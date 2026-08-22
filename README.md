@@ -2,9 +2,6 @@
 
 **A Unified Campus Platform for Student Freelancing and Skill Exchange**
 
-The Apollo University — School of Technology, Department of Computer Science & Engineering (AI & DS)
-Mini Project · Guide: Dr. Thirumalesu Kudithi
-K. Kruthin Raj (122311520143) · K. Lokesh (122311520134)
 
 ---
 
