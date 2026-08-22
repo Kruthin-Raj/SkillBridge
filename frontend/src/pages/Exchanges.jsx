@@ -1,0 +1,109 @@
+import { useCallback, useEffect, useState } from 'react';
+import ListingCard from '../components/ListingCard';
+import { api } from '../lib/api';
+
+export default function Exchanges() {
+  const [matches, setMatches] = useState([]);
+  const [exchanges, setExchanges] = useState([]);
+  const [hint, setHint] = useState('');
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(true);
+
+  const load = useCallback(async () => {
+    setError('');
+    try {
+      const [matchData, exchangeData] = await Promise.all([
+        api.exchanges.matches(),
+        api.exchanges.mine(),
+      ]);
+      setMatches(matchData.matches);
+      setHint(matchData.hint || '');
+      setExchanges(exchangeData.exchanges);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    load();
+  }, [load]);
+
+  const accept = async (id) => {
+    setError('');
+    try {
+      await api.exchanges.accept(id);
+      await load();
+    } catch (err) {
+      setError(err.message);
+    }
+  };
+
+  if (loading) return <p className="text-sm text-slate-500">Finding matches…</p>;
+
+  return (
+    <div className="space-y-8">
+      <section>
+        <h1 className="text-2xl font-bold">Your matches</h1>
+        <p className="mt-1 text-sm text-slate-600">
+          Students whose skills line up with yours. A two-way match means you can teach each
+          other directly.
+        </p>
+
+        {error && (
+          <p role="alert" className="mt-3 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">
+            {error}
+          </p>
+        )}
+
+        {hint && <p className="card mt-4 text-sm text-slate-600">{hint}</p>}
+
+        <div className="mt-4 grid gap-4 sm:grid-cols-2">
+          {matches.map(({ listing, score }) => (
+            <div key={listing.id} className="relative">
+              <span
+                className={`absolute right-3 top-3 z-10 rounded-full px-2 py-0.5 text-xs font-semibold ${
+                  score === 2 ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-100 text-slate-600'
+                }`}
+              >
+                {score === 2 ? 'Two-way match' : 'Partial match'}
+              </span>
+              <ListingCard listing={listing} />
+            </div>
+          ))}
+        </div>
+
+        {!hint && matches.length === 0 && (
+          <p className="card mt-4 text-sm text-slate-600">
+            No matches right now. Try adding more skills to your profile.
+          </p>
+        )}
+      </section>
+
+      <section>
+        <h2 className="text-xl font-bold">Swap requests</h2>
+
+        <ul className="mt-4 space-y-3">
+          {exchanges.map((exchange) => (
+            <li key={exchange.id} className="card flex items-center gap-3">
+              <div className="mr-auto">
+                <p className="text-sm text-slate-700">{exchange.message}</p>
+                <p className="mt-1 text-xs text-slate-500">Listing {exchange.listing_id}</p>
+              </div>
+              <span className="chip capitalize">{exchange.status}</span>
+              {exchange.status === 'pending' && (
+                <button type="button" onClick={() => accept(exchange.id)} className="btn-primary">
+                  Accept
+                </button>
+              )}
+            </li>
+          ))}
+          {exchanges.length === 0 && (
+            <li className="card text-sm text-slate-600">No swap requests yet.</li>
+          )}
+        </ul>
+      </section>
+    </div>
+  );
+}
