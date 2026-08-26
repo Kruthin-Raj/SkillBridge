@@ -2,7 +2,6 @@
 
 **A Unified Campus Platform for Student Freelancing and Skill Exchange**
 
----
 
 ## What it is
 
