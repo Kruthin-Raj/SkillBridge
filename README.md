@@ -3,8 +3,6 @@
 **A Unified Campus Platform for Student Freelancing and Skill Exchange**
 
 
----
-
 ## What it is
 
 A web app open only to verified students of the college. One toggle switches the
