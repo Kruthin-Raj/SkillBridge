@@ -52,6 +52,13 @@ export const supabaseDb = {
     return data;
   },
 
+  async updateMany(table, where, patch) {
+    const { data, error } = await applyWhere(supabase.from(table).update(patch), where)
+      .select();
+    if (error) fail(error);
+    return data ? data.length : 0;
+  },
+
   async remove(table, where) {
     const { error } = await applyWhere(supabase.from(table).delete(), where);
     if (error) fail(error);

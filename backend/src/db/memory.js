@@ -57,6 +57,13 @@ export const memoryDb = {
     return { ...row };
   },
 
+  async updateMany(name, where, patch) {
+    const now = new Date().toISOString();
+    const matched = rowsOf(name).filter((candidate) => matches(candidate, where));
+    matched.forEach((row) => Object.assign(row, patch, { updated_at: now }));
+    return matched.length;
+  },
+
   async remove(name, where) {
     const rows = rowsOf(name);
     const index = rows.findIndex((candidate) => matches(candidate, where));

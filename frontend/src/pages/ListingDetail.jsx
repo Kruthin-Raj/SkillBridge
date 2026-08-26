@@ -178,11 +178,13 @@ export default function ListingDetail() {
                   id="amount"
                   type="number"
                   min={1}
+                  max={100000}
                   required
                   value={form.amount}
                   onChange={(event) => setForm({ ...form, amount: event.target.value })}
                   className="field"
                 />
+                <p className="mt-1 text-xs text-slate-500">Max ₹1,00,000</p>
               </div>
               <div>
                 <label htmlFor="message" className="label">

@@ -9,7 +9,13 @@ export const tokenStore = {
 
 export class ApiError extends Error {
   constructor(status, message, details) {
-    super(message);
+    // When the server returns field-level validation details, append them
+    // to the message so the UI shows what actually went wrong.
+    const fullMessage =
+      Array.isArray(details) && details.length
+        ? `${message}: ${details.map((d) => `${d.field ? d.field + ' – ' : ''}${d.message}`).join(', ')}`
+        : message;
+    super(fullMessage);
     this.status = status;
     this.details = details;
   }

@@ -76,7 +76,13 @@ router.post(
       { status: 'in_progress', accepted_bid_id: bid.id }
     );
 
-    // TODO(week 5): mark the remaining bids on this listing as `rejected`.
+    // Reject all other pending bids on this listing.
+    const allBids = await db.findMany(TABLES.bids, { listing_id: listing.id }, { limit: 1000 });
+    const losers = allBids.filter((b) => b.id !== bid.id && b.status === 'pending');
+    await Promise.all(
+      losers.map((b) => db.update(TABLES.bids, { id: b.id }, { status: 'rejected' }))
+    );
+
     res.json({ bid: accepted });
   })
 );

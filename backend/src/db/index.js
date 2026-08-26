@@ -11,6 +11,7 @@ import { memoryDb } from './memory.js';
  *   db.findOne(table, where)
  *   db.findMany(table, where, { orderBy, ascending, limit })
  *   db.update(table, where, patch)
+ *   db.updateMany(table, where, patch)
  *   db.remove(table, where)
  *
  * The Supabase module is imported lazily so the app still boots when the

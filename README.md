@@ -245,9 +245,9 @@ All routes are under `/api`. Authenticated routes need `Authorization: Bearer <t
 
 ## Not built yet
 
+
 Deliberate gaps, roughly in the order the timeline expects them:
 
-- Rejecting the losing bids when one is accepted (`bids.routes.js` has the TODO)
 - Search and tag filtering on the browse page
 - A reviews UI — the API works, the screen does not exist
 - A dashboard of your own listings, bids and gigs
