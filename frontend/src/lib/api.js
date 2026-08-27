@@ -59,6 +59,8 @@ export const api = {
   users: {
     get: (id) => request(`/api/users/${id}`, { auth: false }),
     updateMe: (patch) => request('/api/users/me', { method: 'PATCH', body: patch }),
+    updateAvatar: (avatar_url) =>
+      request('/api/users/me/avatar', { method: 'PATCH', body: { avatar_url } }),
   },
 
   listings: {
@@ -85,5 +87,14 @@ export const api = {
   reviews: {
     forUser: (userId) => request(`/api/reviews?user_id=${userId}`, { auth: false }),
     create: (review) => request('/api/reviews', { method: 'POST', body: review }),
+  },
+
+  dashboard: {
+    get: () => request('/api/dashboard'),
+  },
+
+  notifications: {
+    list: () => request('/api/notifications'),
+    markRead: () => request('/api/notifications/read', { method: 'PATCH' }),
   },
 };
