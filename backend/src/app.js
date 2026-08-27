@@ -10,7 +10,7 @@ export function createApp() {
   const app = express();
 
   app.use(cors({ origin: env.corsOrigin, credentials: true }));
-  app.use(express.json({ limit: '100kb' }));
+  app.use(express.json({ limit: '500kb' }));
   app.use(morgan(isDev ? 'dev' : 'combined'));
 
   /** Render pings this to check the service is alive. */

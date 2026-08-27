@@ -15,10 +15,12 @@ create table if not exists public.users (
   email          text        not null unique,
   full_name      text        not null default '',
   bio            text        not null default '',
+  avatar_url     text        not null default '',
   skills_offered text[]      not null default '{}',
   skills_wanted  text[]      not null default '{}',
   rating_average numeric(3,2) not null default 0,
   rating_count   integer     not null default 0,
+  last_read_at   timestamptz not null default now(),
   created_at     timestamptz not null default now(),
   updated_at     timestamptz not null default now()
 );
