@@ -234,6 +234,9 @@ export default function Profile() {
         </button>
       </form>
 
+      {/* Set password */}
+      <SetPasswordCard />
+
       {/* Reviews on this profile */}
       <div>
         <h2 className="text-xl font-bold">Your Reviews ({reviews.length})</h2>
@@ -262,5 +265,86 @@ export default function Profile() {
         </div>
       </div>
     </div>
+  );
+}
+
+function SetPasswordCard() {
+  const [password, setPassword] = useState('');
+  const [confirm, setConfirm] = useState('');
+  const [pwStatus, setPwStatus] = useState('');
+  const [pwError, setPwError] = useState('');
+  const [pwSaving, setPwSaving] = useState(false);
+
+  const handleSetPassword = async (e) => {
+    e.preventDefault();
+    setPwError('');
+    setPwStatus('');
+
+    if (password !== confirm) {
+      setPwError('Passwords do not match.');
+      return;
+    }
+
+    setPwSaving(true);
+    try {
+      await api.auth.setPassword(password);
+      setPwStatus('Password set successfully. You can now sign in with your email and password.');
+      setPassword('');
+      setConfirm('');
+    } catch (err) {
+      setPwError(err.message);
+    } finally {
+      setPwSaving(false);
+    }
+  };
+
+  return (
+    <form onSubmit={handleSetPassword} className="card space-y-4">
+      <h2 className="font-semibold text-slate-900">Set Password</h2>
+      <p className="text-xs text-slate-500">
+        Set a password so you can sign in without waiting for an OTP every time.
+      </p>
+
+      <div>
+        <label htmlFor="new-password" className="label">New password</label>
+        <input
+          id="new-password"
+          type="password"
+          required
+          minLength={6}
+          autoComplete="new-password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          placeholder="At least 6 characters"
+          className="field"
+        />
+      </div>
+
+      <div>
+        <label htmlFor="confirm-password" className="label">Confirm password</label>
+        <input
+          id="confirm-password"
+          type="password"
+          required
+          minLength={6}
+          autoComplete="new-password"
+          value={confirm}
+          onChange={(e) => setConfirm(e.target.value)}
+          placeholder="Re-enter password"
+          className="field"
+        />
+      </div>
+
+      {pwError && (
+        <p role="alert" className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{pwError}</p>
+      )}
+      {pwStatus && (
+        <p className="rounded-lg bg-emerald-50 px-3 py-2 text-sm text-emerald-800">{pwStatus}</p>
+      )}
+
+      <button type="submit" disabled={pwSaving} className="btn-primary w-full">
+        {pwSaving ? 'Setting…' : 'Set password'}
+      </button>
+    </form>
   );
 }

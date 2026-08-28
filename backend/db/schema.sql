@@ -16,6 +16,7 @@ create table if not exists public.users (
   full_name      text        not null default '',
   bio            text        not null default '',
   avatar_url     text        not null default '',
+  password_hash  text        not null default '',
   skills_offered text[]      not null default '{}',
   skills_wanted  text[]      not null default '{}',
   rating_average numeric(3,2) not null default 0,
@@ -46,6 +47,9 @@ create table if not exists public.listings (
   -- exchange only
   skill_offered   text,
   skill_wanted    text,
+
+  -- optional attachment (base64 data-url)
+  image_url       text not null default '',
 
   status          text not null default 'open'
                     check (status in ('open', 'in_progress', 'completed', 'cancelled')),

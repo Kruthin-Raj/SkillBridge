@@ -2,42 +2,95 @@ import { Router } from 'express';
 import { z } from 'zod';
 import { asyncHandler } from '../../utils/asyncHandler.js';
 import { requireAuth } from '../../middleware/requireAuth.js';
-import { getUserById, requestOtp, verifyOtpAndIssueToken } from './auth.service.js';
+import {
+  getUserById,
+  requestOtp,
+  loginWithPassword,
+  registerWithOtp,
+  resetPassword,
+  setPassword,
+} from './auth.service.js';
 
 const router = Router();
 
-const requestSchema = z.object({
+const emailSchema = z.object({
   email: z.string().email('Enter a valid email address'),
 });
 
-const verifySchema = z.object({
+const loginSchema = z.object({
   email: z.string().email('Enter a valid email address'),
+  password: z.string().min(6, 'Password must be at least 6 characters'),
+});
+
+const registerSchema = z.object({
+  email: z.string().email('Enter a valid email address'),
+  password: z.string().min(6, 'Password must be at least 6 characters').max(128),
   code: z.string().regex(/^\d{6}$/, 'The code is 6 digits'),
 });
 
-/** POST /api/auth/request-otp - emails (or prints) a fresh code. */
+const resetSchema = z.object({
+  email: z.string().email('Enter a valid email address'),
+  code: z.string().regex(/^\d{6}$/, 'The code is 6 digits'),
+  password: z.string().min(6, 'Password must be at least 6 characters').max(128),
+});
+
+const setPasswordSchema = z.object({
+  password: z.string().min(6, 'Password must be at least 6 characters').max(128),
+});
+
+/** POST /api/auth/request-otp - send a code for registration or password reset. */
 router.post(
   '/request-otp',
   asyncHandler(async (req, res) => {
-    const { email } = requestSchema.parse(req.body);
+    const { email } = emailSchema.parse(req.body);
     const result = await requestOtp(email);
 
     res.json({
       message: `A verification code was sent to ${email}.`,
       expiresInMinutes: result.expiresInMinutes,
-      // Tells the UI to show the "check your terminal" hint in dev.
       deliveredByEmail: result.delivered,
     });
   })
 );
 
-/** POST /api/auth/verify-otp - exchanges a valid code for a JWT. */
+/** POST /api/auth/login - sign in with email + password. */
 router.post(
-  '/verify-otp',
+  '/login',
   asyncHandler(async (req, res) => {
-    const { email, code } = verifySchema.parse(req.body);
-    const { token, user, isNewUser } = await verifyOtpAndIssueToken(email, code);
-    res.json({ token, user, isNewUser });
+    const { email, password } = loginSchema.parse(req.body);
+    const { token, user } = await loginWithPassword(email, password);
+    res.json({ token, user });
+  })
+);
+
+/** POST /api/auth/register - create account with email + password + OTP. */
+router.post(
+  '/register',
+  asyncHandler(async (req, res) => {
+    const { email, password, code } = registerSchema.parse(req.body);
+    const { token, user } = await registerWithOtp(email, password, code);
+    res.json({ token, user });
+  })
+);
+
+/** POST /api/auth/reset-password - verify OTP and set a new password. */
+router.post(
+  '/reset-password',
+  asyncHandler(async (req, res) => {
+    const { email, code, password } = resetSchema.parse(req.body);
+    const { token, user } = await resetPassword(email, code, password);
+    res.json({ token, user });
+  })
+);
+
+/** POST /api/auth/set-password - change password while signed in. */
+router.post(
+  '/set-password',
+  requireAuth,
+  asyncHandler(async (req, res) => {
+    const { password } = setPasswordSchema.parse(req.body);
+    await setPassword(req.user.id, password);
+    res.json({ message: 'Password updated.' });
   })
 );
 
@@ -46,7 +99,8 @@ router.get(
   '/me',
   requireAuth,
   asyncHandler(async (req, res) => {
-    res.json({ user: await getUserById(req.user.id) });
+    const user = await getUserById(req.user.id);
+    res.json({ user, hasPassword: Boolean(user.password_hash) });
   })
 );
 

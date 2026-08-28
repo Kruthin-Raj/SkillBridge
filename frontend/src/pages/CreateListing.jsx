@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import ModeToggle from '../components/ModeToggle';
 import { api } from '../lib/api';
@@ -15,12 +15,39 @@ const emptyForm = {
 
 export default function CreateListing() {
   const navigate = useNavigate();
+  const fileInputRef = useRef(null);
   const [mode, setMode] = useState('freelance');
   const [form, setForm] = useState(emptyForm);
+  const [imagePreview, setImagePreview] = useState('');
+  const [imageBase64, setImageBase64] = useState('');
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
 
   const update = (key) => (event) => setForm((prev) => ({ ...prev, [key]: event.target.value }));
+
+  const handleImageChange = async (event) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 200 * 1024) {
+      setError('Image too large. Please use an image under 200 KB.');
+      return;
+    }
+
+    setError('');
+    const reader = new FileReader();
+    reader.onload = () => {
+      setImagePreview(reader.result);
+      setImageBase64(reader.result);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const removeImage = () => {
+    setImagePreview('');
+    setImageBase64('');
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  };
 
   const buildPayload = () => {
     const base = {
@@ -31,6 +58,7 @@ export default function CreateListing() {
         .split(',')
         .map((tag) => tag.trim())
         .filter(Boolean),
+      image_url: imageBase64,
     };
 
     if (mode === 'freelance') {
@@ -107,6 +135,53 @@ export default function CreateListing() {
             value={form.description}
             onChange={update('description')}
             className="field"
+          />
+        </div>
+
+        {/* Image upload */}
+        <div>
+          <label className="label">
+            Image <span className="font-normal text-slate-400">(optional, max 200 KB)</span>
+          </label>
+          {imagePreview ? (
+            <div className="relative rounded-lg overflow-hidden border border-slate-200">
+              <img
+                src={imagePreview}
+                alt="Preview"
+                className="w-full max-h-48 object-cover"
+              />
+              <button
+                type="button"
+                onClick={removeImage}
+                className="absolute top-2 right-2 flex h-7 w-7 items-center justify-center rounded-full
+                           bg-black/50 text-white text-sm hover:bg-black/70 transition"
+                title="Remove image"
+              >
+                ✕
+              </button>
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              className="flex w-full items-center justify-center gap-2 rounded-lg border-2 border-dashed
+                         border-slate-300 py-6 text-sm text-slate-500 transition
+                         hover:border-slate-400 hover:text-slate-700"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+                <circle cx="8.5" cy="8.5" r="1.5" />
+                <polyline points="21 15 16 10 5 21" />
+              </svg>
+              Click to add a photo
+            </button>
+          )}
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            onChange={handleImageChange}
+            className="hidden"
           />
         </div>
 

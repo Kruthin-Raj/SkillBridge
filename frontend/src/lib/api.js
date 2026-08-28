@@ -51,8 +51,14 @@ export const api = {
   auth: {
     requestOtp: (email) =>
       request('/api/auth/request-otp', { method: 'POST', body: { email }, auth: false }),
-    verifyOtp: (email, code) =>
-      request('/api/auth/verify-otp', { method: 'POST', body: { email, code }, auth: false }),
+    login: (email, password) =>
+      request('/api/auth/login', { method: 'POST', body: { email, password }, auth: false }),
+    register: (email, password, code) =>
+      request('/api/auth/register', { method: 'POST', body: { email, password, code }, auth: false }),
+    resetPassword: (email, code, password) =>
+      request('/api/auth/reset-password', { method: 'POST', body: { email, code, password }, auth: false }),
+    setPassword: (password) =>
+      request('/api/auth/set-password', { method: 'POST', body: { password } }),
     me: () => request('/api/auth/me'),
   },
 
