@@ -111,4 +111,38 @@ router.patch(
   })
 );
 
+/** GET /api/notifications/stream — SSE for live unread count. */
+router.get(
+  '/stream',
+  requireAuth,
+  asyncHandler(async (req, res) => {
+    res.setHeader('Content-Type', 'text/event-stream');
+    res.setHeader('Cache-Control', 'no-cache');
+    res.setHeader('Connection', 'keep-alive');
+
+    // Send an immediate update
+    const notifications = await buildNotifications(req.user.id);
+    let lastCount = notifications.filter((n) => !n.read).length;
+    res.write(`data: ${JSON.stringify({ unread_count: lastCount })}\n\n`);
+
+    // Poll internally every 3 seconds to push if there's a change
+    const intervalId = setInterval(async () => {
+      try {
+        const notifs = await buildNotifications(req.user.id);
+        const count = notifs.filter((n) => !n.read).length;
+        if (count !== lastCount) {
+          lastCount = count;
+          res.write(`data: ${JSON.stringify({ unread_count: count })}\n\n`);
+        }
+      } catch (err) {
+        console.error('SSE Poll error:', err);
+      }
+    }, 3000);
+
+    req.on('close', () => {
+      clearInterval(intervalId);
+    });
+  })
+);
+
 export default router;

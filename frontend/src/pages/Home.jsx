@@ -8,6 +8,7 @@ const FEATURES = [
     desc: 'Post paid tasks with budgets and deadlines. Students bid, you pick the best fit.',
     color: 'from-freelance/10 to-freelance/5 border-freelance/20',
     accent: 'text-freelance',
+    link: '/browse?mode=freelance',
   },
   {
     icon: '🔄',
@@ -15,6 +16,7 @@ const FEATURES = [
     desc: 'Teach what you know, learn what you need. No money involved — just mutual growth.',
     color: 'from-exchange/10 to-exchange/5 border-exchange/20',
     accent: 'text-exchange',
+    link: '/browse?mode=exchange',
   },
   {
     icon: '⭐',
@@ -22,6 +24,7 @@ const FEATURES = [
     desc: 'Every completed job builds your campus reputation. Ratings and reviews drive quality.',
     color: 'from-amber-50 to-amber-50/50 border-amber-200/50',
     accent: 'text-amber-600',
+    link: '/browse',
   },
 ];
 
@@ -76,14 +79,15 @@ export default function Home() {
 
         <div className="mt-10 grid gap-6 sm:grid-cols-3">
           {FEATURES.map((f) => (
-            <div
+            <Link
+              to={f.link}
               key={f.title}
-              className={`animate-fade-in rounded-2xl border bg-gradient-to-b p-6 ${f.color} transition hover:shadow-md`}
+              className={`animate-fade-in rounded-2xl border bg-gradient-to-b p-6 ${f.color} transition hover:shadow-md block`}
             >
               <span className="text-3xl">{f.icon}</span>
               <h3 className={`mt-3 text-lg font-semibold ${f.accent}`}>{f.title}</h3>
               <p className="mt-2 text-sm text-slate-600 leading-relaxed">{f.desc}</p>
-            </div>
+            </Link>
           ))}
         </div>
       </section>
