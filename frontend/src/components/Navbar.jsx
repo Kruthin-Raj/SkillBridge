@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link, NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { api } from '../lib/api';
+import { api, BASE_URL } from '../lib/api';
 
 const linkClass = ({ isActive }) =>
   `rounded-lg px-3 py-1.5 text-sm font-medium transition ${
@@ -24,14 +24,32 @@ export default function Navbar() {
         .slice(0, 2)
     : '';
 
-  // Fetch unread notification count
+  // Live unread notification count via Server-Sent Events (SSE)
   useEffect(() => {
     if (!user) return;
-    api.notifications.list().then((r) => setUnread(r.unread_count)).catch(() => {});
-    const interval = setInterval(() => {
-      api.notifications.list().then((r) => setUnread(r.unread_count)).catch(() => {});
-    }, 30000);
-    return () => clearInterval(interval);
+
+    // We pass the token in the query string since EventSource does not support custom headers natively.
+    const token = localStorage.getItem('skillbridge.token');
+    const source = new EventSource(`${BASE_URL}/api/notifications/stream?token=${token}`);
+
+    source.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        if (typeof data.unread_count === 'number') {
+          setUnread(data.unread_count);
+        }
+      } catch (err) {
+        // Ignore parse errors
+      }
+    };
+
+    source.onerror = () => {
+      // It will auto-reconnect, but we can log or handle if necessary.
+    };
+
+    return () => {
+      source.close();
+    };
   }, [user]);
 
   // Close dropdown on outside click

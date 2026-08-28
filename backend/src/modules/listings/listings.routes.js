@@ -50,8 +50,18 @@ router.get(
       where.mode = req.query.mode;
     }
 
-    const listings = await db.findMany(TABLES.listings, where, { limit: 50 });
-    res.json({ listings });
+    let listings = await db.findMany(TABLES.listings, where, { limit: 100 });
+    
+    // Filter out expired freelance listings (deadline in the past)
+    const now = new Date();
+    listings = listings.filter((listing) => {
+      if (listing.mode === 'freelance' && listing.deadline) {
+        return new Date(listing.deadline) > now;
+      }
+      return true;
+    });
+
+    res.json({ listings: listings.slice(0, 50) });
   })
 );
 

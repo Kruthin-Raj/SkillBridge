@@ -38,6 +38,10 @@ router.post(
     if (listing.mode !== 'freelance') throw ApiError.badRequest('Only freelance listings take bids');
     if (listing.status !== 'open') throw ApiError.conflict('This listing is no longer open');
     if (listing.owner_id === req.user.id) throw ApiError.forbidden('You cannot bid on your own listing');
+    
+    if (listing.deadline && new Date(listing.deadline) < new Date()) {
+      throw ApiError.conflict('The deadline for this listing has passed');
+    }
 
     const existing = await db.findOne(TABLES.bids, {
       listing_id: listing.id,

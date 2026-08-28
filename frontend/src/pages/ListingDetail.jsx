@@ -68,16 +68,17 @@ export default function ListingDetail() {
   if (!listing) return <p className="text-sm text-red-700">{error || 'Listing not found.'}</p>;
 
   const isFreelance = listing.mode === 'freelance';
+  const isExpired = isFreelance && listing.deadline && new Date(listing.deadline) < new Date();
 
   return (
     <div className="mx-auto max-w-2xl space-y-6">
       <div className="card overflow-hidden">
         <span
           className={`rounded-full px-2.5 py-0.5 text-xs font-semibold text-white ${
-            isFreelance ? 'bg-freelance' : 'bg-exchange'
+            isExpired ? 'bg-slate-500' : isFreelance ? 'bg-freelance' : 'bg-exchange'
           }`}
         >
-          {isFreelance ? 'Freelance' : 'Exchange'}
+          {isExpired ? 'Expired' : isFreelance ? 'Freelance' : 'Exchange'}
         </span>
 
         {listing.image_url && (
@@ -102,8 +103,8 @@ export default function ListingDetail() {
               </div>
               <div>
                 <dt className="text-slate-500">Deadline</dt>
-                <dd className="font-semibold">
-                  {new Date(listing.deadline).toLocaleDateString()}
+                <dd className={`font-semibold ${isExpired ? 'text-red-600' : ''}`}>
+                  {new Date(listing.deadline).toLocaleDateString()} {isExpired && '(Passed)'}
                 </dd>
               </div>
             </>
@@ -164,7 +165,7 @@ export default function ListingDetail() {
                   <p className="text-sm text-slate-600">{bid.message}</p>
                 </div>
                 <span className="chip capitalize">{bid.status}</span>
-                {isOwner && bid.status === 'pending' && listing.status === 'open' && (
+                {isOwner && bid.status === 'pending' && listing.status === 'open' && !isExpired && (
                   <button
                     type="button"
                     onClick={() => handleAction(() => api.bids.accept(bid.id))}
@@ -178,7 +179,7 @@ export default function ListingDetail() {
             {bids.length === 0 && <li className="text-sm text-slate-500">No bids yet.</li>}
           </ul>
 
-          {!isOwner && listing.status === 'open' && (
+          {!isOwner && listing.status === 'open' && !isExpired && (
             <form onSubmit={submitBid} className="mt-4 space-y-3 border-t border-slate-200 pt-4">
               <div>
                 <label htmlFor="amount" className="label">
@@ -215,6 +216,12 @@ export default function ListingDetail() {
                 Place bid
               </button>
             </form>
+          )}
+
+          {!isOwner && listing.status === 'open' && isExpired && (
+            <div className="mt-4 border-t border-slate-200 pt-4 text-sm text-slate-500 text-center">
+              The deadline for this listing has passed. No new bids can be placed.
+            </div>
           )}
         </div>
       )}

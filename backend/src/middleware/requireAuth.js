@@ -7,10 +7,17 @@ import { ApiError } from '../utils/ApiError.js';
  * Every route that touches user-owned data must sit behind this.
  */
 export function requireAuth(req, _res, next) {
-  const header = req.headers.authorization || '';
-  const [scheme, token] = header.split(' ');
+  let token = null;
 
-  if (scheme !== 'Bearer' || !token) {
+  const header = req.headers.authorization || '';
+  if (header.startsWith('Bearer ')) {
+    token = header.substring(7);
+  } else if (req.query.token) {
+    // Fallback for SSE EventSource which cannot send custom headers
+    token = req.query.token;
+  }
+
+  if (!token) {
     return next(ApiError.unauthorized('Missing Bearer token'));
   }
 
