@@ -3,11 +3,15 @@ import { api, tokenStore } from '../lib/api';
 
 const AuthContext = createContext(null);
 
+/** Returns true if the profile is considered "empty" and needs setup. */
+export function isProfileIncomplete(user) {
+  return !user?.full_name || user.full_name.trim() === '';
+}
+
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // On a page refresh the token is still in localStorage - ask the API who it belongs to.
   useEffect(() => {
     if (!tokenStore.get()) {
       setLoading(false);
@@ -23,11 +27,23 @@ export function AuthProvider({ children }) {
 
   const requestOtp = useCallback((email) => api.auth.requestOtp(email), []);
 
-  const verifyOtp = useCallback(async (email, code) => {
-    const { token, user: me, isNewUser } = await api.auth.verifyOtp(email, code);
+  const loginWithPassword = useCallback(async (email, password) => {
+    const { token, user: me } = await api.auth.login(email, password);
     tokenStore.set(token);
     setUser(me);
-    return { isNewUser };
+    return { isNewUser: isProfileIncomplete(me) };
+  }, []);
+
+  const register = useCallback(async (email, password, code) => {
+    const { token, user: me } = await api.auth.register(email, password, code);
+    tokenStore.set(token);
+    setUser(me);
+  }, []);
+
+  const resetPassword = useCallback(async (email, code, password) => {
+    const { token, user: me } = await api.auth.resetPassword(email, code, password);
+    tokenStore.set(token);
+    setUser(me);
   }, []);
 
   const signOut = useCallback(() => {
@@ -36,8 +52,17 @@ export function AuthProvider({ children }) {
   }, []);
 
   const value = useMemo(
-    () => ({ user, setUser, loading, requestOtp, verifyOtp, signOut }),
-    [user, loading, requestOtp, verifyOtp, signOut]
+    () => ({
+      user,
+      setUser,
+      loading,
+      requestOtp,
+      loginWithPassword,
+      register,
+      resetPassword,
+      signOut,
+    }),
+    [user, loading, requestOtp, loginWithPassword, register, resetPassword, signOut]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

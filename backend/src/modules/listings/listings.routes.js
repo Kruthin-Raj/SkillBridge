@@ -19,6 +19,7 @@ const baseSchema = z.object({
   title: z.string().min(5).max(120),
   description: z.string().min(10).max(2000),
   tags: z.array(z.string().min(1).max(30)).max(10).default([]),
+  image_url: z.string().max(300000, 'Image is too large').default(''),
 });
 
 const freelanceSchema = baseSchema.extend({

@@ -5,9 +5,20 @@ const formatDate = (value) =>
 
 export default function ListingCard({ listing }) {
   const isFreelance = listing.mode === 'freelance';
+  const hasImage = Boolean(listing.image_url);
 
   return (
-    <Link to={`/listings/${listing.id}`} className="card block transition hover:shadow-md">
+    <Link to={`/listings/${listing.id}`} className="card block overflow-hidden transition hover:shadow-md">
+      {hasImage && (
+        <div className="-mx-5 -mt-5 mb-4">
+          <img
+            src={listing.image_url}
+            alt={listing.title}
+            className="w-full h-36 object-cover"
+          />
+        </div>
+      )}
+
       <div className="mb-2 flex items-center gap-2">
         <span
           className={`rounded-full px-2.5 py-0.5 text-xs font-semibold text-white ${

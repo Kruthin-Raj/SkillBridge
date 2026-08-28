@@ -71,7 +71,7 @@ export default function ListingDetail() {
 
   return (
     <div className="mx-auto max-w-2xl space-y-6">
-      <div className="card">
+      <div className="card overflow-hidden">
         <span
           className={`rounded-full px-2.5 py-0.5 text-xs font-semibold text-white ${
             isFreelance ? 'bg-freelance' : 'bg-exchange'
@@ -79,6 +79,16 @@ export default function ListingDetail() {
         >
           {isFreelance ? 'Freelance' : 'Exchange'}
         </span>
+
+        {listing.image_url && (
+          <div className="-mx-5 mt-3">
+            <img
+              src={listing.image_url}
+              alt={listing.title}
+              className="w-full max-h-72 object-cover"
+            />
+          </div>
+        )}
 
         <h1 className="mt-3 text-2xl font-bold">{listing.title}</h1>
         <p className="mt-2 whitespace-pre-line text-slate-700">{listing.description}</p>

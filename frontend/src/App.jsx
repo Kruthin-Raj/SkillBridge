@@ -6,13 +6,15 @@ import Browse from './pages/Browse';
 import CreateListing from './pages/CreateListing';
 import Dashboard from './pages/Dashboard';
 import Exchanges from './pages/Exchanges';
+import ForgotPassword from './pages/ForgotPassword';
 import ListingDetail from './pages/ListingDetail';
 import Login from './pages/Login';
 import NotFound from './pages/NotFound';
 import Notifications from './pages/Notifications';
 import Profile from './pages/Profile';
+import ProfileSetup from './pages/ProfileSetup';
 import PublicProfile from './pages/PublicProfile';
-import VerifyOtp from './pages/VerifyOtp';
+import Register from './pages/Register';
 
 export default function App() {
   return (
@@ -23,10 +25,19 @@ export default function App() {
           <Route path="/" element={<Home />} />
           <Route path="/browse" element={<Browse />} />
           <Route path="/login" element={<Login />} />
-          <Route path="/verify" element={<VerifyOtp />} />
+          <Route path="/register" element={<Register />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/listings/:id" element={<ListingDetail />} />
           <Route path="/users/:id" element={<PublicProfile />} />
 
+          <Route
+            path="/profile/setup"
+            element={
+              <ProtectedRoute>
+                <ProfileSetup />
+              </ProtectedRoute>
+            }
+          />
           <Route
             path="/new"
             element={
