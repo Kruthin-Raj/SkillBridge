@@ -38,11 +38,11 @@ export default function ReportModal({ reportedUser, listingId, onClose }) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4 animate-fade-in">
-      <div className="bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden">
-        <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50">
-          <h3 className="font-bold text-slate-900 text-lg">Report Issue</h3>
-          <button onClick={onClose} className="text-slate-400 hover:text-slate-600">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-cw-bg/80 p-4 animate-fade-in">
+      <div className="bg-cw-surface border border-cw-border rounded-xl shadow-xl w-full max-w-md overflow-hidden">
+        <div className="px-6 py-4 border-b border-cw-border flex justify-between items-center bg-cw-bg-alt">
+          <h3 className="font-bold text-cw-text-1 text-lg">Report Issue</h3>
+          <button onClick={onClose} className="text-cw-text-3 hover:text-cw-text-1">
             &times;
           </button>
         </div>
@@ -52,8 +52,8 @@ export default function ReportModal({ reportedUser, listingId, onClose }) {
             <div className="w-12 h-12 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-4">
               ✓
             </div>
-            <h4 className="font-semibold text-lg text-slate-900">Report Submitted</h4>
-            <p className="text-sm text-slate-600 mt-2">
+            <h4 className="font-semibold text-lg text-cw-text-1">Report Submitted</h4>
+            <p className="text-sm text-cw-text-2 mt-2">
               Thank you for keeping SkillBridge safe. Our team will review this shortly.
             </p>
           </div>
@@ -61,8 +61,8 @@ export default function ReportModal({ reportedUser, listingId, onClose }) {
           <form onSubmit={handleSubmit} className="p-6 space-y-4">
             {error && <p className="text-sm text-red-600 bg-red-50 p-3 rounded-lg">{error}</p>}
             
-            <p className="text-sm text-slate-600">
-              Reporting: <span className="font-semibold text-slate-900">{reportedUser.full_name}</span>
+            <p className="text-sm text-cw-text-2">
+              Reporting: <span className="font-semibold text-cw-text-1">{reportedUser.full_name}</span>
             </p>
 
             <div>
@@ -70,7 +70,7 @@ export default function ReportModal({ reportedUser, listingId, onClose }) {
               <select
                 value={reason}
                 onChange={(e) => setReason(e.target.value)}
-                className="field bg-white"
+                className="field bg-cw-bg-alt"
                 required
               >
                 {REASONS.map((r) => (

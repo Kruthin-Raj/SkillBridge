@@ -51,7 +51,7 @@ export default function Notifications() {
     }
   };
 
-  if (loading) return <p className="text-sm text-slate-500">Loading notifications…</p>;
+  if (loading) return <p className="text-sm text-cw-text-3">Loading notifications…</p>;
   if (error) return <p className="text-sm text-red-700">{error}</p>;
 
   return (
@@ -59,7 +59,7 @@ export default function Notifications() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold">Notifications</h1>
-          <p className="mt-1 text-sm text-slate-600">
+          <p className="mt-1 text-sm text-cw-text-2">
             {unreadCount > 0 ? `${unreadCount} unread` : 'All caught up'}
           </p>
         </div>
@@ -73,8 +73,8 @@ export default function Notifications() {
       {notifications.length === 0 && (
         <div className="card text-center py-12">
           <p className="text-3xl">🔔</p>
-          <p className="mt-3 text-sm text-slate-600">No notifications yet.</p>
-          <p className="mt-1 text-xs text-slate-500">
+          <p className="mt-3 text-sm text-cw-text-2">No notifications yet.</p>
+          <p className="mt-1 text-xs text-cw-text-3">
             You'll see updates here when someone bids on your listings or accepts your bids.
           </p>
         </div>
@@ -82,7 +82,7 @@ export default function Notifications() {
 
       <div>
         {notifications.map((n) => {
-          const config = TYPE_CONFIG[n.type] || { icon: '📌', color: 'bg-slate-500', label: n.type };
+          const config = TYPE_CONFIG[n.type] || { icon: '📌', color: 'bg-cw-border', label: n.type };
           return (
             <div key={n.id} className={`timeline-item ${!n.read ? '' : 'opacity-60'}`}>
               <div className={`timeline-dot ${config.color}`}>
@@ -91,10 +91,10 @@ export default function Notifications() {
               <div className="min-w-0 flex-1 pt-0.5">
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
-                    <p className={`text-sm ${!n.read ? 'font-semibold text-slate-900' : 'text-slate-700'}`}>
+                    <p className={`text-sm ${!n.read ? 'font-semibold text-cw-text-1' : 'text-cw-text-2'}`}>
                       {n.message}
                     </p>
-                    <p className="mt-1 text-xs text-slate-500">{timeAgo(n.created_at)}</p>
+                    <p className="mt-1 text-xs text-cw-text-3">{timeAgo(n.created_at)}</p>
                   </div>
                   {n.listing_id && (
                     <Link

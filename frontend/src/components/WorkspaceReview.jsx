@@ -40,7 +40,7 @@ export default function WorkspaceReview({ listingId, reviewee, onReviewSubmitted
 
   return (
     <div className="card">
-      <h3 className="font-semibold text-slate-900 mb-3 border-b pb-2">
+      <h3 className="font-semibold text-cw-text-1 mb-3 border-b border-cw-border pb-2">
         Review {reviewee.full_name}
       </h3>
       
@@ -56,7 +56,7 @@ export default function WorkspaceReview({ listingId, reviewee, onReviewSubmitted
                 type="button"
                 onClick={() => setRating(star)}
                 className={`text-2xl focus:outline-none transition-colors ${
-                  star <= rating ? 'text-amber-400' : 'text-slate-200 hover:text-amber-200'
+                  star <= rating ? 'text-amber-400' : 'text-cw-border hover:text-amber-200'
                 }`}
               >
                 ★

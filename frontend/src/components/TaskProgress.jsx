@@ -2,9 +2,9 @@ import { useState } from 'react';
 import { api } from '../lib/api';
 
 const OPTIONS = [
-  { value: 'todo', label: 'To Do', color: 'bg-slate-100 text-slate-700' },
-  { value: 'in_progress', label: 'In Progress', color: 'bg-blue-100 text-blue-800' },
-  { value: 'review', label: 'Ready for Review', color: 'bg-purple-100 text-purple-800' },
+  { value: 'todo', label: 'To Do', color: 'bg-cw-bg text-cw-text-1 border border-cw-border' },
+  { value: 'in_progress', label: 'In Progress', color: 'bg-cw-accent/20 text-cw-accent-light border border-cw-accent/30' },
+  { value: 'review', label: 'Ready for Review', color: 'bg-indigo-900/30 text-indigo-300 border border-indigo-700/50' },
 ];
 
 export default function TaskProgress({ listingId, currentStatus, onUpdate }) {
@@ -27,7 +27,7 @@ export default function TaskProgress({ listingId, currentStatus, onUpdate }) {
 
   return (
     <div className="card">
-      <h3 className="font-semibold text-slate-900 mb-3">Task Progress</h3>
+      <h3 className="font-semibold text-cw-text-1 mb-3">Task Progress</h3>
       
       <div className="flex flex-wrap gap-2">
         {OPTIONS.map((opt) => {
@@ -39,8 +39,8 @@ export default function TaskProgress({ listingId, currentStatus, onUpdate }) {
               disabled={loading}
               className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
                 isActive 
-                  ? opt.color + ' ring-2 ring-offset-1 ring-slate-300'
-                  : 'bg-slate-50 text-slate-600 hover:bg-slate-100'
+                  ? opt.color + ' ring-2 ring-offset-1 ring-cw-border ring-offset-cw-surface'
+                  : 'bg-cw-surface border border-cw-border text-cw-text-2 hover:bg-cw-bg-alt hover:text-cw-text-1'
               }`}
             >
               {opt.label}

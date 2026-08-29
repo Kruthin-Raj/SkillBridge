@@ -41,7 +41,7 @@ export default function Browse() {
           <h1 className="text-2xl font-bold">
             {mode === 'freelance' ? 'Open tasks' : 'Skill swaps'}
           </h1>
-          <p className="text-sm text-slate-600">
+          <p className="text-sm text-cw-text-2">
             {mode === 'freelance'
               ? 'Paid work posted by students on campus.'
               : 'Teach what you know, learn what you want. No money involved.'}
@@ -56,7 +56,7 @@ export default function Browse() {
         </Link>
       )}
 
-      {loading && <p className="text-sm text-slate-500">Loading listings…</p>}
+      {loading && <p className="text-sm text-cw-text-3">Loading listings…</p>}
 
       {error && (
         <p role="alert" className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">
@@ -66,7 +66,7 @@ export default function Browse() {
 
       {!loading && !error && listings.length === 0 && (
         <div className="card text-center">
-          <p className="text-sm text-slate-600">
+          <p className="text-sm text-cw-text-2">
             Nothing here yet. {user ? 'Be the first to post one.' : 'Sign in to post the first one.'}
           </p>
         </div>

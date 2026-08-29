@@ -69,7 +69,7 @@ export default function ListingDetail() {
       api.exchanges.propose({ listing_id: id, message: 'I would like to swap skills with you.' })
     );
 
-  if (loading) return <p className="text-sm text-slate-500">Loading…</p>;
+  if (loading) return <p className="text-sm text-cw-text-3">Loading…</p>;
   if (!listing) return <p className="text-sm text-red-700">{error || 'Listing not found.'}</p>;
 
   const isFreelance = listing.mode === 'freelance';
@@ -91,7 +91,7 @@ export default function ListingDetail() {
         <div className="card overflow-hidden">
           <span
             className={`rounded-full px-2.5 py-0.5 text-xs font-semibold text-white ${
-              isExpired ? 'bg-slate-500' : isFreelance ? 'bg-freelance' : 'bg-exchange'
+              isExpired ? 'bg-cw-border text-cw-text-1' : isFreelance ? 'bg-freelance' : 'bg-exchange'
             }`}
           >
             {isExpired ? 'Expired' : isFreelance ? 'Freelance' : 'Exchange'}
@@ -108,17 +108,17 @@ export default function ListingDetail() {
           )}
 
           <h1 className="mt-3 text-2xl font-bold">{listing.title}</h1>
-          <p className="mt-2 whitespace-pre-line text-slate-700">{listing.description}</p>
+          <p className="mt-2 whitespace-pre-line text-cw-text-1">{listing.description}</p>
 
           <dl className="mt-4 grid gap-3 text-sm sm:grid-cols-2">
             {isFreelance ? (
               <>
                 <div>
-                  <dt className="text-slate-500">Budget</dt>
+                  <dt className="text-cw-text-2">Budget</dt>
                   <dd className="font-semibold">₹{listing.budget}</dd>
                 </div>
                 <div>
-                  <dt className="text-slate-500">Deadline</dt>
+                  <dt className="text-cw-text-2">Deadline</dt>
                   <dd className={`font-semibold ${isExpired ? 'text-red-600' : ''}`}>
                     {new Date(listing.deadline).toLocaleDateString()} {isExpired && '(Passed)'}
                   </dd>
@@ -127,17 +127,17 @@ export default function ListingDetail() {
             ) : (
               <>
                 <div>
-                  <dt className="text-slate-500">They can teach</dt>
+                  <dt className="text-cw-text-2">They can teach</dt>
                   <dd className="font-semibold">{listing.skill_offered}</dd>
                 </div>
                 <div>
-                  <dt className="text-slate-500">They want to learn</dt>
+                  <dt className="text-cw-text-2">They want to learn</dt>
                   <dd className="font-semibold">{listing.skill_wanted}</dd>
                 </div>
               </>
             )}
             <div>
-              <dt className="text-slate-500">Status</dt>
+              <dt className="text-cw-text-2">Status</dt>
               <dd className="font-semibold capitalize">{listing.status.replace('_', ' ')}</dd>
             </div>
           </dl>
@@ -160,7 +160,7 @@ export default function ListingDetail() {
         )}
 
         {!user && (
-          <p className="card text-sm text-slate-600">
+          <p className="card text-sm text-cw-text-2">
             Sign in with your college email to bid or propose a swap.
           </p>
         )}
@@ -177,9 +177,9 @@ export default function ListingDetail() {
         {/* Review System when completed */}
         {user && isParticipant && listing.status === 'completed' && targetReviewee && (
           listing.has_reviewed ? (
-            <div className="card text-center bg-slate-50 border-slate-100">
-              <p className="text-slate-700 font-medium">You have already left a review.</p>
-              <p className="text-sm text-slate-500 mt-1">Thank you for your feedback.</p>
+            <div className="card text-center bg-cw-surface border-cw-border">
+              <p className="text-cw-text-1 font-medium">You have already left a review.</p>
+              <p className="text-sm text-cw-text-3 mt-1">Thank you for your feedback.</p>
             </div>
           ) : (
             <WorkspaceReview 
@@ -199,11 +199,11 @@ export default function ListingDetail() {
               {bids.map((bid) => (
                 <li
                   key={bid.id}
-                  className="flex items-start gap-3 rounded-lg border border-slate-200 p-3"
+                  className="flex items-start gap-3 rounded-lg border border-cw-border bg-cw-surface p-3"
                 >
                   <div className="mr-auto">
                     <p className="font-semibold">₹{bid.amount}</p>
-                    <p className="text-sm text-slate-600">{bid.message}</p>
+                    <p className="text-sm text-cw-text-2">{bid.message}</p>
                   </div>
                   <span className="chip capitalize">{bid.status}</span>
                   {isOwner && bid.status === 'pending' && listing.status === 'open' && !isExpired && (
@@ -217,11 +217,11 @@ export default function ListingDetail() {
                   )}
                 </li>
               ))}
-              {bids.length === 0 && <li className="text-sm text-slate-500">No bids yet.</li>}
+              {bids.length === 0 && <li className="text-sm text-cw-text-3">No bids yet.</li>}
             </ul>
 
             {!isOwner && listing.status === 'open' && !isExpired && (
-              <form onSubmit={submitBid} className="mt-4 space-y-3 border-t border-slate-200 pt-4">
+              <form onSubmit={submitBid} className="mt-4 space-y-3 border-t border-cw-border pt-4">
                 <div>
                   <label htmlFor="amount" className="label">
                     Your price (₹)
@@ -236,7 +236,7 @@ export default function ListingDetail() {
                     onChange={(event) => setForm({ ...form, amount: event.target.value })}
                     className="field"
                   />
-                  <p className="mt-1 text-xs text-slate-500">Max ₹1,00,000</p>
+                  <p className="mt-1 text-xs text-cw-text-3">Max ₹1,00,000</p>
                 </div>
                 <div>
                   <label htmlFor="message" className="label">
@@ -258,9 +258,8 @@ export default function ListingDetail() {
                 </button>
               </form>
             )}
-
             {!isOwner && listing.status === 'open' && isExpired && (
-              <div className="mt-4 border-t border-slate-200 pt-4 text-sm text-slate-500 text-center">
+              <div className="mt-4 border-t border-cw-border pt-4 text-sm text-cw-text-3 text-center">
                 The deadline for this listing has passed. No new bids can be placed.
               </div>
             )}
@@ -281,7 +280,7 @@ export default function ListingDetail() {
         {/* Participants Overview */}
         {(listing.status === 'in_progress' || listing.status === 'completed') && (
           <div className="space-y-3">
-            <h3 className="font-semibold text-slate-900 px-1">Participants</h3>
+            <h3 className="font-semibold text-cw-text-1 px-1">Participants</h3>
             
             {listing.owner && (
               <ParticipantCard 

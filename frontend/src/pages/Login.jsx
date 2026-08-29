@@ -31,7 +31,7 @@ export default function Login() {
   return (
     <div className="mx-auto max-w-md animate-fade-in">
       <h1 className="text-2xl font-bold">Sign in to SkillBridge</h1>
-      <p className="mt-2 text-sm text-slate-600">
+      <p className="mt-2 text-sm text-cw-text-2">
         Use your college email address. Only <strong>@{COLLEGE_DOMAIN}</strong> accounts can join.
       </p>
 

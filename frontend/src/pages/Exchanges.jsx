@@ -40,13 +40,13 @@ export default function Exchanges() {
     }
   };
 
-  if (loading) return <p className="text-sm text-slate-500">Finding matches…</p>;
+  if (loading) return <p className="text-sm text-cw-text-3">Finding matches…</p>;
 
   return (
     <div className="space-y-8">
       <section>
         <h1 className="text-2xl font-bold">Your matches</h1>
-        <p className="mt-1 text-sm text-slate-600">
+        <p className="mt-1 text-sm text-cw-text-2">
           Students whose skills line up with yours. A two-way match means you can teach each
           other directly.
         </p>
@@ -57,14 +57,14 @@ export default function Exchanges() {
           </p>
         )}
 
-        {hint && <p className="card mt-4 text-sm text-slate-600">{hint}</p>}
+        {hint && <p className="card mt-4 text-sm text-cw-text-2">{hint}</p>}
 
         <div className="mt-4 grid gap-4 sm:grid-cols-2">
           {matches.map(({ listing, score }) => (
             <div key={listing.id} className="relative">
               <span
                 className={`absolute right-3 top-3 z-10 rounded-full px-2 py-0.5 text-xs font-semibold ${
-                  score === 2 ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-100 text-slate-600'
+                  score === 2 ? 'bg-emerald-100 text-emerald-800' : 'bg-cw-bg-alt text-cw-text-2 border border-cw-border'
                 }`}
               >
                 {score === 2 ? 'Two-way match' : 'Partial match'}
@@ -75,7 +75,7 @@ export default function Exchanges() {
         </div>
 
         {!hint && matches.length === 0 && (
-          <p className="card mt-4 text-sm text-slate-600">
+          <p className="card mt-4 text-sm text-cw-text-2">
             No matches right now. Try adding more skills to your profile.
           </p>
         )}
@@ -88,8 +88,8 @@ export default function Exchanges() {
           {exchanges.map((exchange) => (
             <li key={exchange.id} className="card flex items-center gap-3">
               <div className="mr-auto">
-                <p className="text-sm text-slate-700">{exchange.message}</p>
-                <p className="mt-1 text-xs text-slate-500">Listing {exchange.listing_id}</p>
+                <p className="text-sm text-cw-text-1">{exchange.message}</p>
+                <p className="mt-1 text-xs text-cw-text-3">Listing {exchange.listing_id}</p>
               </div>
               <span className="chip capitalize">{exchange.status}</span>
               {exchange.status === 'pending' && (
@@ -100,7 +100,7 @@ export default function Exchanges() {
             </li>
           ))}
           {exchanges.length === 0 && (
-            <li className="card text-sm text-slate-600">No swap requests yet.</li>
+            <li className="card text-sm text-cw-text-2">No swap requests yet.</li>
           )}
         </ul>
       </section>

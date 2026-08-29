@@ -52,17 +52,17 @@ export default function WorkspaceChat({ listingId }) {
     }
   };
 
-  if (loading) return <div className="card text-center text-sm text-slate-500">Loading chat...</div>;
+  if (loading) return <div className="card text-center text-sm text-cw-text-3">Loading chat...</div>;
 
   return (
     <div className="card flex flex-col h-[500px]">
-      <h3 className="font-semibold text-slate-900 mb-3 border-b pb-2">Workspace Chat</h3>
+      <h3 className="font-semibold text-cw-text-1 mb-3 border-b border-cw-border pb-2">Workspace Chat</h3>
       
       {error && <p className="mb-2 text-sm text-red-600">{error}</p>}
       
       <div className="flex-1 overflow-y-auto space-y-4 mb-4 pr-2 custom-scrollbar">
         {messages.length === 0 ? (
-          <p className="text-center text-sm text-slate-500 my-10">No messages yet. Say hello!</p>
+          <p className="text-center text-sm text-cw-text-3 my-10">No messages yet. Say hello!</p>
         ) : (
           messages.map((msg) => {
             const isMe = msg.sender.id === user.id;
@@ -70,11 +70,11 @@ export default function WorkspaceChat({ listingId }) {
               <div key={msg.id} className={`flex flex-col ${isMe ? 'items-end' : 'items-start'}`}>
                 <div className="flex items-center gap-2 mb-1">
                   {!isMe && (
-                    <span className="text-xs font-medium text-slate-600">
+                    <span className="text-xs font-medium text-cw-text-2">
                       {msg.sender.full_name || 'User'}
                     </span>
                   )}
-                  <span className="text-[10px] text-slate-400">
+                  <span className="text-[10px] text-cw-text-3">
                     {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                   </span>
                 </div>
@@ -82,7 +82,7 @@ export default function WorkspaceChat({ listingId }) {
                   className={`px-3 py-2 rounded-2xl max-w-[85%] text-sm ${
                     isMe
                       ? 'bg-freelance text-white rounded-tr-sm'
-                      : 'bg-slate-100 text-slate-800 rounded-tl-sm'
+                      : 'bg-cw-bg border border-cw-border text-cw-text-1 rounded-tl-sm'
                   }`}
                 >
                   {msg.content}
@@ -94,7 +94,7 @@ export default function WorkspaceChat({ listingId }) {
         <div ref={bottomRef} />
       </div>
 
-      <form onSubmit={handleSend} className="flex gap-2 mt-auto pt-2 border-t">
+      <form onSubmit={handleSend} className="flex gap-2 mt-auto pt-2 border-t border-cw-border">
         <input
           type="text"
           value={content}
