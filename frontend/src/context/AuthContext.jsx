@@ -23,6 +23,14 @@ export function AuthProvider({ children }) {
       .then(({ user: me }) => setUser(me))
       .catch(() => tokenStore.clear())
       .finally(() => setLoading(false));
+
+    const handleUnauthorized = () => {
+      setUser(null);
+      tokenStore.clear();
+    };
+
+    window.addEventListener('unauthorized', handleUnauthorized);
+    return () => window.removeEventListener('unauthorized', handleUnauthorized);
   }, []);
 
   const requestOtp = useCallback((email) => api.auth.requestOtp(email), []);

@@ -40,7 +40,10 @@ async function request(path, { method = 'GET', body, auth = true } = {}) {
 
   if (!response.ok) {
     // An expired or tampered token should not leave the UI in a signed-in state.
-    if (response.status === 401) tokenStore.clear();
+    if (response.status === 401) {
+      tokenStore.clear();
+      window.dispatchEvent(new Event('unauthorized'));
+    }
     throw new ApiError(response.status, payload.error || response.statusText, payload.details);
   }
 

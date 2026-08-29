@@ -85,6 +85,7 @@ router.post(
       ...payload,
       owner_id: req.user.id,
       status: 'open',
+      worker_status: 'todo',
     });
     res.status(201).json({ listing });
   })
@@ -104,6 +105,44 @@ router.patch(
     }
 
     const updated = await db.update(TABLES.listings, { id: listing.id }, { status });
+    res.json({ listing: updated });
+  })
+);
+
+const workerStatusSchema = z.object({ worker_status: z.enum(['todo', 'in_progress', 'review']) });
+
+/** PATCH /api/listings/:id/worker-status - worker updates their progress. */
+router.patch(
+  '/:id/worker-status',
+  requireAuth,
+  asyncHandler(async (req, res) => {
+    const { worker_status } = workerStatusSchema.parse(req.body);
+
+    const listing = await db.findOne(TABLES.listings, { id: req.params.id });
+    if (!listing) throw ApiError.notFound('Listing not found');
+
+    let isAuthorized = false;
+    
+    // For freelance, the accepted bidder can update status
+    if (listing.mode === 'freelance') {
+      const bid = await db.findOne(TABLES.bids, { listing_id: listing.id, bidder_id: req.user.id, status: 'accepted' });
+      if (bid) isAuthorized = true;
+    }
+    
+    // For exchanges, either the owner or the accepted proposer can update status
+    if (listing.mode === 'exchange') {
+      if (listing.owner_id === req.user.id) isAuthorized = true;
+      else {
+        const exchange = await db.findOne(TABLES.exchanges, { listing_id: listing.id, proposer_id: req.user.id, status: 'accepted' });
+        if (exchange) isAuthorized = true;
+      }
+    }
+
+    if (!isAuthorized) {
+      throw ApiError.forbidden('You are not authorized to update the progress of this task');
+    }
+
+    const updated = await db.update(TABLES.listings, { id: listing.id }, { worker_status });
     res.json({ listing: updated });
   })
 );

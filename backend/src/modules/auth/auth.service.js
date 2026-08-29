@@ -99,6 +99,6 @@ export async function setPassword(userId, password) {
 
 export async function getUserById(id) {
   const user = await db.findOne(TABLES.users, { id });
-  if (!user) throw ApiError.notFound('User not found');
+  if (!user) throw ApiError.unauthorized('User not found (please sign in again)');
   return user;
 }

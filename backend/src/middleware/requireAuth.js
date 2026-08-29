@@ -11,10 +11,11 @@ export function requireAuth(req, _res, next) {
 
   const header = req.headers.authorization || '';
   if (header.startsWith('Bearer ')) {
-    token = header.substring(7);
-  } else if (req.query.token) {
+    token = header.substring(7).trim();
+    if (token === 'null' || token === 'undefined') token = null;
+  } else if (req.query.token && req.query.token !== 'null' && req.query.token !== 'undefined') {
     // Fallback for SSE EventSource which cannot send custom headers
-    token = req.query.token;
+    token = req.query.token.trim();
   }
 
   if (!token) {

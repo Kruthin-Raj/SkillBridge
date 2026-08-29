@@ -7,6 +7,7 @@ import exchangesRoutes from '../modules/exchanges/exchanges.routes.js';
 import reviewsRoutes from '../modules/reviews/reviews.routes.js';
 import dashboardRoutes from '../modules/dashboard/dashboard.routes.js';
 import notificationsRoutes from '../modules/notifications/notifications.routes.js';
+import messagesRoutes from '../modules/messages/messages.routes.js';
 
 const router = Router();
 
@@ -18,5 +19,6 @@ router.use('/exchanges', exchangesRoutes);
 router.use('/reviews', reviewsRoutes);
 router.use('/dashboard', dashboardRoutes);
 router.use('/notifications', notificationsRoutes);
+router.use('/messages', messagesRoutes);
 
 export default router;
