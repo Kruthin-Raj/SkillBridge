@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { api } from '../lib/api';
 
-export default function WorkspaceReview({ listingId, revieweeId, onReviewSubmitted }) {
+export default function WorkspaceReview({ listingId, reviewee, onReviewSubmitted }) {
   const [rating, setRating] = useState(5);
   const [comment, setComment] = useState('');
   const [loading, setLoading] = useState(false);
@@ -16,7 +16,7 @@ export default function WorkspaceReview({ listingId, revieweeId, onReviewSubmitt
     try {
       await api.reviews.create({
         listing_id: listingId,
-        reviewee_id: revieweeId,
+        reviewee_id: reviewee.id,
         rating,
         comment,
       });
@@ -40,7 +40,9 @@ export default function WorkspaceReview({ listingId, revieweeId, onReviewSubmitt
 
   return (
     <div className="card">
-      <h3 className="font-semibold text-slate-900 mb-3 border-b pb-2">Leave a Review</h3>
+      <h3 className="font-semibold text-slate-900 mb-3 border-b pb-2">
+        Review {reviewee.full_name}
+      </h3>
       
       <form onSubmit={handleSubmit} className="space-y-4">
         {error && <p className="text-sm text-red-600 bg-red-50 p-2 rounded">{error}</p>}

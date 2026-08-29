@@ -76,12 +76,12 @@ export default function ListingDetail() {
   const isExpired = isFreelance && listing.deadline && new Date(listing.deadline) < new Date();
   
   // Determine who to review (the other participant)
-  let targetRevieweeId = null;
+  let targetReviewee = null;
   if (isParticipant && listing.status === 'completed') {
     if (isOwner && listing.assigned_users?.length > 0) {
-      targetRevieweeId = listing.assigned_users[0].id; // For simplicity, take the first assigned user
+      targetReviewee = listing.assigned_users[0]; // For simplicity, take the first assigned user
     } else if (!isOwner && listing.owner) {
-      targetRevieweeId = listing.owner.id;
+      targetReviewee = listing.owner;
     }
   }
 
@@ -175,8 +175,19 @@ export default function ListingDetail() {
         )}
         
         {/* Review System when completed */}
-        {user && isParticipant && listing.status === 'completed' && targetRevieweeId && (
-          <WorkspaceReview listingId={listing.id} revieweeId={targetRevieweeId} />
+        {user && isParticipant && listing.status === 'completed' && targetReviewee && (
+          listing.has_reviewed ? (
+            <div className="card text-center bg-slate-50 border-slate-100">
+              <p className="text-slate-700 font-medium">You have already left a review.</p>
+              <p className="text-sm text-slate-500 mt-1">Thank you for your feedback.</p>
+            </div>
+          ) : (
+            <WorkspaceReview 
+              listingId={listing.id} 
+              reviewee={targetReviewee} 
+              onReviewSubmitted={load}
+            />
+          )
         )}
 
         {/* Freelance mode: place a bid, or (as owner) accept one. */}

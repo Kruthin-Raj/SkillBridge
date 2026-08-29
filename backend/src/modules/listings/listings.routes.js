@@ -130,15 +130,21 @@ router.get(
     
     listing.assigned_users = assigned_users;
 
+    let hasReviewed = false;
     if (userId) {
       if (listing.owner_id === userId) {
         isParticipant = true;
       } else if (assigned_users.some(u => u.id === userId)) {
         isParticipant = true;
       }
+
+      const existingReview = await db.findOne(TABLES.reviews, { listing_id: listing.id, reviewer_id: userId });
+      if (existingReview) {
+        hasReviewed = true;
+      }
     }
 
-    res.json({ listing: { ...listing, is_participant: isParticipant } });
+    res.json({ listing: { ...listing, is_participant: isParticipant, has_reviewed: hasReviewed } });
   })
 );
 
