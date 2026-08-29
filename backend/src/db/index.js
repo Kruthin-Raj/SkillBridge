@@ -34,4 +34,5 @@ export const TABLES = {
   exchanges: 'exchanges',
   reviews: 'reviews',
   messages: 'messages',
+  reports: 'reports',
 };

@@ -102,19 +102,37 @@ export default function Dashboard() {
               <Link key={listing.id} to={`/listings/${listing.id}`} className="card block transition hover:shadow-md">
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
-                    <h3 className="font-semibold text-slate-900 truncate">{listing.title}</h3>
+                    <div className="flex items-center gap-2">
+                      <span className={`rounded-full px-2 py-0.5 text-xs font-semibold text-white ${listing.mode === 'freelance' ? 'bg-freelance' : 'bg-exchange'}`}>
+                        {listing.mode === 'freelance' ? 'Freelance' : 'Exchange'}
+                      </span>
+                      <h3 className="font-semibold text-slate-900 truncate">{listing.title}</h3>
+                    </div>
                     <p className="mt-1 text-sm text-slate-600 line-clamp-2">{listing.description}</p>
                   </div>
-                  <span className={`flex-shrink-0 rounded-full px-2.5 py-0.5 text-xs font-semibold ${STATUS_COLORS.in_progress}`}>
-                    In Progress
-                  </span>
+                  
+                  <div className="flex flex-col items-end gap-1 flex-shrink-0">
+                    <span className={`rounded-full px-2.5 py-0.5 text-xs font-semibold capitalize ${
+                      listing.worker_status === 'todo' ? 'bg-slate-100 text-slate-700' :
+                      listing.worker_status === 'review' ? 'bg-purple-100 text-purple-800' :
+                      'bg-blue-100 text-blue-800'
+                    }`}>
+                      {listing.worker_status ? listing.worker_status.replace('_', ' ') : 'To Do'}
+                    </span>
+                  </div>
                 </div>
-                {listing.budget && (
-                  <p className="mt-3 text-sm font-semibold text-freelance">₹{listing.budget}</p>
-                )}
-                {listing.deadline && (
-                  <p className="mt-1 text-xs text-slate-500">Due {formatDate(listing.deadline)}</p>
-                )}
+                <div className="mt-3 flex items-center justify-between">
+                  {listing.budget ? (
+                    <p className="text-sm font-semibold text-freelance">₹{listing.budget}</p>
+                  ) : (
+                    <p className="text-sm font-semibold text-exchange">Skill Swap</p>
+                  )}
+                  {listing.deadline && (
+                    <p className={`text-xs font-medium ${new Date(listing.deadline) < new Date() ? 'text-red-600' : 'text-slate-500'}`}>
+                      Due: {formatDate(listing.deadline)}
+                    </p>
+                  )}
+                </div>
               </Link>
             ))}
           </div>

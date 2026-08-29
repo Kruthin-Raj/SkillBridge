@@ -26,8 +26,15 @@ router.get(
     // 2. Bids this user has placed
     const myBids = await db.findMany(TABLES.bids, { bidder_id: userId }, { limit: 200 });
 
-    // 3. Enrich bids with listing details and find active work
-    const activeWork = [];
+    // 3. Exchanges this user is involved in
+    const [proposedExchanges, receivedExchanges] = await Promise.all([
+      db.findMany(TABLES.exchanges, { proposer_id: userId }, { limit: 100 }),
+      db.findMany(TABLES.exchanges, { owner_id: userId }, { limit: 100 }),
+    ]);
+    const allExchanges = [...proposedExchanges, ...receivedExchanges];
+
+    // 4. Enrich bids with listing details and find active work
+    let activeWork = [];
     const completed = [];
     const bidHistory = [];
 
@@ -42,7 +49,31 @@ router.get(
       }
     }
 
-    // 4. Also include completed listings posted by this user
+    // 5. Check exchanges for active work
+    for (const exchange of allExchanges) {
+      if (exchange.status === 'accepted') {
+        const listing = await db.findOne(TABLES.listings, { id: exchange.listing_id });
+        if (listing) {
+          if (listing.status === 'in_progress') activeWork.push(listing);
+          if (listing.status === 'completed') completed.push(listing);
+        }
+      }
+    }
+    
+    // De-duplicate activeWork (in case user is both owner and proposer somehow, though impossible)
+    activeWork = activeWork.reduce((acc, listing) => {
+      if (!acc.find((l) => l.id === listing.id)) acc.push(listing);
+      return acc;
+    }, []);
+
+    // Sort activeWork by deadline (earliest first). Listings without deadline go last.
+    activeWork.sort((a, b) => {
+      if (!a.deadline) return 1;
+      if (!b.deadline) return -1;
+      return new Date(a.deadline) - new Date(b.deadline);
+    });
+
+    // 6. Also include completed listings posted by this user
     const ownCompleted = posted.filter((l) => l.status === 'completed');
     const allCompleted = [...completed, ...ownCompleted].reduce((acc, listing) => {
       if (!acc.find((l) => l.id === listing.id)) acc.push(listing);

@@ -69,9 +69,76 @@ router.get(
 router.get(
   '/:id',
   asyncHandler(async (req, res) => {
+    let token = null;
+    const header = req.headers.authorization || '';
+    if (header.startsWith('Bearer ')) {
+      token = header.substring(7).trim();
+      if (token === 'null' || token === 'undefined') token = null;
+    }
+    let userId = null;
+    if (token) {
+      try {
+        const payload = (await import('jsonwebtoken')).default.verify(token, (await import('../../config/env.js')).env.jwtSecret);
+        userId = payload.sub;
+      } catch (err) {}
+    }
+
     const listing = await db.findOne(TABLES.listings, { id: req.params.id });
     if (!listing) throw ApiError.notFound('Listing not found');
-    res.json({ listing });
+
+    const owner = await db.findOne(TABLES.users, { id: listing.owner_id });
+    if (owner) {
+      listing.owner = {
+        id: owner.id,
+        full_name: owner.full_name,
+        avatar_url: owner.avatar_url,
+      };
+    }
+
+    let isParticipant = false;
+    const assigned_users = [];
+    
+    if (listing.status !== 'open' && listing.status !== 'cancelled') {
+      if (listing.mode === 'freelance') {
+        const acceptedBids = await db.findMany(TABLES.bids, { listing_id: listing.id, status: 'accepted' });
+        for (const bid of acceptedBids) {
+          const user = await db.findOne(TABLES.users, { id: bid.bidder_id });
+          if (user) {
+            assigned_users.push({
+              id: user.id,
+              full_name: user.full_name,
+              avatar_url: user.avatar_url,
+              role: 'freelancer'
+            });
+          }
+        }
+      } else if (listing.mode === 'exchange') {
+        const acceptedExchanges = await db.findMany(TABLES.exchanges, { listing_id: listing.id, status: 'accepted' });
+        for (const ex of acceptedExchanges) {
+          const user = await db.findOne(TABLES.users, { id: ex.proposer_id });
+          if (user) {
+            assigned_users.push({
+              id: user.id,
+              full_name: user.full_name,
+              avatar_url: user.avatar_url,
+              role: 'exchange_partner'
+            });
+          }
+        }
+      }
+    }
+    
+    listing.assigned_users = assigned_users;
+
+    if (userId) {
+      if (listing.owner_id === userId) {
+        isParticipant = true;
+      } else if (assigned_users.some(u => u.id === userId)) {
+        isParticipant = true;
+      }
+    }
+
+    res.json({ listing: { ...listing, is_participant: isParticipant } });
   })
 );
 

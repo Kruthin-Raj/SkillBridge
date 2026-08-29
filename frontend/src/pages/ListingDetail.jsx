@@ -2,6 +2,10 @@ import { useCallback, useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { api } from '../lib/api';
 import { useAuth } from '../context/AuthContext';
+import TaskProgress from '../components/TaskProgress';
+import WorkspaceChat from '../components/WorkspaceChat';
+import ParticipantCard from '../components/ParticipantCard';
+import WorkspaceReview from '../components/WorkspaceReview';
 
 export default function ListingDetail() {
   const { id } = useParams();
@@ -14,6 +18,7 @@ export default function ListingDetail() {
   const [loading, setLoading] = useState(true);
 
   const isOwner = user && listing && listing.owner_id === user.id;
+  const isParticipant = listing && listing.is_participant;
 
   const load = useCallback(async () => {
     setError('');
@@ -69,169 +74,229 @@ export default function ListingDetail() {
 
   const isFreelance = listing.mode === 'freelance';
   const isExpired = isFreelance && listing.deadline && new Date(listing.deadline) < new Date();
+  
+  // Determine who to review (the other participant)
+  let targetRevieweeId = null;
+  if (isParticipant && listing.status === 'completed') {
+    if (isOwner && listing.assigned_users?.length > 0) {
+      targetRevieweeId = listing.assigned_users[0].id; // For simplicity, take the first assigned user
+    } else if (!isOwner && listing.owner) {
+      targetRevieweeId = listing.owner.id;
+    }
+  }
 
   return (
-    <div className="mx-auto max-w-2xl space-y-6">
-      <div className="card overflow-hidden">
-        <span
-          className={`rounded-full px-2.5 py-0.5 text-xs font-semibold text-white ${
-            isExpired ? 'bg-slate-500' : isFreelance ? 'bg-freelance' : 'bg-exchange'
-          }`}
-        >
-          {isExpired ? 'Expired' : isFreelance ? 'Freelance' : 'Exchange'}
-        </span>
+    <div className="mx-auto max-w-5xl grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="space-y-6 lg:col-span-2">
+        <div className="card overflow-hidden">
+          <span
+            className={`rounded-full px-2.5 py-0.5 text-xs font-semibold text-white ${
+              isExpired ? 'bg-slate-500' : isFreelance ? 'bg-freelance' : 'bg-exchange'
+            }`}
+          >
+            {isExpired ? 'Expired' : isFreelance ? 'Freelance' : 'Exchange'}
+          </span>
 
-        {listing.image_url && (
-          <div className="-mx-5 mt-3">
-            <img
-              src={listing.image_url}
-              alt={listing.title}
-              className="w-full max-h-72 object-cover"
-            />
+          {listing.image_url && (
+            <div className="-mx-5 mt-3">
+              <img
+                src={listing.image_url}
+                alt={listing.title}
+                className="w-full max-h-72 object-cover"
+              />
+            </div>
+          )}
+
+          <h1 className="mt-3 text-2xl font-bold">{listing.title}</h1>
+          <p className="mt-2 whitespace-pre-line text-slate-700">{listing.description}</p>
+
+          <dl className="mt-4 grid gap-3 text-sm sm:grid-cols-2">
+            {isFreelance ? (
+              <>
+                <div>
+                  <dt className="text-slate-500">Budget</dt>
+                  <dd className="font-semibold">₹{listing.budget}</dd>
+                </div>
+                <div>
+                  <dt className="text-slate-500">Deadline</dt>
+                  <dd className={`font-semibold ${isExpired ? 'text-red-600' : ''}`}>
+                    {new Date(listing.deadline).toLocaleDateString()} {isExpired && '(Passed)'}
+                  </dd>
+                </div>
+              </>
+            ) : (
+              <>
+                <div>
+                  <dt className="text-slate-500">They can teach</dt>
+                  <dd className="font-semibold">{listing.skill_offered}</dd>
+                </div>
+                <div>
+                  <dt className="text-slate-500">They want to learn</dt>
+                  <dd className="font-semibold">{listing.skill_wanted}</dd>
+                </div>
+              </>
+            )}
+            <div>
+              <dt className="text-slate-500">Status</dt>
+              <dd className="font-semibold capitalize">{listing.status.replace('_', ' ')}</dd>
+            </div>
+          </dl>
+
+          {isOwner && listing.status === 'in_progress' && (
+            <button
+              type="button"
+              onClick={() => handleAction(() => api.listings.setStatus(id, 'completed'))}
+              className="btn-ghost mt-4"
+            >
+              Mark as completed
+            </button>
+          )}
+        </div>
+
+        {error && (
+          <p role="alert" className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">
+            {error}
+          </p>
+        )}
+
+        {!user && (
+          <p className="card text-sm text-slate-600">
+            Sign in with your college email to bid or propose a swap.
+          </p>
+        )}
+
+        {/* Workspace controls */}
+        {user && isParticipant && listing.status === 'in_progress' && (
+          <TaskProgress 
+            listingId={listing.id} 
+            currentStatus={listing.worker_status} 
+            onUpdate={(updated) => setListing({ ...listing, worker_status: updated.worker_status })} 
+          />
+        )}
+        
+        {/* Review System when completed */}
+        {user && isParticipant && listing.status === 'completed' && targetRevieweeId && (
+          <WorkspaceReview listingId={listing.id} revieweeId={targetRevieweeId} />
+        )}
+
+        {/* Freelance mode: place a bid, or (as owner) accept one. */}
+        {user && isFreelance && (
+          <div className="card">
+            <h2 className="mb-3 font-semibold">Bids ({bids.length})</h2>
+
+            <ul className="space-y-3">
+              {bids.map((bid) => (
+                <li
+                  key={bid.id}
+                  className="flex items-start gap-3 rounded-lg border border-slate-200 p-3"
+                >
+                  <div className="mr-auto">
+                    <p className="font-semibold">₹{bid.amount}</p>
+                    <p className="text-sm text-slate-600">{bid.message}</p>
+                  </div>
+                  <span className="chip capitalize">{bid.status}</span>
+                  {isOwner && bid.status === 'pending' && listing.status === 'open' && !isExpired && (
+                    <button
+                      type="button"
+                      onClick={() => handleAction(() => api.bids.accept(bid.id))}
+                      className="btn-primary"
+                    >
+                      Accept
+                    </button>
+                  )}
+                </li>
+              ))}
+              {bids.length === 0 && <li className="text-sm text-slate-500">No bids yet.</li>}
+            </ul>
+
+            {!isOwner && listing.status === 'open' && !isExpired && (
+              <form onSubmit={submitBid} className="mt-4 space-y-3 border-t border-slate-200 pt-4">
+                <div>
+                  <label htmlFor="amount" className="label">
+                    Your price (₹)
+                  </label>
+                  <input
+                    id="amount"
+                    type="number"
+                    min={1}
+                    max={100000}
+                    required
+                    value={form.amount}
+                    onChange={(event) => setForm({ ...form, amount: event.target.value })}
+                    className="field"
+                  />
+                  <p className="mt-1 text-xs text-slate-500">Max ₹1,00,000</p>
+                </div>
+                <div>
+                  <label htmlFor="message" className="label">
+                    Message
+                  </label>
+                  <textarea
+                    id="message"
+                    rows={2}
+                    required
+                    minLength={5}
+                    value={form.message}
+                    onChange={(event) => setForm({ ...form, message: event.target.value })}
+                    placeholder="Why you are a good fit"
+                    className="field"
+                  />
+                </div>
+                <button type="submit" className="btn-primary w-full">
+                  Place bid
+                </button>
+              </form>
+            )}
+
+            {!isOwner && listing.status === 'open' && isExpired && (
+              <div className="mt-4 border-t border-slate-200 pt-4 text-sm text-slate-500 text-center">
+                The deadline for this listing has passed. No new bids can be placed.
+              </div>
+            )}
           </div>
         )}
 
-        <h1 className="mt-3 text-2xl font-bold">{listing.title}</h1>
-        <p className="mt-2 whitespace-pre-line text-slate-700">{listing.description}</p>
-
-        <dl className="mt-4 grid gap-3 text-sm sm:grid-cols-2">
-          {isFreelance ? (
-            <>
-              <div>
-                <dt className="text-slate-500">Budget</dt>
-                <dd className="font-semibold">₹{listing.budget}</dd>
-              </div>
-              <div>
-                <dt className="text-slate-500">Deadline</dt>
-                <dd className={`font-semibold ${isExpired ? 'text-red-600' : ''}`}>
-                  {new Date(listing.deadline).toLocaleDateString()} {isExpired && '(Passed)'}
-                </dd>
-              </div>
-            </>
-          ) : (
-            <>
-              <div>
-                <dt className="text-slate-500">They can teach</dt>
-                <dd className="font-semibold">{listing.skill_offered}</dd>
-              </div>
-              <div>
-                <dt className="text-slate-500">They want to learn</dt>
-                <dd className="font-semibold">{listing.skill_wanted}</dd>
-              </div>
-            </>
-          )}
-          <div>
-            <dt className="text-slate-500">Status</dt>
-            <dd className="font-semibold capitalize">{listing.status.replace('_', ' ')}</dd>
-          </div>
-        </dl>
-
-        {isOwner && listing.status === 'in_progress' && (
-          <button
-            type="button"
-            onClick={() => handleAction(() => api.listings.setStatus(id, 'completed'))}
-            className="btn-ghost mt-4"
-          >
-            Mark as completed
+        {/* Exchange mode: propose the swap. */}
+        {user && !isFreelance && !isOwner && listing.status === 'open' && (
+          <button type="button" onClick={proposeSwap} className="btn-primary">
+            Propose a swap
           </button>
         )}
       </div>
 
-      {error && (
-        <p role="alert" className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">
-          {error}
-        </p>
-      )}
-
-      {!user && (
-        <p className="card text-sm text-slate-600">
-          Sign in with your college email to bid or propose a swap.
-        </p>
-      )}
-
-      {/* Freelance mode: place a bid, or (as owner) accept one. */}
-      {user && isFreelance && (
-        <div className="card">
-          <h2 className="mb-3 font-semibold">Bids ({bids.length})</h2>
-
-          <ul className="space-y-3">
-            {bids.map((bid) => (
-              <li
-                key={bid.id}
-                className="flex items-start gap-3 rounded-lg border border-slate-200 p-3"
-              >
-                <div className="mr-auto">
-                  <p className="font-semibold">₹{bid.amount}</p>
-                  <p className="text-sm text-slate-600">{bid.message}</p>
-                </div>
-                <span className="chip capitalize">{bid.status}</span>
-                {isOwner && bid.status === 'pending' && listing.status === 'open' && !isExpired && (
-                  <button
-                    type="button"
-                    onClick={() => handleAction(() => api.bids.accept(bid.id))}
-                    className="btn-primary"
-                  >
-                    Accept
-                  </button>
-                )}
-              </li>
+      {/* Workspace Sidebar */}
+      <div className="lg:col-span-1 space-y-6">
+        
+        {/* Participants Overview */}
+        {(listing.status === 'in_progress' || listing.status === 'completed') && (
+          <div className="space-y-3">
+            <h3 className="font-semibold text-slate-900 px-1">Participants</h3>
+            
+            {listing.owner && (
+              <ParticipantCard 
+                user={listing.owner} 
+                role="Owner" 
+                listingId={listing.id} 
+              />
+            )}
+            
+            {listing.assigned_users?.map((assignee) => (
+              <ParticipantCard 
+                key={assignee.id} 
+                user={assignee} 
+                role={assignee.role} 
+                listingId={listing.id} 
+              />
             ))}
-            {bids.length === 0 && <li className="text-sm text-slate-500">No bids yet.</li>}
-          </ul>
+          </div>
+        )}
 
-          {!isOwner && listing.status === 'open' && !isExpired && (
-            <form onSubmit={submitBid} className="mt-4 space-y-3 border-t border-slate-200 pt-4">
-              <div>
-                <label htmlFor="amount" className="label">
-                  Your price (₹)
-                </label>
-                <input
-                  id="amount"
-                  type="number"
-                  min={1}
-                  max={100000}
-                  required
-                  value={form.amount}
-                  onChange={(event) => setForm({ ...form, amount: event.target.value })}
-                  className="field"
-                />
-                <p className="mt-1 text-xs text-slate-500">Max ₹1,00,000</p>
-              </div>
-              <div>
-                <label htmlFor="message" className="label">
-                  Message
-                </label>
-                <textarea
-                  id="message"
-                  rows={2}
-                  required
-                  minLength={5}
-                  value={form.message}
-                  onChange={(event) => setForm({ ...form, message: event.target.value })}
-                  placeholder="Why you are a good fit"
-                  className="field"
-                />
-              </div>
-              <button type="submit" className="btn-primary w-full">
-                Place bid
-              </button>
-            </form>
-          )}
-
-          {!isOwner && listing.status === 'open' && isExpired && (
-            <div className="mt-4 border-t border-slate-200 pt-4 text-sm text-slate-500 text-center">
-              The deadline for this listing has passed. No new bids can be placed.
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Exchange mode: propose the swap. */}
-      {user && !isFreelance && !isOwner && listing.status === 'open' && (
-        <button type="button" onClick={proposeSwap} className="btn-primary">
-          Propose a swap
-        </button>
-      )}
+        {user && isParticipant && listing.status === 'in_progress' && (
+          <div className="sticky top-6">
+            <WorkspaceChat listingId={listing.id} />
+          </div>
+        )}
+      </div>
     </div>
   );
 }
