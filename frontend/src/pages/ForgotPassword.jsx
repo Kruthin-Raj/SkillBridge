@@ -57,7 +57,7 @@ export default function ForgotPassword() {
     return (
       <div className="mx-auto max-w-md animate-fade-in">
         <h1 className="text-2xl font-bold">Reset your password</h1>
-        <p className="mt-2 text-sm text-slate-600">
+        <p className="mt-2 text-sm text-cw-text-2">
           Enter the code sent to <strong>{email}</strong> and choose a new password.
         </p>
 
@@ -138,7 +138,7 @@ export default function ForgotPassword() {
   return (
     <div className="mx-auto max-w-md animate-fade-in">
       <h1 className="text-2xl font-bold">Forgot your password?</h1>
-      <p className="mt-2 text-sm text-slate-600">
+      <p className="mt-2 text-sm text-cw-text-2">
         Enter your college email and we'll send a verification code to reset it.
       </p>
 
@@ -167,7 +167,7 @@ export default function ForgotPassword() {
           {busy ? 'Sending code…' : 'Send reset code'}
         </button>
 
-        <p className="text-center text-sm text-slate-500">
+        <p className="text-center text-sm text-cw-text-3">
           <Link to="/login" className="font-medium text-freelance hover:underline">
             ← Back to sign in
           </Link>

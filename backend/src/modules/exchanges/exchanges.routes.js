@@ -26,7 +26,7 @@ router.get(
   requireAuth,
   asyncHandler(async (req, res) => {
     const me = await db.findOne(TABLES.users, { id: req.user.id });
-    if (!me) throw ApiError.notFound('User not found');
+    if (!me) throw ApiError.unauthorized('User not found (please sign in again)');
 
     const iOffer = (me.skills_offered ?? []).map(normalise);
     const iWant = (me.skills_wanted ?? []).map(normalise);

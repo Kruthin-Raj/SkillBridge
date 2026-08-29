@@ -53,6 +53,8 @@ create table if not exists public.listings (
 
   status          text not null default 'open'
                     check (status in ('open', 'in_progress', 'completed', 'cancelled')),
+  worker_status   text not null default 'todo'
+                    check (worker_status in ('todo', 'in_progress', 'review')),
   created_at      timestamptz not null default now(),
   updated_at      timestamptz not null default now(),
 
@@ -138,6 +140,38 @@ create table if not exists public.reviews (
 create index if not exists reviews_reviewee_idx on public.reviews (reviewee_id);
 
 -- ---------------------------------------------------------------------------
+-- messages  -  workspace chat
+-- ---------------------------------------------------------------------------
+create table if not exists public.messages (
+  id          uuid primary key default gen_random_uuid(),
+  listing_id  uuid not null references public.listings(id) on delete cascade,
+  sender_id   uuid not null references public.users(id)    on delete cascade,
+  content     text not null,
+  created_at  timestamptz not null default now()
+);
+
+create index if not exists messages_listing_idx on public.messages (listing_id);
+
+-- ---------------------------------------------------------------------------
+-- reports  -  dispute resolution and safety
+-- ---------------------------------------------------------------------------
+create table if not exists public.reports (
+  id               uuid primary key default gen_random_uuid(),
+  reporter_id      uuid not null references public.users(id) on delete cascade,
+  reported_user_id uuid not null references public.users(id) on delete cascade,
+  listing_id       uuid references public.listings(id) on delete set null,
+  reason           text not null check (reason in ('harassment', 'scam', 'inappropriate_content', 'non_delivery', 'other')),
+  description      text not null,
+  status           text not null default 'pending' check (status in ('pending', 'reviewed', 'resolved', 'dismissed')),
+  created_at       timestamptz not null default now(),
+  updated_at       timestamptz not null default now(),
+
+  constraint reports_not_self check (reporter_id <> reported_user_id)
+);
+
+create index if not exists reports_reported_user_idx on public.reports (reported_user_id);
+
+-- ---------------------------------------------------------------------------
 -- Row Level Security
 --
 -- The Express API is the only client and it uses the service-role key, which
@@ -149,6 +183,8 @@ alter table public.listings  enable row level security;
 alter table public.bids      enable row level security;
 alter table public.exchanges enable row level security;
 alter table public.reviews   enable row level security;
+alter table public.messages  enable row level security;
+alter table public.reports   enable row level security;
 
 -- ---------------------------------------------------------------------------
 -- keep updated_at honest
@@ -166,7 +202,7 @@ $$;
 do $$
 declare t text;
 begin
-  foreach t in array array['users', 'listings', 'bids', 'exchanges'] loop
+  foreach t in array array['users', 'listings', 'bids', 'exchanges', 'reports'] loop
     execute format('drop trigger if exists touch_%1$s on public.%1$I', t);
     execute format(
       'create trigger touch_%1$s before update on public.%1$I

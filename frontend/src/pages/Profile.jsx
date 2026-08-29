@@ -147,26 +147,26 @@ export default function Profile() {
           />
         </div>
         <div className="text-center">
-          <p className="font-semibold text-slate-900">{user.full_name || 'Student'}</p>
-          <p className="text-sm text-slate-500">{user.email}</p>
+          <p className="font-semibold text-cw-text-1">{user.full_name || 'Student'}</p>
+          <p className="text-sm text-cw-text-2">{user.email}</p>
         </div>
 
         {/* Trust score */}
-        <div className="flex items-center gap-6 border-t border-slate-100 pt-4 w-full justify-center">
+        <div className="flex items-center gap-6 border-t border-cw-border pt-4 w-full justify-center">
           <div className="text-center">
             <p className="text-2xl font-bold">{Number(user.rating_average ?? 0).toFixed(1)}</p>
-            <p className="text-xs text-slate-500">Trust score</p>
+            <p className="text-xs text-cw-text-3">Trust score</p>
           </div>
-          <div className="border-l border-slate-200 pl-6 text-center">
+          <div className="border-l border-cw-border pl-6 text-center">
             <p className="text-2xl font-bold">{user.rating_count ?? 0}</p>
-            <p className="text-xs text-slate-500">Reviews</p>
+            <p className="text-xs text-cw-text-3">Reviews</p>
           </div>
         </div>
       </div>
 
       {/* Edit form */}
       <form onSubmit={handleSubmit} className="card space-y-4">
-        <h2 className="font-semibold text-slate-900">Edit Profile</h2>
+        <h2 className="font-semibold text-cw-text-1">Edit Profile</h2>
 
         <div>
           <label htmlFor="full_name" className="label">
@@ -191,7 +191,7 @@ export default function Profile() {
 
         <div>
           <label htmlFor="skills_offered" className="label">
-            Skills you can teach <span className="font-normal text-slate-400">(comma separated)</span>
+            Skills you can teach <span className="font-normal text-cw-text-3">(comma separated)</span>
           </label>
           <input
             id="skills_offered"
@@ -205,7 +205,7 @@ export default function Profile() {
         <div>
           <label htmlFor="skills_wanted" className="label">
             Skills you want to learn{' '}
-            <span className="font-normal text-slate-400">(comma separated)</span>
+            <span className="font-normal text-cw-text-3">(comma separated)</span>
           </label>
           <input
             id="skills_wanted"
@@ -216,7 +216,7 @@ export default function Profile() {
           />
         </div>
 
-        <p className="text-xs text-slate-500">
+        <p className="text-xs text-cw-text-3">
           These two lists drive the skill-exchange matching, so keep them up to date.
         </p>
 
@@ -243,7 +243,7 @@ export default function Profile() {
 
         {reviews.length === 0 && (
           <div className="card mt-4 text-center py-6">
-            <p className="text-sm text-slate-600">No reviews yet. Complete work to earn reviews.</p>
+            <p className="text-sm text-cw-text-2">No reviews yet. Complete work to earn reviews.</p>
           </div>
         )}
 
@@ -253,12 +253,12 @@ export default function Profile() {
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <Stars rating={review.rating} />
-                  <span className="ml-2 text-sm font-semibold text-slate-700">{review.rating}/5</span>
+                  <span className="ml-2 text-sm font-semibold text-cw-text-1">{review.rating}/5</span>
                 </div>
-                <p className="text-xs text-slate-500">{formatDate(review.created_at)}</p>
+                <p className="text-xs text-cw-text-3">{formatDate(review.created_at)}</p>
               </div>
               {review.comment && (
-                <p className="mt-2 text-sm text-slate-700 whitespace-pre-line">{review.comment}</p>
+                <p className="mt-2 text-sm text-cw-text-1 whitespace-pre-line">{review.comment}</p>
               )}
             </div>
           ))}
@@ -300,8 +300,8 @@ function SetPasswordCard() {
 
   return (
     <form onSubmit={handleSetPassword} className="card space-y-4">
-      <h2 className="font-semibold text-slate-900">Set Password</h2>
-      <p className="text-xs text-slate-500">
+      <h2 className="font-semibold text-cw-text-1">Set Password</h2>
+      <p className="text-xs text-cw-text-3">
         Set a password so you can sign in without waiting for an OTP every time.
       </p>
 

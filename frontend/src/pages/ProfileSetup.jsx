@@ -47,7 +47,7 @@ export default function ProfileSetup() {
       <div className="text-center">
         <span className="text-4xl">👋</span>
         <h1 className="mt-3 text-2xl font-bold">Welcome to SkillBridge!</h1>
-        <p className="mt-2 text-sm text-slate-600">
+        <p className="mt-2 text-sm text-cw-text-2">
           Let's set up your profile so other students know who you are.
         </p>
       </div>
@@ -82,7 +82,7 @@ export default function ProfileSetup() {
 
         <div>
           <label htmlFor="setup-offer" className="label">
-            Skills you can teach <span className="font-normal text-slate-400">(comma separated)</span>
+            Skills you can teach <span className="font-normal text-cw-text-3">(comma separated)</span>
           </label>
           <input
             id="setup-offer"
@@ -95,7 +95,7 @@ export default function ProfileSetup() {
 
         <div>
           <label htmlFor="setup-want" className="label">
-            Skills you want to learn <span className="font-normal text-slate-400">(comma separated)</span>
+            Skills you want to learn <span className="font-normal text-cw-text-3">(comma separated)</span>
           </label>
           <input
             id="setup-want"

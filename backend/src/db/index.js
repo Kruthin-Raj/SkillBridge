@@ -33,4 +33,6 @@ export const TABLES = {
   bids: 'bids',
   exchanges: 'exchanges',
   reviews: 'reviews',
+  messages: 'messages',
+  reports: 'reports',
 };

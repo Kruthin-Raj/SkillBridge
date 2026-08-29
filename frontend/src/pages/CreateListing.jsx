@@ -95,7 +95,7 @@ export default function CreateListing() {
   return (
     <div className="mx-auto max-w-xl">
       <h1 className="text-2xl font-bold">Post a listing</h1>
-      <p className="mt-2 text-sm text-slate-600">
+      <p className="mt-2 text-sm text-cw-text-2">
         Choose whether you are paying for work or swapping a skill.
       </p>
 
@@ -141,10 +141,10 @@ export default function CreateListing() {
         {/* Image upload */}
         <div>
           <label className="label">
-            Image <span className="font-normal text-slate-400">(optional, max 200 KB)</span>
+            Image <span className="font-normal text-cw-text-3">(optional, max 200 KB)</span>
           </label>
           {imagePreview ? (
-            <div className="relative rounded-lg overflow-hidden border border-slate-200">
+            <div className="relative rounded-lg overflow-hidden border border-cw-border">
               <img
                 src={imagePreview}
                 alt="Preview"
@@ -165,8 +165,8 @@ export default function CreateListing() {
               type="button"
               onClick={() => fileInputRef.current?.click()}
               className="flex w-full items-center justify-center gap-2 rounded-lg border-2 border-dashed
-                         border-slate-300 py-6 text-sm text-slate-500 transition
-                         hover:border-slate-400 hover:text-slate-700"
+                         border-cw-border py-6 text-sm text-cw-text-2 transition
+                         hover:border-cw-text-3 hover:text-cw-text-1"
             >
               <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
@@ -248,7 +248,7 @@ export default function CreateListing() {
 
         <div>
           <label htmlFor="tags" className="label">
-            Tags <span className="font-normal text-slate-400">(comma separated)</span>
+            Tags <span className="font-normal text-cw-text-3">(comma separated)</span>
           </label>
           <input
             id="tags"

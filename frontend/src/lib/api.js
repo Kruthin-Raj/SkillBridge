@@ -40,7 +40,10 @@ async function request(path, { method = 'GET', body, auth = true } = {}) {
 
   if (!response.ok) {
     // An expired or tampered token should not leave the UI in a signed-in state.
-    if (response.status === 401) tokenStore.clear();
+    if (response.status === 401) {
+      tokenStore.clear();
+      window.dispatchEvent(new Event('unauthorized'));
+    }
     throw new ApiError(response.status, payload.error || response.statusText, payload.details);
   }
 
@@ -71,10 +74,17 @@ export const api = {
 
   listings: {
     list: (mode) => request(`/api/listings${mode ? `?mode=${mode}` : ''}`, { auth: false }),
-    get: (id) => request(`/api/listings/${id}`, { auth: false }),
+    get: (id) => request(`/api/listings/${id}`),
     create: (listing) => request('/api/listings', { method: 'POST', body: listing }),
     setStatus: (id, status) =>
       request(`/api/listings/${id}/status`, { method: 'PATCH', body: { status } }),
+    setWorkerStatus: (id, worker_status) =>
+      request(`/api/listings/${id}/worker-status`, { method: 'PATCH', body: { worker_status } }),
+  },
+
+  messages: {
+    get: (listingId) => request(`/api/messages/${listingId}`),
+    send: (listingId, content) => request(`/api/messages/${listingId}`, { method: 'POST', body: { content } }),
   },
 
   bids: {
@@ -97,6 +107,10 @@ export const api = {
 
   dashboard: {
     get: () => request('/api/dashboard'),
+  },
+
+  reports: {
+    create: (report) => request('/api/reports', { method: 'POST', body: report }),
   },
 
   notifications: {

@@ -22,8 +22,8 @@ const FEATURES = [
     icon: '⭐',
     title: 'Trust & Reviews',
     desc: 'Every completed job builds your campus reputation. Ratings and reviews drive quality.',
-    color: 'from-amber-50 to-amber-50/50 border-amber-200/50',
-    accent: 'text-amber-600',
+    color: 'from-amber-500/10 to-amber-500/5 border-amber-500/20',
+    accent: 'text-amber-500',
     link: '/browse',
   },
 ];
@@ -41,11 +41,11 @@ export default function Home() {
   return (
     <div className="-mt-8 -mx-4">
       {/* Hero */}
-      <section className="hero-gradient px-4 py-20 text-center text-white">
+      <section className="hero-gradient px-4 py-20 text-center text-white relative z-10">
         <div className="mx-auto max-w-3xl animate-slide-up">
-          <h1 className="text-4xl font-extrabold tracking-tight sm:text-5xl lg:text-6xl">
+          <h1 className="text-4xl font-extrabold tracking-tight sm:text-5xl lg:text-6xl font-serif">
             Your Campus,{' '}
-            <span className="bg-gradient-to-r from-emerald-200 to-purple-200 bg-clip-text text-transparent">
+            <span className="text-cw-bg font-serif">
               Your Marketplace
             </span>
           </h1>
@@ -53,16 +53,19 @@ export default function Home() {
             Freelance for pay or exchange skills for free — all within your verified student community.
           </p>
           <div className="mt-8 flex flex-wrap items-center justify-center gap-4">
-            <Link to="/browse" className="btn rounded-full bg-white px-8 py-3 text-sm font-semibold text-slate-900 hover:bg-slate-100 shadow-lg">
+            <Link to="/browse" className="btn rounded-full bg-cw-text-1 px-8 py-3 text-sm font-semibold text-cw-bg hover:opacity-90 shadow-lg flex items-center gap-2">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
               Browse Listings
             </Link>
             {!user && (
-              <Link to="/login" className="btn rounded-full border-2 border-white/30 px-8 py-3 text-sm font-semibold text-white hover:bg-white/10">
+              <Link to="/login" className="btn rounded-full border-2 border-white/30 px-8 py-3 text-sm font-semibold text-white hover:bg-white/10 flex items-center gap-2">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" /></svg>
                 Sign In
               </Link>
             )}
             {user && (
-              <Link to="/new" className="btn rounded-full border-2 border-white/30 px-8 py-3 text-sm font-semibold text-white hover:bg-white/10">
+              <Link to="/new" className="btn rounded-full border-2 border-white/30 px-8 py-3 text-sm font-semibold text-white hover:bg-white/10 flex items-center gap-2">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
                 Post a Task
               </Link>
             )}
@@ -71,9 +74,9 @@ export default function Home() {
       </section>
 
       {/* Features */}
-      <section className="mx-auto max-w-5xl px-4 py-16">
-        <h2 className="text-center text-2xl font-bold text-slate-900">Two modes, one platform</h2>
-        <p className="mx-auto mt-2 max-w-lg text-center text-sm text-slate-600">
+      <section className="mx-auto max-w-5xl px-4 py-16 relative z-10">
+        <h2 className="text-center text-3xl font-bold text-cw-text-1 font-serif">Two modes, one platform</h2>
+        <p className="mx-auto mt-2 max-w-lg text-center text-sm text-cw-text-2">
           Whether you want to earn money or trade knowledge, SkillBridge has you covered.
         </p>
 
@@ -82,29 +85,29 @@ export default function Home() {
             <Link
               to={f.link}
               key={f.title}
-              className={`animate-fade-in rounded-2xl border bg-gradient-to-b p-6 ${f.color} transition hover:shadow-md block`}
+              className={`animate-fade-in rounded-2xl border bg-gradient-to-b p-6 ${f.color} transition hover:shadow-md block bg-cw-surface/50`}
             >
               <span className="text-3xl">{f.icon}</span>
-              <h3 className={`mt-3 text-lg font-semibold ${f.accent}`}>{f.title}</h3>
-              <p className="mt-2 text-sm text-slate-600 leading-relaxed">{f.desc}</p>
+              <h3 className={`mt-3 text-lg font-semibold ${f.accent} font-serif`}>{f.title}</h3>
+              <p className="mt-2 text-sm text-cw-text-2 leading-relaxed">{f.desc}</p>
             </Link>
           ))}
         </div>
       </section>
 
       {/* How it works */}
-      <section className="border-t border-slate-200 bg-white px-4 py-16">
+      <section className="border-t border-cw-accent/10 bg-cw-surface px-4 py-16 relative z-10">
         <div className="mx-auto max-w-3xl">
-          <h2 className="text-center text-2xl font-bold text-slate-900">How it works</h2>
+          <h2 className="text-center text-3xl font-bold text-cw-text-1 font-serif">How it works</h2>
           <div className="mt-10 space-y-8">
             {STEPS.map((s) => (
               <div key={s.num} className="flex gap-5 animate-fade-in">
-                <div className="flex-shrink-0 flex h-12 w-12 items-center justify-center rounded-xl bg-slate-900 text-sm font-bold text-white">
+                <div className="flex-shrink-0 flex h-12 w-12 items-center justify-center rounded-xl bg-cw-accent text-sm font-bold text-white">
                   {s.num}
                 </div>
                 <div>
-                  <h3 className="font-semibold text-slate-900">{s.title}</h3>
-                  <p className="mt-1 text-sm text-slate-600">{s.desc}</p>
+                  <h3 className="font-semibold text-cw-text-1 text-lg">{s.title}</h3>
+                  <p className="mt-1 text-sm text-cw-text-2">{s.desc}</p>
                 </div>
               </div>
             ))}
@@ -113,10 +116,10 @@ export default function Home() {
       </section>
 
       {/* CTA */}
-      <section className="px-4 py-16 text-center">
+      <section className="px-4 py-16 text-center relative z-10">
         <div className="mx-auto max-w-md">
-          <h2 className="text-2xl font-bold text-slate-900">Ready to get started?</h2>
-          <p className="mt-2 text-sm text-slate-600">
+          <h2 className="text-3xl font-bold text-cw-text-1 font-serif">Ready to get started?</h2>
+          <p className="mt-2 text-sm text-cw-text-2">
             Join your campus community and start collaborating today.
           </p>
           <Link

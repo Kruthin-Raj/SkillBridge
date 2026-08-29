@@ -69,9 +69,82 @@ router.get(
 router.get(
   '/:id',
   asyncHandler(async (req, res) => {
+    let token = null;
+    const header = req.headers.authorization || '';
+    if (header.startsWith('Bearer ')) {
+      token = header.substring(7).trim();
+      if (token === 'null' || token === 'undefined') token = null;
+    }
+    let userId = null;
+    if (token) {
+      try {
+        const payload = (await import('jsonwebtoken')).default.verify(token, (await import('../../config/env.js')).env.jwtSecret);
+        userId = payload.sub;
+      } catch (err) {}
+    }
+
     const listing = await db.findOne(TABLES.listings, { id: req.params.id });
     if (!listing) throw ApiError.notFound('Listing not found');
-    res.json({ listing });
+
+    const owner = await db.findOne(TABLES.users, { id: listing.owner_id });
+    if (owner) {
+      listing.owner = {
+        id: owner.id,
+        full_name: owner.full_name,
+        avatar_url: owner.avatar_url,
+      };
+    }
+
+    let isParticipant = false;
+    const assigned_users = [];
+    
+    if (listing.status !== 'open' && listing.status !== 'cancelled') {
+      if (listing.mode === 'freelance') {
+        const acceptedBids = await db.findMany(TABLES.bids, { listing_id: listing.id, status: 'accepted' });
+        for (const bid of acceptedBids) {
+          const user = await db.findOne(TABLES.users, { id: bid.bidder_id });
+          if (user) {
+            assigned_users.push({
+              id: user.id,
+              full_name: user.full_name,
+              avatar_url: user.avatar_url,
+              role: 'freelancer'
+            });
+          }
+        }
+      } else if (listing.mode === 'exchange') {
+        const acceptedExchanges = await db.findMany(TABLES.exchanges, { listing_id: listing.id, status: 'accepted' });
+        for (const ex of acceptedExchanges) {
+          const user = await db.findOne(TABLES.users, { id: ex.proposer_id });
+          if (user) {
+            assigned_users.push({
+              id: user.id,
+              full_name: user.full_name,
+              avatar_url: user.avatar_url,
+              role: 'exchange_partner'
+            });
+          }
+        }
+      }
+    }
+    
+    listing.assigned_users = assigned_users;
+
+    let hasReviewed = false;
+    if (userId) {
+      if (listing.owner_id === userId) {
+        isParticipant = true;
+      } else if (assigned_users.some(u => u.id === userId)) {
+        isParticipant = true;
+      }
+
+      const existingReview = await db.findOne(TABLES.reviews, { listing_id: listing.id, reviewer_id: userId });
+      if (existingReview) {
+        hasReviewed = true;
+      }
+    }
+
+    res.json({ listing: { ...listing, is_participant: isParticipant, has_reviewed: hasReviewed } });
   })
 );
 
@@ -85,6 +158,7 @@ router.post(
       ...payload,
       owner_id: req.user.id,
       status: 'open',
+      worker_status: 'todo',
     });
     res.status(201).json({ listing });
   })
@@ -104,6 +178,44 @@ router.patch(
     }
 
     const updated = await db.update(TABLES.listings, { id: listing.id }, { status });
+    res.json({ listing: updated });
+  })
+);
+
+const workerStatusSchema = z.object({ worker_status: z.enum(['todo', 'in_progress', 'review']) });
+
+/** PATCH /api/listings/:id/worker-status - worker updates their progress. */
+router.patch(
+  '/:id/worker-status',
+  requireAuth,
+  asyncHandler(async (req, res) => {
+    const { worker_status } = workerStatusSchema.parse(req.body);
+
+    const listing = await db.findOne(TABLES.listings, { id: req.params.id });
+    if (!listing) throw ApiError.notFound('Listing not found');
+
+    let isAuthorized = false;
+    
+    // For freelance, the accepted bidder can update status
+    if (listing.mode === 'freelance') {
+      const bid = await db.findOne(TABLES.bids, { listing_id: listing.id, bidder_id: req.user.id, status: 'accepted' });
+      if (bid) isAuthorized = true;
+    }
+    
+    // For exchanges, either the owner or the accepted proposer can update status
+    if (listing.mode === 'exchange') {
+      if (listing.owner_id === req.user.id) isAuthorized = true;
+      else {
+        const exchange = await db.findOne(TABLES.exchanges, { listing_id: listing.id, proposer_id: req.user.id, status: 'accepted' });
+        if (exchange) isAuthorized = true;
+      }
+    }
+
+    if (!isAuthorized) {
+      throw ApiError.forbidden('You are not authorized to update the progress of this task');
+    }
+
+    const updated = await db.update(TABLES.listings, { id: listing.id }, { worker_status });
     res.json({ listing: updated });
   })
 );

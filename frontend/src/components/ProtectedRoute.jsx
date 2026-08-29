@@ -10,7 +10,7 @@ export default function ProtectedRoute({ children }) {
   const location = useLocation();
 
   if (loading) {
-    return <p className="text-sm text-slate-500">Loading…</p>;
+    return <p className="text-sm text-cw-text-3">Loading…</p>;
   }
 
   if (!user) {

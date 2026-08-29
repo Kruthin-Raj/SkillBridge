@@ -57,7 +57,7 @@ export default function Register() {
     return (
       <div className="mx-auto max-w-md animate-fade-in">
         <h1 className="text-2xl font-bold">Verify your email</h1>
-        <p className="mt-2 text-sm text-slate-600">
+        <p className="mt-2 text-sm text-cw-text-2">
           We sent a 6-digit code to <strong>{email}</strong>.
         </p>
 
@@ -111,7 +111,7 @@ export default function Register() {
   return (
     <div className="mx-auto max-w-md animate-fade-in">
       <h1 className="text-2xl font-bold">Create your account</h1>
-      <p className="mt-2 text-sm text-slate-600">
+      <p className="mt-2 text-sm text-cw-text-2">
         Only <strong>@{COLLEGE_DOMAIN}</strong> email addresses can register — verified students only.
       </p>
 
@@ -170,7 +170,7 @@ export default function Register() {
           {busy ? 'Sending code…' : 'Send verification code'}
         </button>
 
-        <p className="text-center text-sm text-slate-500">
+        <p className="text-center text-sm text-cw-text-3">
           Already have an account?{' '}
           <Link to="/login" className="font-medium text-freelance hover:underline">
             Sign in
