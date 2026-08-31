@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import PasswordInput from '../components/PasswordInput';
 
 const COLLEGE_DOMAIN = import.meta.env.VITE_COLLEGE_DOMAIN || 'apollouniversity.edu.in';
 
@@ -132,31 +133,27 @@ export default function Register() {
 
         <div>
           <label htmlFor="reg-password" className="label">Password</label>
-          <input
+          <PasswordInput
             id="reg-password"
-            type="password"
             required
             minLength={6}
             autoComplete="new-password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             placeholder="At least 6 characters"
-            className="field"
           />
         </div>
 
         <div>
           <label htmlFor="reg-confirm" className="label">Confirm password</label>
-          <input
+          <PasswordInput
             id="reg-confirm"
-            type="password"
             required
             minLength={6}
             autoComplete="new-password"
             value={confirm}
             onChange={(e) => setConfirm(e.target.value)}
             placeholder="Re-enter password"
-            className="field"
           />
         </div>
 

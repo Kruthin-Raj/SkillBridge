@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth, isProfileIncomplete } from '../context/AuthContext';
+import PasswordInput from '../components/PasswordInput';
 
 const COLLEGE_DOMAIN = import.meta.env.VITE_COLLEGE_DOMAIN || 'apollouniversity.edu.in';
 
@@ -56,16 +57,14 @@ export default function Login() {
           <label htmlFor="password" className="label">
             Password
           </label>
-          <input
+          <PasswordInput
             id="password"
-            type="password"
             required
             minLength={6}
             autoComplete="current-password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             placeholder="Enter your password"
-            className="field"
           />
         </div>
 
