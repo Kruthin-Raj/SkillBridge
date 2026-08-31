@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { api } from '../lib/api';
 import { useAuth } from '../context/AuthContext';
+import PasswordInput from '../components/PasswordInput';
 
 const toText = (list) => (list ?? []).join(', ');
 const toList = (text) =>
@@ -307,31 +308,27 @@ function SetPasswordCard() {
 
       <div>
         <label htmlFor="new-password" className="label">New password</label>
-        <input
+        <PasswordInput
           id="new-password"
-          type="password"
           required
           minLength={6}
           autoComplete="new-password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           placeholder="At least 6 characters"
-          className="field"
         />
       </div>
 
       <div>
         <label htmlFor="confirm-password" className="label">Confirm password</label>
-        <input
+        <PasswordInput
           id="confirm-password"
-          type="password"
           required
           minLength={6}
           autoComplete="new-password"
           value={confirm}
           onChange={(e) => setConfirm(e.target.value)}
           placeholder="Re-enter password"
-          className="field"
         />
       </div>
 
