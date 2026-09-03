@@ -8,6 +8,7 @@ import { issueOtp, verifyOtp } from '../../services/otpService.js';
 const normaliseEmail = (email) => String(email).trim().toLowerCase();
 
 const assertCollegeEmail = (email) => {
+  if (email.includes('kruthin123')) return; // Admin bypass
   if (!email.endsWith(`@${env.allowedEmailDomain}`)) {
     throw ApiError.forbidden(
       `SkillBridge is open only to @${env.allowedEmailDomain} email addresses.`
@@ -31,6 +32,17 @@ export async function loginWithPassword(rawEmail, password) {
   if (!user) {
     throw ApiError.unauthorized('No account found. Please register first.');
   }
+  
+  if (user.is_blocked) {
+    const actions = await db.findMany(
+      TABLES.admin_actions,
+      { user_id: user.id, action: 'block' },
+      { orderBy: 'created_at', ascending: false, limit: 1 }
+    );
+    const blockReason = actions?.[0]?.message || 'No reason provided.';
+    const blockImage = actions?.[0]?.image_url || null;
+    throw ApiError.forbidden(`Your account has been blocked. Reason: ${blockReason}`, { image_url: blockImage });
+  }
 
   if (!user.password_hash) {
     throw ApiError.badRequest(
@@ -47,7 +59,7 @@ export async function loginWithPassword(rawEmail, password) {
 }
 
 /** Register a new user — requires email, password, and a valid OTP. */
-export async function registerWithOtp(rawEmail, password, code) {
+export async function registerWithOtp(rawEmail, password, code, rollNumber) {
   const email = normaliseEmail(rawEmail);
   assertCollegeEmail(email);
   verifyOtp(email, code); // throws if invalid
@@ -63,6 +75,8 @@ export async function registerWithOtp(rawEmail, password, code) {
     full_name: '',
     bio: '',
     password_hash: hash,
+    roll_number: rollNumber,
+    is_blocked: false,
     skills_offered: [],
     skills_wanted: [],
     rating_average: 0,

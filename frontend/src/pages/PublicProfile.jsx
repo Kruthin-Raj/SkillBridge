@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { api } from '../lib/api';
+import ReportModal from '../components/ReportModal';
+import ImageModal from '../components/ImageModal';
 
 const Stars = ({ rating }) => (
   <span className="inline-flex gap-0.5">
@@ -17,17 +19,22 @@ export default function PublicProfile() {
   const { id } = useParams();
   const [profile, setProfile] = useState(null);
   const [reviews, setReviews] = useState([]);
+  const [listings, setListings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [isReporting, setIsReporting] = useState(false);
+  const [fullscreenImage, setFullscreenImage] = useState(null);
 
   const load = useCallback(async () => {
     try {
-      const [userData, reviewData] = await Promise.all([
+      const [userData, reviewData, listingData] = await Promise.all([
         api.users.get(id),
         api.reviews.forUser(id),
+        api.listings.forOwner(id),
       ]);
       setProfile(userData.user);
       setReviews(reviewData.reviews);
+      setListings(listingData.listings);
     } catch (err) {
       setError(err.message);
     } finally {
@@ -70,6 +77,14 @@ export default function PublicProfile() {
             {profile.bio && (
               <p className="mt-3 text-sm text-cw-text-1 whitespace-pre-line">{profile.bio}</p>
             )}
+            <div className="mt-4">
+              <button
+                onClick={() => setIsReporting(true)}
+                className="text-xs font-medium text-red-500 hover:text-red-600 hover:underline"
+              >
+                Report User
+              </button>
+            </div>
           </div>
         </div>
 
@@ -142,6 +157,16 @@ export default function PublicProfile() {
               {review.comment && (
                 <p className="mt-2 text-sm text-cw-text-1 whitespace-pre-line">{review.comment}</p>
               )}
+              {review.image_url && (
+                <div className="mt-3">
+                  <img 
+                    src={review.image_url} 
+                    alt="Review attachment" 
+                    className="max-h-48 rounded-lg border border-cw-border object-cover cursor-zoom-in"
+                    onClick={() => setFullscreenImage(review.image_url)}
+                  />
+                </div>
+              )}
               <Link
                 to={`/listings/${review.listing_id}`}
                 className="mt-2 inline-block text-xs font-medium text-freelance hover:underline"
@@ -152,6 +177,52 @@ export default function PublicProfile() {
           ))}
         </div>
       </div>
+
+      {/* Listings */}
+      <div className="pt-4 border-t border-cw-border">
+        <h2 className="text-xl font-bold">Listings by {profile.full_name?.split(' ')[0] || 'User'} ({listings.length})</h2>
+
+        {listings.length === 0 && (
+          <div className="card mt-4 text-center py-8">
+            <p className="text-sm text-cw-text-2">No active listings.</p>
+          </div>
+        )}
+
+        <div className="mt-4 grid gap-4 sm:grid-cols-2">
+          {listings.map((listing) => (
+            <Link key={listing.id} to={`/listings/${listing.id}`} className="card hover:border-cw-accent hover:shadow-md transition">
+              <div className="flex items-center justify-between">
+                <span className={`text-xs font-semibold px-2 py-0.5 rounded uppercase tracking-wider ${listing.mode === 'freelance' ? 'bg-freelance/10 text-freelance' : 'bg-exchange/10 text-exchange'}`}>
+                  {listing.mode === 'freelance' ? 'Freelance' : 'Skill Swap'}
+                </span>
+                <span className="text-xs text-cw-text-3 font-medium capitalize">
+                  {listing.status.replace('_', ' ')}
+                </span>
+              </div>
+              <p className="mt-3 text-base font-semibold text-cw-text-1 line-clamp-1">
+                {listing.title}
+              </p>
+              <div className="mt-4 flex flex-wrap gap-1.5">
+                {listing.tags?.slice(0, 3).map((tag) => (
+                  <span key={tag} className="text-[10px] font-medium text-cw-text-2 bg-cw-bg-alt px-2 py-0.5 rounded-full">
+                    {tag}
+                  </span>
+                ))}
+              </div>
+            </Link>
+          ))}
+        </div>
+      </div>
+      {isReporting && (
+        <ReportModal 
+          reportedUser={profile} 
+          onClose={() => setIsReporting(false)} 
+        />
+      )}
+
+      {fullscreenImage && (
+        <ImageModal src={fullscreenImage} onClose={() => setFullscreenImage(null)} />
+      )}
     </div>
   );
 }

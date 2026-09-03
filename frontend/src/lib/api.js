@@ -56,8 +56,8 @@ export const api = {
       request('/api/auth/request-otp', { method: 'POST', body: { email }, auth: false }),
     login: (email, password) =>
       request('/api/auth/login', { method: 'POST', body: { email, password }, auth: false }),
-    register: (email, password, code) =>
-      request('/api/auth/register', { method: 'POST', body: { email, password, code }, auth: false }),
+    register: (email, password, code, roll_number) =>
+      request('/api/auth/register', { method: 'POST', body: { email, password, code, roll_number }, auth: false }),
     resetPassword: (email, code, password) =>
       request('/api/auth/reset-password', { method: 'POST', body: { email, code, password }, auth: false }),
     setPassword: (password) =>
@@ -66,6 +66,7 @@ export const api = {
   },
 
   users: {
+    search: (q) => request(`/api/users/search?q=${encodeURIComponent(q)}`, { auth: false }),
     get: (id) => request(`/api/users/${id}`, { auth: false }),
     updateMe: (patch) => request('/api/users/me', { method: 'PATCH', body: patch }),
     updateAvatar: (avatar_url) =>
@@ -74,6 +75,7 @@ export const api = {
 
   listings: {
     list: (mode) => request(`/api/listings${mode ? `?mode=${mode}` : ''}`, { auth: false }),
+    forOwner: (ownerId) => request(`/api/listings?owner_id=${ownerId}`, { auth: false }),
     get: (id) => request(`/api/listings/${id}`),
     create: (listing) => request('/api/listings', { method: 'POST', body: listing }),
     setStatus: (id, status) =>
@@ -116,5 +118,13 @@ export const api = {
   notifications: {
     list: () => request('/api/notifications'),
     markRead: () => request('/api/notifications/read', { method: 'PATCH' }),
+  },
+
+  admin: {
+    getUsers: () => request('/api/admin/users'),
+    getReports: () => request('/api/admin/reports'),
+    warnUser: (id, payload) => request(`/api/admin/users/${id}/warn`, { method: 'POST', body: payload }),
+    blockUser: (id, payload) => request(`/api/admin/users/${id}/block`, { method: 'POST', body: payload }),
+    unblockUser: (id, payload) => request(`/api/admin/users/${id}/unblock`, { method: 'POST', body: payload }),
   },
 };

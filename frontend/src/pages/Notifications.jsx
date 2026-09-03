@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../lib/api';
+import ImageModal from '../components/ImageModal';
 
 const TYPE_CONFIG = {
   new_bid: { icon: '💰', color: 'bg-freelance', label: 'New Bid' },
@@ -8,6 +9,8 @@ const TYPE_CONFIG = {
   bid_rejected: { icon: '❌', color: 'bg-red-500', label: 'Bid Rejected' },
   exchange_proposal: { icon: '🔄', color: 'bg-exchange', label: 'Swap Proposal' },
   listing_completed: { icon: '🎉', color: 'bg-amber-500', label: 'Completed' },
+  admin_warning: { icon: '⚠️', color: 'bg-amber-500', label: 'Warning' },
+  admin_unblock: { icon: '🔓', color: 'bg-emerald-500', label: 'Unblocked' },
 };
 
 const timeAgo = (dateStr) => {
@@ -26,6 +29,7 @@ export default function Notifications() {
   const [unreadCount, setUnreadCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [fullscreenImage, setFullscreenImage] = useState(null);
 
   const load = useCallback(async () => {
     try {
@@ -94,6 +98,16 @@ export default function Notifications() {
                     <p className={`text-sm ${!n.read ? 'font-semibold text-cw-text-1' : 'text-cw-text-2'}`}>
                       {n.message}
                     </p>
+                    {n.image_url && (
+                      <div className="mt-2 mb-1">
+                        <img 
+                          src={n.image_url} 
+                          alt="Attachment" 
+                          className="max-h-32 rounded-lg border border-cw-border object-cover cursor-zoom-in"
+                          onClick={() => setFullscreenImage(n.image_url)}
+                        />
+                      </div>
+                    )}
                     <p className="mt-1 text-xs text-cw-text-3">{timeAgo(n.created_at)}</p>
                   </div>
                   {n.listing_id && (
@@ -110,6 +124,10 @@ export default function Notifications() {
           );
         })}
       </div>
+
+      {fullscreenImage && (
+        <ImageModal src={fullscreenImage} onClose={() => setFullscreenImage(null)} />
+      )}
     </div>
   );
 }

@@ -11,6 +11,7 @@ export default function Register() {
 
   const [step, setStep] = useState('form'); // 'form' | 'otp'
   const [email, setEmail] = useState('');
+  const [rollNumber, setRollNumber] = useState('');
   const [password, setPassword] = useState('');
   const [confirm, setConfirm] = useState('');
   const [code, setCode] = useState('');
@@ -24,6 +25,11 @@ export default function Register() {
 
     if (password !== confirm) {
       setError('Passwords do not match.');
+      return;
+    }
+    
+    if (!rollNumber.trim()) {
+      setError('Roll number is required.');
       return;
     }
 
@@ -45,7 +51,7 @@ export default function Register() {
     setBusy(true);
 
     try {
-      await register(email, password, code.trim());
+      await register(email, password, code.trim(), rollNumber.trim());
       navigate('/profile/setup', { replace: true });
     } catch (err) {
       setError(err.message);
@@ -127,6 +133,19 @@ export default function Register() {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             placeholder={`yourname@${COLLEGE_DOMAIN}`}
+            className="field"
+          />
+        </div>
+
+        <div>
+          <label htmlFor="reg-roll" className="label">Roll Number</label>
+          <input
+            id="reg-roll"
+            type="text"
+            required
+            value={rollNumber}
+            onChange={(e) => setRollNumber(e.target.value)}
+            placeholder="e.g. 21X01A0501"
             className="field"
           />
         </div>

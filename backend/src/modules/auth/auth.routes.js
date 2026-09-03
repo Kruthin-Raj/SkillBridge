@@ -26,6 +26,7 @@ const registerSchema = z.object({
   email: z.string().email('Enter a valid email address'),
   password: z.string().min(6, 'Password must be at least 6 characters').max(128),
   code: z.string().regex(/^\d{6}$/, 'The code is 6 digits'),
+  roll_number: z.string().min(1, 'Roll number is required').max(50),
 });
 
 const resetSchema = z.object({
@@ -67,8 +68,8 @@ router.post(
 router.post(
   '/register',
   asyncHandler(async (req, res) => {
-    const { email, password, code } = registerSchema.parse(req.body);
-    const { token, user } = await registerWithOtp(email, password, code);
+    const { email, password, code, roll_number } = registerSchema.parse(req.body);
+    const { token, user } = await registerWithOtp(email, password, code, roll_number);
     res.json({ token, user });
   })
 );

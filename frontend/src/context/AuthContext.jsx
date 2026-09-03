@@ -42,8 +42,8 @@ export function AuthProvider({ children }) {
     return { isNewUser: isProfileIncomplete(me) };
   }, []);
 
-  const register = useCallback(async (email, password, code) => {
-    const { token, user: me } = await api.auth.register(email, password, code);
+  const register = useCallback(async (email, password, code, rollNumber) => {
+    const { token, user: me } = await api.auth.register(email, password, code, rollNumber);
     tokenStore.set(token);
     setUser(me);
   }, []);

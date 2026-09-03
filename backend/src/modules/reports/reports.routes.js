@@ -12,6 +12,7 @@ const reportSchema = z.object({
   listing_id: z.string().optional(),
   reason: z.enum(['harassment', 'scam', 'inappropriate_content', 'non_delivery', 'other']),
   description: z.string().min(10, 'Description must be at least 10 characters').max(1000),
+  proof_url: z.string().max(500000, 'Image is too large (max ~300 KB)').optional(),
 });
 
 /** POST /api/reports - submit a new report */

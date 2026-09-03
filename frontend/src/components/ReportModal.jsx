@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { api } from '../lib/api';
 
 const REASONS = [
@@ -12,9 +12,39 @@ const REASONS = [
 export default function ReportModal({ reportedUser, listingId, onClose }) {
   const [reason, setReason] = useState('harassment');
   const [description, setDescription] = useState('');
+  const [proofUrl, setProofUrl] = useState(null);
+  const [uploading, setUploading] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
+  
+  const fileInputRef = useRef(null);
+
+  const handleImageChange = async (event) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 300 * 1024) {
+      setError('Image too large. Please use an image under 300 KB.');
+      return;
+    }
+
+    setUploading(true);
+    setError('');
+    try {
+      const reader = new FileReader();
+      const base64 = await new Promise((resolve, reject) => {
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+      setProofUrl(base64);
+    } catch (err) {
+      setError('Failed to process image');
+    } finally {
+      setUploading(false);
+    }
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -27,6 +57,7 @@ export default function ReportModal({ reportedUser, listingId, onClose }) {
         listing_id: listingId,
         reason,
         description,
+        proof_url: proofUrl,
       });
       setSuccess(true);
       setTimeout(() => onClose(), 2000);
@@ -87,9 +118,31 @@ export default function ReportModal({ reportedUser, listingId, onClose }) {
                 rows={4}
                 required
                 minLength={10}
-                placeholder="Please provide details about the issue..."
+                placeholder="Provide details about the issue. Paste messages here or attach a screenshot below."
                 className="field"
               />
+            </div>
+
+            <div>
+              <label className="label">Screenshot (Optional Proof)</label>
+              <div className="flex items-center gap-3 mt-1">
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={uploading}
+                  className="btn-ghost text-xs py-1.5"
+                >
+                  {uploading ? 'Processing...' : 'Upload Image'}
+                </button>
+                {proofUrl && <span className="text-xs font-medium text-emerald-600">Image attached ✓</span>}
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageChange}
+                  className="hidden"
+                />
+              </div>
             </div>
 
             <div className="flex gap-3 pt-2">

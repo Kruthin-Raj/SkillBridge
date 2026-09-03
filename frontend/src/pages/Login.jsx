@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth, isProfileIncomplete } from '../context/AuthContext';
 import PasswordInput from '../components/PasswordInput';
+import ImageModal from '../components/ImageModal';
 
 const COLLEGE_DOMAIN = import.meta.env.VITE_COLLEGE_DOMAIN || 'apollouniversity.edu.in';
 
@@ -11,19 +12,20 @@ export default function Login() {
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
+  const [errorObj, setErrorObj] = useState(null);
   const [busy, setBusy] = useState(false);
+  const [fullscreenImage, setFullscreenImage] = useState(null);
 
   const handleSubmit = async (event) => {
     event.preventDefault();
-    setError('');
+    setErrorObj(null);
     setBusy(true);
 
     try {
       const { isNewUser } = await loginWithPassword(email, password);
       navigate(isNewUser ? '/profile/setup' : '/', { replace: true });
     } catch (err) {
-      setError(err.message);
+      setErrorObj(err);
     } finally {
       setBusy(false);
     }
@@ -68,10 +70,21 @@ export default function Login() {
           />
         </div>
 
-        {error && (
-          <p role="alert" className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">
-            {error}
-          </p>
+        {errorObj && (
+          <div role="alert" className="rounded-lg bg-red-50 p-4 border border-red-200">
+            <p className="text-sm font-medium text-red-700">{errorObj.message}</p>
+            {errorObj.details?.image_url && (
+              <div className="mt-3">
+                <p className="text-xs text-red-600 mb-1 font-semibold uppercase tracking-wider">Proof / Attachment</p>
+                <img 
+                  src={errorObj.details.image_url} 
+                  alt="Block Reason" 
+                  className="max-h-32 rounded border border-red-200 object-cover cursor-zoom-in"
+                  onClick={() => setFullscreenImage(errorObj.details.image_url)}
+                />
+              </div>
+            )}
+          </div>
         )}
 
         <button type="submit" disabled={busy} className="btn-primary w-full">
@@ -87,6 +100,10 @@ export default function Login() {
           </Link>
         </div>
       </form>
+
+      {fullscreenImage && (
+        <ImageModal src={fullscreenImage} onClose={() => setFullscreenImage(null)} />
+      )}
     </div>
   );
 }

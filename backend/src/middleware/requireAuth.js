@@ -1,12 +1,13 @@
 import jwt from 'jsonwebtoken';
 import { env } from '../config/env.js';
+import { db, TABLES } from '../db/index.js';
 import { ApiError } from '../utils/ApiError.js';
 
 /**
  * Reads the Bearer token, verifies it and puts the caller on `req.user`.
  * Every route that touches user-owned data must sit behind this.
  */
-export function requireAuth(req, _res, next) {
+export async function requireAuth(req, _res, next) {
   let token = null;
 
   const header = req.headers.authorization || '';
@@ -24,9 +25,18 @@ export function requireAuth(req, _res, next) {
 
   try {
     const payload = jwt.verify(token, env.jwtSecret);
-    req.user = { id: payload.sub, email: payload.email };
+    const userId = payload.sub;
+
+    // Check if the user has been blocked
+    const userRecord = await db.findOne(TABLES.users, { id: userId });
+    if (userRecord && userRecord.is_blocked) {
+      return next(ApiError.unauthorized('Your account has been blocked. Please contact support.'));
+    }
+
+    req.user = { id: userId, email: payload.email };
     return next();
-  } catch {
+  } catch (err) {
+    if (err instanceof ApiError) return next(err);
     return next(ApiError.unauthorized('Invalid or expired token'));
   }
 }

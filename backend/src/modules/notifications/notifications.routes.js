@@ -85,6 +85,34 @@ async function buildNotifications(userId) {
     }
   }
 
+  // 5. Admin Warnings and Unblocks
+  try {
+    const adminActions = await db.findMany(TABLES.admin_actions, { user_id: userId }, { limit: 50 });
+    for (const action of adminActions) {
+      if (action.action === 'warn') {
+        notifications.push({
+          id: `warn-${action.id}`,
+          type: 'admin_warning',
+          message: `Admin Warning: ${action.message || 'Please review community guidelines.'}`,
+          image_url: action.image_url || undefined,
+          created_at: action.created_at,
+          read: new Date(action.created_at) <= lastRead,
+        });
+      } else if (action.action === 'unblock') {
+        notifications.push({
+          id: `unblock-${action.id}`,
+          type: 'admin_unblock',
+          message: `Account Unblocked: ${action.message || 'You have been unblocked by the administration.'}`,
+          image_url: action.image_url || undefined,
+          created_at: action.created_at,
+          read: new Date(action.created_at) <= lastRead,
+        });
+      }
+    }
+  } catch (e) {
+    // Ignore if table doesn't exist yet
+  }
+
   // Sort newest first
   notifications.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
   return notifications;
