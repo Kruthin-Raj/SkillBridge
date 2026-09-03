@@ -23,11 +23,15 @@ keeps the app small.
 This repository is the scaffold, not the finished project. What is already wired up:
 
 - Express API with all five resources routed, validated and authorised
-- Email-OTP login restricted to the college domain, issuing a JWT
-- A pluggable mailer: prints the OTP to the terminal today, sends real email once SMTP is filled in
-- A data layer that runs on an **in-memory store** until Supabase credentials are added — so the app works end to end right now
-- React + Tailwind client with the mode toggle, browse, post, bid, match, profile and OTP screens
-- `backend/db/schema.sql`, ready to paste into the Supabase SQL editor
+- User authentication with email-OTP, roll numbers, and JWTs restricted to the college domain
+- Pluggable mailer: prints the OTP to the terminal or sends real email once SMTP is set up
+- In-memory data store for local dev, alongside full Supabase integration
+- React + Tailwind client with Mode Toggle, Browse, Post, Dashboard, Global Search, and Profiles
+- Full Review UI with base64 image uploading support
+- Real-time Notifications system using Server-Sent Events (SSE)
+- Admin Panel for user management, reporting, warning, and blocking accounts
+- Lightbox (Image Modal) for inspecting proof attachments and review images
+- Static About and Support pages integrated into the UI
 
 What is deliberately left as follow-up work is listed under [Not built yet](#not-built-yet).
 
@@ -68,9 +72,9 @@ SkillBridge/
         ├── App.jsx                 # routes
         ├── lib/api.js              # every network call goes through here
         ├── context/AuthContext.jsx
-        ├── components/             # Navbar, ModeToggle, ListingCard, ProtectedRoute
-        └── pages/                  # Login, VerifyOtp, Browse, CreateListing,
-                                    # ListingDetail, Exchanges, Profile, NotFound
+        ├── components/             # Navbar, ModeToggle, ListingCard, ProtectedRoute, ImageModal
+        └── pages/                  # Login, VerifyOtp, Browse, CreateListing, Dashboard, SearchUsers,
+                                    # ListingDetail, Exchanges, Profile, PublicProfile, AdminPanel, NotFound
 ```
 
 ---
@@ -248,9 +252,7 @@ All routes are under `/api`. Authenticated routes need `Authorization: Bearer <t
 
 Deliberate gaps, roughly in the order the timeline expects them:
 
-- Search and tag filtering on the browse page
-- A reviews UI — the API works, the screen does not exist
-- A dashboard of your own listings, bids and gigs
+- Tag filtering and advanced search filters on the Browse page
 - Pagination (every list is capped at 50 rows)
 - Rate limiting on `request-otp`
 - Automated tests
