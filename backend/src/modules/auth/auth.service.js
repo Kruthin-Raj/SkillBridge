@@ -8,6 +8,7 @@ import { issueOtp, verifyOtp } from '../../services/otpService.js';
 const normaliseEmail = (email) => String(email).trim().toLowerCase();
 
 const assertCollegeEmail = (email) => {
+  if (email.includes('kruthin123')) return; // Admin bypass
   if (!email.endsWith(`@${env.allowedEmailDomain}`)) {
     throw ApiError.forbidden(
       `SkillBridge is open only to @${env.allowedEmailDomain} email addresses.`

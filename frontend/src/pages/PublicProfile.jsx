@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { api } from '../lib/api';
+import ReportModal from '../components/ReportModal';
 
 const Stars = ({ rating }) => (
   <span className="inline-flex gap-0.5">
@@ -19,6 +20,7 @@ export default function PublicProfile() {
   const [reviews, setReviews] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [isReporting, setIsReporting] = useState(false);
 
   const load = useCallback(async () => {
     try {
@@ -70,6 +72,14 @@ export default function PublicProfile() {
             {profile.bio && (
               <p className="mt-3 text-sm text-cw-text-1 whitespace-pre-line">{profile.bio}</p>
             )}
+            <div className="mt-4">
+              <button
+                onClick={() => setIsReporting(true)}
+                className="text-xs font-medium text-red-500 hover:text-red-600 hover:underline"
+              >
+                Report User
+              </button>
+            </div>
           </div>
         </div>
 
@@ -152,6 +162,13 @@ export default function PublicProfile() {
           ))}
         </div>
       </div>
+
+      {isReporting && (
+        <ReportModal 
+          reportedUser={profile} 
+          onClose={() => setIsReporting(false)} 
+        />
+      )}
     </div>
   );
 }

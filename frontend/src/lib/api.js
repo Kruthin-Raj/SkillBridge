@@ -117,4 +117,11 @@ export const api = {
     list: () => request('/api/notifications'),
     markRead: () => request('/api/notifications/read', { method: 'PATCH' }),
   },
+
+  admin: {
+    getUsers: () => request('/api/admin/users'),
+    getReports: () => request('/api/admin/reports'),
+    warnUser: (id) => request(`/api/admin/users/${id}/warn`, { method: 'POST' }),
+    removeUser: (id) => request(`/api/admin/users/${id}`, { method: 'DELETE' }),
+  },
 };

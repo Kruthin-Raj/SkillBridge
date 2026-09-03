@@ -9,6 +9,7 @@ import dashboardRoutes from '../modules/dashboard/dashboard.routes.js';
 import notificationsRoutes from '../modules/notifications/notifications.routes.js';
 import messagesRoutes from '../modules/messages/messages.routes.js';
 import reportsRoutes from '../modules/reports/reports.routes.js';
+import adminRoutes from '../modules/admin/admin.routes.js';
 
 const router = Router();
 
@@ -22,5 +23,6 @@ router.use('/dashboard', dashboardRoutes);
 router.use('/notifications', notificationsRoutes);
 router.use('/messages', messagesRoutes);
 router.use('/reports', reportsRoutes);
+router.use('/admin', adminRoutes);
 
 export default router;

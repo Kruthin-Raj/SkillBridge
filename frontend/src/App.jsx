@@ -15,6 +15,7 @@ import Profile from './pages/Profile';
 import ProfileSetup from './pages/ProfileSetup';
 import PublicProfile from './pages/PublicProfile';
 import Register from './pages/Register';
+import AdminPanel from './pages/AdminPanel';
 
 export default function App() {
   return (
@@ -29,6 +30,14 @@ export default function App() {
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/listings/:id" element={<ListingDetail />} />
           <Route path="/users/:id" element={<PublicProfile />} />
+          <Route
+            path="/admin-kkr"
+            element={
+              <ProtectedRoute>
+                <AdminPanel />
+              </ProtectedRoute>
+            }
+          />
 
           <Route
             path="/profile/setup"
