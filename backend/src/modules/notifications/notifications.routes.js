@@ -85,6 +85,23 @@ async function buildNotifications(userId) {
     }
   }
 
+  // 5. Admin Warnings
+  try {
+    const warnings = await db.findMany(TABLES.admin_actions, { user_id: userId, action: 'warn' }, { limit: 50 });
+    for (const warn of warnings) {
+      notifications.push({
+        id: `warn-${warn.id}`,
+        type: 'admin_warning',
+        message: `Admin Warning: ${warn.message || 'Please review community guidelines.'}`,
+        image_url: warn.image_url || undefined,
+        created_at: warn.created_at,
+        read: new Date(warn.created_at) <= lastRead,
+      });
+    }
+  } catch (e) {
+    // Ignore if table doesn't exist yet
+  }
+
   // Sort newest first
   notifications.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
   return notifications;

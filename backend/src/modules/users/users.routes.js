@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { z } from 'zod';
 import { db, TABLES } from '../../db/index.js';
+import { supabase } from '../../db/supabase.js';
 import { ApiError } from '../../utils/ApiError.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
 import { requireAuth } from '../../middleware/requireAuth.js';
@@ -30,6 +31,29 @@ const toPublicProfile = (user) => ({
   rating_count: user.rating_count ?? 0,
   created_at: user.created_at,
 });
+
+/** GET /api/users/search?q=... - search for public users. */
+router.get(
+  '/search',
+  asyncHandler(async (req, res) => {
+    const q = req.query.q || '';
+    if (!q.trim()) {
+      return res.json({ users: [] });
+    }
+    
+    const { data, error } = await supabase
+      .from(TABLES.users)
+      .select('*')
+      .neq('email', 'kruthin123@gmail.com')
+      .or(`full_name.ilike.%${q}%,email.ilike.%${q}%`)
+      .limit(20);
+      
+    if (error) throw ApiError.badRequest('Search failed');
+    
+    const users = (data || []).map(toPublicProfile);
+    res.json({ users });
+  })
+);
 
 /** GET /api/users/:id - public profile with the trust score (slide 9). */
 router.get(

@@ -42,7 +42,12 @@ const statusSchema = z.object({ status: z.enum(LISTING_STATUSES) });
 router.get(
   '/',
   asyncHandler(async (req, res) => {
-    const where = { status: 'open' };
+    const where = {};
+    if (req.query.owner_id) {
+      where.owner_id = req.query.owner_id;
+    } else {
+      where.status = 'open';
+    }
     if (req.query.mode) {
       if (!LISTING_MODES.includes(req.query.mode)) {
         throw ApiError.badRequest(`mode must be one of: ${LISTING_MODES.join(', ')}`);

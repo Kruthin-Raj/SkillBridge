@@ -24,7 +24,9 @@ router.get(
       {},
       { orderBy: 'created_at', ascending: false, limit: 100 }
     );
-    res.json({ users });
+    // Exclude the admin from the management list
+    const filteredUsers = users.filter(u => u.email !== 'kruthin123@gmail.com');
+    res.json({ users: filteredUsers });
   })
 );
 
@@ -64,6 +66,8 @@ router.post(
   requireAdmin,
   asyncHandler(async (req, res) => {
     const userId = req.params.id;
+    const { message = '', image_url = '' } = req.body || {};
+    
     const user = await db.findOne(TABLES.users, { id: userId });
     
     if (!user) throw ApiError.notFound('User not found');
@@ -74,29 +78,69 @@ router.post(
       { id: userId },
       { warnings_count: newCount, updated_at: new Date().toISOString() }
     );
+    
+    await db.insert(TABLES.admin_actions, {
+      user_id: userId,
+      action: 'warn',
+      message,
+      image_url,
+    });
 
     res.json({ user: updatedUser });
   })
 );
 
-/** DELETE /api/admin/users/:id - Delete a user (Admin only) */
-router.delete(
-  '/users/:id',
+/** POST /api/admin/users/:id/block - Block a user (Admin only) */
+router.post(
+  '/users/:id/block',
   requireAuth,
   requireAdmin,
   asyncHandler(async (req, res) => {
     const userId = req.params.id;
+    const { message = '', image_url = '' } = req.body || {};
     
     if (userId === req.user.id) {
-      throw ApiError.badRequest('You cannot delete yourself');
+      throw ApiError.badRequest('You cannot block yourself');
     }
 
     const user = await db.findOne(TABLES.users, { id: userId });
     if (!user) throw ApiError.notFound('User not found');
 
-    await db.remove(TABLES.users, { id: userId });
+    const updatedUser = await db.update(TABLES.users, { id: userId }, { is_blocked: true, updated_at: new Date().toISOString() });
 
-    res.json({ success: true });
+    await db.insert(TABLES.admin_actions, {
+      user_id: userId,
+      action: 'block',
+      message,
+      image_url,
+    });
+
+    res.json({ success: true, user: updatedUser });
+  })
+);
+
+/** POST /api/admin/users/:id/unblock - Unblock a user (Admin only) */
+router.post(
+  '/users/:id/unblock',
+  requireAuth,
+  requireAdmin,
+  asyncHandler(async (req, res) => {
+    const userId = req.params.id;
+    const { message = '', image_url = '' } = req.body || {};
+    
+    const user = await db.findOne(TABLES.users, { id: userId });
+    if (!user) throw ApiError.notFound('User not found');
+
+    const updatedUser = await db.update(TABLES.users, { id: userId }, { is_blocked: false, updated_at: new Date().toISOString() });
+
+    await db.insert(TABLES.admin_actions, {
+      user_id: userId,
+      action: 'unblock',
+      message,
+      image_url,
+    });
+
+    res.json({ success: true, user: updatedUser });
   })
 );
 

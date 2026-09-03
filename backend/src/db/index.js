@@ -35,4 +35,5 @@ export const TABLES = {
   reviews: 'reviews',
   messages: 'messages',
   reports: 'reports',
+  admin_actions: 'admin_actions',
 };

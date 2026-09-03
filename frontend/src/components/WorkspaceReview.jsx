@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { api } from '../lib/api';
 
 export default function WorkspaceReview({ listingId, reviewee, onReviewSubmitted }) {
@@ -7,6 +7,36 @@ export default function WorkspaceReview({ listingId, reviewee, onReviewSubmitted
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [submitted, setSubmitted] = useState(false);
+  const [imageUrl, setImageUrl] = useState('');
+  const [uploading, setUploading] = useState(false);
+
+  const fileInputRef = useRef(null);
+
+  const handleImageChange = async (event) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 300 * 1024) {
+      setError('Image too large. Please use an image under 300 KB.');
+      return;
+    }
+
+    setUploading(true);
+    setError('');
+    try {
+      const reader = new FileReader();
+      const base64 = await new Promise((resolve, reject) => {
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+      setImageUrl(base64);
+    } catch (err) {
+      setError('Failed to process image');
+    } finally {
+      setUploading(false);
+    }
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -19,6 +49,7 @@ export default function WorkspaceReview({ listingId, reviewee, onReviewSubmitted
         reviewee_id: reviewee.id,
         rating,
         comment,
+        image_url: imageUrl,
       });
       setSubmitted(true);
       if (onReviewSubmitted) onReviewSubmitted();
@@ -75,6 +106,28 @@ export default function WorkspaceReview({ listingId, reviewee, onReviewSubmitted
             placeholder="Share your experience working with this user..."
             className="field"
           />
+        </div>
+
+        <div>
+          <label className="label">Photo (Optional)</label>
+          <div className="flex items-center gap-3 mt-1">
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={uploading}
+              className="btn-ghost text-xs py-1.5 px-3 rounded-lg border border-cw-border"
+            >
+              {uploading ? 'Processing...' : 'Upload Image'}
+            </button>
+            {imageUrl && <span className="text-xs font-medium text-emerald-600">Image attached ✓</span>}
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              onChange={handleImageChange}
+              className="hidden"
+            />
+          </div>
         </div>
 
         <button

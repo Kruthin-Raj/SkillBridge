@@ -18,8 +18,8 @@ export class ApiError extends Error {
     return new ApiError(401, message);
   }
 
-  static forbidden(message = 'You are not allowed to do that') {
-    return new ApiError(403, message);
+  static forbidden(message = 'You are not allowed to do that', details) {
+    return new ApiError(403, message, details);
   }
 
   static notFound(message = 'Not found') {
