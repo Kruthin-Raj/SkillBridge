@@ -10,6 +10,7 @@ const TYPE_CONFIG = {
   exchange_proposal: { icon: '🔄', color: 'bg-exchange', label: 'Swap Proposal' },
   listing_completed: { icon: '🎉', color: 'bg-amber-500', label: 'Completed' },
   admin_warning: { icon: '⚠️', color: 'bg-amber-500', label: 'Warning' },
+  admin_unblock: { icon: '🔓', color: 'bg-emerald-500', label: 'Unblocked' },
 };
 
 const timeAgo = (dateStr) => {

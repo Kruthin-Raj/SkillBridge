@@ -85,18 +85,29 @@ async function buildNotifications(userId) {
     }
   }
 
-  // 5. Admin Warnings
+  // 5. Admin Warnings and Unblocks
   try {
-    const warnings = await db.findMany(TABLES.admin_actions, { user_id: userId, action: 'warn' }, { limit: 50 });
-    for (const warn of warnings) {
-      notifications.push({
-        id: `warn-${warn.id}`,
-        type: 'admin_warning',
-        message: `Admin Warning: ${warn.message || 'Please review community guidelines.'}`,
-        image_url: warn.image_url || undefined,
-        created_at: warn.created_at,
-        read: new Date(warn.created_at) <= lastRead,
-      });
+    const adminActions = await db.findMany(TABLES.admin_actions, { user_id: userId }, { limit: 50 });
+    for (const action of adminActions) {
+      if (action.action === 'warn') {
+        notifications.push({
+          id: `warn-${action.id}`,
+          type: 'admin_warning',
+          message: `Admin Warning: ${action.message || 'Please review community guidelines.'}`,
+          image_url: action.image_url || undefined,
+          created_at: action.created_at,
+          read: new Date(action.created_at) <= lastRead,
+        });
+      } else if (action.action === 'unblock') {
+        notifications.push({
+          id: `unblock-${action.id}`,
+          type: 'admin_unblock',
+          message: `Account Unblocked: ${action.message || 'You have been unblocked by the administration.'}`,
+          image_url: action.image_url || undefined,
+          created_at: action.created_at,
+          read: new Date(action.created_at) <= lastRead,
+        });
+      }
     }
   } catch (e) {
     // Ignore if table doesn't exist yet
