@@ -42,10 +42,14 @@ router.get(
       { orderBy: 'created_at', ascending: false, limit: 100 }
     );
 
-    // Fetch related users to enrich the reports
     const userIds = [...new Set(reports.flatMap(r => [r.reported_user_id, r.reporter_id]))];
+    const listingIds = [...new Set(reports.filter(r => r.listing_id).map(r => r.listing_id))];
+    
     const users = await Promise.all(userIds.map(id => db.findOne(TABLES.users, { id })));
+    const listings = await Promise.all(listingIds.map(id => db.findOne(TABLES.listings, { id })));
+    
     const userMap = users.reduce((acc, u) => { acc[u.id] = u; return acc; }, {});
+    const listingMap = listings.reduce((acc, l) => { acc[l.id] = l; return acc; }, {});
 
     const enrichedReports = reports.map(r => ({
       ...r,
@@ -53,6 +57,7 @@ router.get(
       reported_name: userMap[r.reported_user_id]?.full_name,
       reporter_email: userMap[r.reporter_id]?.email,
       reporter_name: userMap[r.reporter_id]?.full_name,
+      listing_title: listingMap[r.listing_id]?.title,
     }));
 
     res.json({ reports: enrichedReports });
@@ -141,6 +146,40 @@ router.post(
     });
 
     res.json({ success: true, user: updatedUser });
+  })
+);
+
+/** DELETE /api/admin/reports/:id - Delete a report (Admin only) */
+router.delete(
+  '/reports/:id',
+  requireAuth,
+  requireAdmin,
+  asyncHandler(async (req, res) => {
+    const reportId = req.params.id;
+    
+    const report = await db.findOne(TABLES.reports, { id: reportId });
+    if (!report) throw ApiError.notFound('Report not found');
+
+    await db.remove(TABLES.reports, { id: reportId });
+
+    res.json({ success: true });
+  })
+);
+
+/** DELETE /api/admin/listings/:id - Delete a listing (Admin only) */
+router.delete(
+  '/listings/:id',
+  requireAuth,
+  requireAdmin,
+  asyncHandler(async (req, res) => {
+    const listingId = req.params.id;
+    
+    const listing = await db.findOne(TABLES.listings, { id: listingId });
+    if (!listing) throw ApiError.notFound('Listing not found');
+
+    await db.remove(TABLES.listings, { id: listingId });
+
+    res.json({ success: true });
   })
 );
 

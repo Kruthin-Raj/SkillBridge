@@ -12,6 +12,7 @@ export default function Navbar() {
   const navigate = useNavigate();
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [unread, setUnread] = useState(0);
+  const [searchQuery, setSearchQuery] = useState('');
   const dropdownRef = useRef(null);
 
   const initials = user
@@ -66,6 +67,13 @@ export default function Navbar() {
     setDropdownOpen(false);
     signOut();
     navigate('/');
+  };
+
+  const handleSearch = (e) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      navigate(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
+    }
   };
 
   return (
@@ -123,7 +131,24 @@ export default function Navbar() {
           </Link>
         </div>
 
-        {/* Center: Nav links */}
+        {/* Center: Nav links & Search */}
+        <div className="flex-1 max-w-md mx-4">
+          <form onSubmit={handleSearch} className="relative group">
+            <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-cw-text-3 group-focus-within:text-cw-accent">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+            </div>
+            <input
+              type="text"
+              className="block w-full rounded-full border border-cw-border bg-cw-bg-alt/50 pl-10 pr-4 py-1.5 text-sm focus:border-cw-accent focus:bg-cw-surface focus:outline-none focus:ring-1 focus:ring-cw-accent transition"
+              placeholder="Search users..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+          </form>
+        </div>
+
         <NavLink to="/" className={linkClass} end>
           Home
         </NavLink>

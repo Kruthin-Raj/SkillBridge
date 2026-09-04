@@ -6,6 +6,7 @@ import TaskProgress from '../components/TaskProgress';
 import WorkspaceChat from '../components/WorkspaceChat';
 import ParticipantCard from '../components/ParticipantCard';
 import WorkspaceReview from '../components/WorkspaceReview';
+import ReportModal from '../components/ReportModal';
 
 export default function ListingDetail() {
   const { id } = useParams();
@@ -16,6 +17,7 @@ export default function ListingDetail() {
   const [form, setForm] = useState({ amount: '', message: '' });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
+  const [isReportModalOpen, setIsReportModalOpen] = useState(false);
 
   const isOwner = user && listing && listing.owner_id === user.id;
   const isParticipant = listing && listing.is_participant;
@@ -107,7 +109,18 @@ export default function ListingDetail() {
             </div>
           )}
 
-          <h1 className="mt-3 text-2xl font-bold">{listing.title}</h1>
+          <div className="flex justify-between items-start mt-3">
+            <h1 className="text-2xl font-bold">{listing.title}</h1>
+            {user && !isOwner && (
+              <button 
+                onClick={() => setIsReportModalOpen(true)}
+                className="text-xs font-semibold text-red-500 hover:text-red-600 bg-red-50 hover:bg-red-100 px-2.5 py-1.5 rounded transition-colors"
+                title="Report inappropriate content or bullying"
+              >
+                ⚠️ Report Post
+              </button>
+            )}
+          </div>
           <p className="mt-2 whitespace-pre-line text-cw-text-1">{listing.description}</p>
 
           <dl className="mt-4 grid gap-3 text-sm sm:grid-cols-2">
@@ -307,6 +320,14 @@ export default function ListingDetail() {
           </div>
         )}
       </div>
+
+      {isReportModalOpen && (
+        <ReportModal
+          reportedUser={listing.owner || { id: listing.owner_id, full_name: 'Listing Owner' }}
+          listingId={listing.id}
+          onClose={() => setIsReportModalOpen(false)}
+        />
+      )}
     </div>
   );
 }

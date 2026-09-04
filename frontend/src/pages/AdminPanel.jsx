@@ -53,6 +53,27 @@ export default function AdminPanel() {
     }
   };
 
+  const handleDeleteReport = async (reportId) => {
+    if (!window.confirm('Are you sure you want to ignore/delete this report?')) return;
+    try {
+      await api.admin.deleteReport(reportId);
+      loadData();
+    } catch (err) {
+      alert(err.message);
+    }
+  };
+
+  const handleTakeDownPost = async (listingId, reportId) => {
+    if (!window.confirm('Are you sure you want to take down this post permanently?')) return;
+    try {
+      await api.admin.deleteListing(listingId);
+      await api.admin.deleteReport(reportId); // Also delete the report since the post is gone
+      loadData();
+    } catch (err) {
+      alert(err.message);
+    }
+  };
+
   const openActionModal = (u, action) => {
     setModalUser(u);
     setModalAction(action);
@@ -205,18 +226,41 @@ export default function AdminPanel() {
               </div>
             )}
 
+            {r.listing_id && (
+              <div className="mt-4 p-3 bg-cw-bg-alt/50 rounded-lg border border-cw-border">
+                <p className="text-xs font-semibold text-cw-text-3 uppercase tracking-wider mb-1">Reported Post</p>
+                <p className="text-sm font-medium text-cw-text-1">
+                  {r.listing_title ? `"${r.listing_title}"` : <span className="italic text-cw-text-3">Post already deleted</span>}
+                </p>
+              </div>
+            )}
+
             <div className="mt-6 pt-4 border-t border-cw-border flex justify-between items-center text-sm">
               <div className="text-cw-text-2">
                 Reported <span className="font-semibold text-cw-text-1">{r.reported_name || r.reported_email}</span>
                 {' by '}
                 <span className="font-semibold text-cw-text-1">{r.reporter_name || r.reporter_email}</span>
               </div>
-              <div className="space-x-3">
+              <div className="space-x-2 flex items-center">
                 <button
                   onClick={() => openActionModal({ id: r.reported_user_id, full_name: r.reported_name, email: r.reported_email }, 'warn')}
-                  className="btn-ghost py-1 px-3 text-xs"
+                  className="btn-ghost py-1.5 px-3 text-xs"
                 >
                   Warn User
+                </button>
+                {r.listing_id && r.listing_title && (
+                  <button
+                    onClick={() => handleTakeDownPost(r.listing_id, r.id)}
+                    className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-red-500/10 text-red-500 hover:bg-red-500/20 transition-colors"
+                  >
+                    Take Down Post
+                  </button>
+                )}
+                <button
+                  onClick={() => handleDeleteReport(r.id)}
+                  className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-cw-bg-alt text-cw-text-2 hover:bg-red-50 hover:text-red-600 transition-colors"
+                >
+                  Ignore
                 </button>
               </div>
             </div>
