@@ -153,12 +153,12 @@ export default function Profile() {
         </div>
 
         {/* Trust score */}
-        <div className="flex items-center gap-6 border-t border-cw-border pt-4 w-full justify-center">
-          <div className="text-center">
+        <div className="flex flex-wrap items-center gap-6 border-t border-cw-border pt-4 w-full justify-center">
+          <div className="text-center px-4">
             <p className="text-2xl font-bold">{Number(user.rating_average ?? 0).toFixed(1)}</p>
             <p className="text-xs text-cw-text-3">Trust score</p>
           </div>
-          <div className="border-l border-cw-border pl-6 text-center">
+          <div className="border-l border-cw-border pl-6 px-4 text-center">
             <p className="text-2xl font-bold">{user.rating_count ?? 0}</p>
             <p className="text-xs text-cw-text-3">Reviews</p>
           </div>
@@ -251,12 +251,12 @@ export default function Profile() {
         <div className="mt-4 space-y-3">
           {reviews.map((review) => (
             <div key={review.id} className="card">
-              <div className="flex items-start justify-between gap-3">
+              <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>
                   <Stars rating={review.rating} />
                   <span className="ml-2 text-sm font-semibold text-cw-text-1">{review.rating}/5</span>
                 </div>
-                <p className="text-xs text-cw-text-3">{formatDate(review.created_at)}</p>
+                <p className="text-xs text-cw-text-3 w-full sm:w-auto">{formatDate(review.created_at)}</p>
               </div>
               {review.comment && (
                 <p className="mt-2 text-sm text-cw-text-1 whitespace-pre-line">{review.comment}</p>
