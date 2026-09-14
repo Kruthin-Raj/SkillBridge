@@ -10,8 +10,11 @@ export default function AdminPanel() {
   const [searchQuery, setSearchQuery] = useState('');
   const [users, setUsers] = useState([]);
   const [reports, setReports] = useState([]);
+  const [colleges, setColleges] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  
+  const [newCollege, setNewCollege] = useState({ domain: '', name: '' });
 
   const [modalOpen, setModalOpen] = useState(false);
   const [modalUser, setModalUser] = useState(null);
@@ -22,12 +25,14 @@ export default function AdminPanel() {
     setLoading(true);
     setError('');
     try {
-      const [usersData, reportsData] = await Promise.all([
+      const [usersData, reportsData, collegesData] = await Promise.all([
         api.admin.getUsers(),
         api.admin.getReports(),
+        api.admin.getColleges(),
       ]);
       setUsers(usersData.users);
       setReports(reportsData.reports);
+      setColleges(collegesData.colleges);
     } catch (err) {
       if (err.status === 403) {
         navigate('/');
@@ -68,6 +73,27 @@ export default function AdminPanel() {
     try {
       await api.admin.deleteListing(listingId);
       await api.admin.deleteReport(reportId); // Also delete the report since the post is gone
+      loadData();
+    } catch (err) {
+      alert(err.message);
+    }
+  };
+
+  const handleAddCollege = async (e) => {
+    e.preventDefault();
+    try {
+      await api.admin.createCollege(newCollege);
+      setNewCollege({ domain: '', name: '' });
+      loadData();
+    } catch (err) {
+      alert(err.message);
+    }
+  };
+
+  const handleDeleteCollege = async (domain) => {
+    if (!window.confirm(`Are you sure you want to delete ${domain}? This will permanently delete all users and posts from this college.`)) return;
+    try {
+      await api.admin.deleteCollege(domain);
       loadData();
     } catch (err) {
       alert(err.message);
@@ -270,6 +296,74 @@ export default function AdminPanel() {
     </div>
   );
 
+  const renderCollegesTab = () => (
+    <div className="space-y-6">
+      <div className="bg-cw-surface p-6 rounded-xl border border-cw-border">
+        <h3 className="text-lg font-semibold text-cw-text-1 mb-4">Add a New College</h3>
+        <form onSubmit={handleAddCollege} className="flex flex-col sm:flex-row gap-4">
+          <div className="flex-1">
+            <label className="block text-xs font-medium text-cw-text-2 mb-1">College Domain (e.g., stanford.edu)</label>
+            <input
+              type="text"
+              required
+              className="field w-full"
+              value={newCollege.domain}
+              onChange={e => setNewCollege({ ...newCollege, domain: e.target.value.toLowerCase() })}
+              placeholder="harvard.edu"
+            />
+          </div>
+          <div className="flex-1">
+            <label className="block text-xs font-medium text-cw-text-2 mb-1">College Name</label>
+            <input
+              type="text"
+              required
+              className="field w-full"
+              value={newCollege.name}
+              onChange={e => setNewCollege({ ...newCollege, name: e.target.value })}
+              placeholder="Harvard University"
+            />
+          </div>
+          <div className="flex items-end">
+            <button type="submit" className="btn-primary py-2 px-6">Add</button>
+          </div>
+        </form>
+      </div>
+
+      <div className="overflow-x-auto bg-cw-surface rounded-xl border border-cw-border">
+        <table className="w-full text-left text-sm text-cw-text-2">
+          <thead className="bg-cw-bg-alt text-xs uppercase text-cw-text-3">
+            <tr>
+              <th className="px-6 py-4 font-semibold">Domain</th>
+              <th className="px-6 py-4 font-semibold">Name</th>
+              <th className="px-6 py-4 font-semibold text-right">Actions</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-cw-border">
+            {colleges.map(c => (
+              <tr key={c.id} className="hover:bg-cw-bg-alt/50 transition-colors">
+                <td className="px-6 py-4 font-medium text-cw-text-1">@{c.domain}</td>
+                <td className="px-6 py-4">{c.name}</td>
+                <td className="px-6 py-4 text-right">
+                  <button
+                    onClick={() => handleDeleteCollege(c.domain)}
+                    className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-red-500/10 text-red-500 hover:bg-red-500/20 transition-colors"
+                  >
+                    Delete
+                  </button>
+                </td>
+              </tr>
+            ))}
+            {colleges.length === 0 && (
+              <tr>
+                <td colSpan="3" className="px-6 py-8 text-center text-cw-text-3">No colleges found.</td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+
   return (
     <div className="max-w-5xl mx-auto space-y-6 animate-fade-in">
       <div className="flex justify-between items-center">
@@ -310,6 +404,15 @@ export default function AdminPanel() {
           >
             Reports ({reports.length})
           </button>
+          <button
+            onClick={() => { setActiveTab('colleges'); setSearchQuery(''); }}
+            className={`whitespace-nowrap pb-4 px-1 border-b-2 font-medium text-sm transition-colors ${activeTab === 'colleges'
+                ? 'border-cw-accent text-cw-accent'
+                : 'border-transparent text-cw-text-2 hover:text-cw-text-1 hover:border-cw-border'
+              }`}
+          >
+            Assigned Colleges ({colleges.length})
+          </button>
         </nav>
       </div>
 
@@ -320,6 +423,7 @@ export default function AdminPanel() {
           {activeTab === 'users' && renderUsersTab()}
           {activeTab === 'blocked' && renderBlockedTab()}
           {activeTab === 'reports' && renderReportsTab()}
+          {activeTab === 'colleges' && renderCollegesTab()}
         </div>
       )}
 

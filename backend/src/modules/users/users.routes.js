@@ -41,12 +41,32 @@ router.get(
       return res.json({ users: [] });
     }
     
-    const { data, error } = await supabase
+    // Attempt to extract token to filter by college
+    let token = null;
+    const header = req.headers.authorization || '';
+    if (header.startsWith('Bearer ')) {
+      token = header.substring(7).trim();
+      if (token === 'null' || token === 'undefined') token = null;
+    }
+    let userCollegeId = null;
+    if (token) {
+      try {
+        const payload = (await import('jsonwebtoken')).default.verify(token, (await import('../../config/env.js')).env.jwtSecret);
+        userCollegeId = payload.college_id;
+      } catch (err) {}
+    }
+
+    let query = supabase
       .from(TABLES.users)
       .select('*')
       .neq('email', 'kruthin123@gmail.com')
-      .or(`full_name.ilike.%${q}%,email.ilike.%${q}%`)
-      .limit(20);
+      .or(`full_name.ilike.%${q}%,email.ilike.%${q}%`);
+      
+    if (userCollegeId) {
+      query = query.eq('college_id', userCollegeId);
+    }
+    
+    const { data, error } = await query.limit(20);
       
     if (error) throw ApiError.badRequest('Search failed');
     

@@ -33,7 +33,7 @@ export async function requireAuth(req, _res, next) {
       return next(ApiError.unauthorized('Your account has been blocked. Please contact support.'));
     }
 
-    req.user = { id: userId, email: payload.email };
+    req.user = { id: userId, email: payload.email, college_id: userRecord?.college_id || null };
     return next();
   } catch (err) {
     if (err instanceof ApiError) return next(err);
@@ -42,7 +42,7 @@ export async function requireAuth(req, _res, next) {
 }
 
 export function signToken(user) {
-  return jwt.sign({ sub: user.id, email: user.email }, env.jwtSecret, {
+  return jwt.sign({ sub: user.id, email: user.email, college_id: user.college_id || null }, env.jwtSecret, {
     expiresIn: env.jwtExpiresIn,
   });
 }
