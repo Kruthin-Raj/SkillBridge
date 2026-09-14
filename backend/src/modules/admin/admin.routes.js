@@ -183,4 +183,58 @@ router.delete(
   })
 );
 
+/** GET /api/admin/colleges - Get all colleges */
+router.get(
+  '/colleges',
+  requireAuth,
+  requireAdmin,
+  asyncHandler(async (req, res) => {
+    const colleges = await db.findMany(
+      TABLES.colleges,
+      {},
+      { orderBy: 'created_at', ascending: false, limit: 100 }
+    );
+    res.json({ colleges });
+  })
+);
+
+/** POST /api/admin/colleges - Create a new college */
+router.post(
+  '/colleges',
+  requireAuth,
+  requireAdmin,
+  asyncHandler(async (req, res) => {
+    const { domain, name } = req.body;
+    if (!domain || !name) throw ApiError.badRequest('Domain and Name are required');
+    
+    // Check if domain exists
+    const existing = await db.findOne(TABLES.colleges, { domain });
+    if (existing) throw ApiError.conflict('College domain already exists');
+
+    const college = await db.insert(TABLES.colleges, { domain, name });
+    res.status(201).json({ college });
+  })
+);
+
+/** DELETE /api/admin/colleges/:domain - Delete a college */
+router.delete(
+  '/colleges/:domain',
+  requireAuth,
+  requireAdmin,
+  asyncHandler(async (req, res) => {
+    const { domain } = req.params;
+    const college = await db.findOne(TABLES.colleges, { domain });
+    if (!college) throw ApiError.notFound('College not found');
+
+    // Manually cascade delete all users that belong to this college
+    // (Listings, bids, exchanges, etc. will cascade automatically because 
+    // their foreign keys point to users with ON DELETE CASCADE)
+    await db.remove(TABLES.users, { college_id: college.id });
+
+    // Now delete the college itself
+    await db.remove(TABLES.colleges, { domain });
+    res.json({ success: true });
+  })
+);
+
 export default router;

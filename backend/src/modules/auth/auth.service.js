@@ -7,26 +7,34 @@ import { issueOtp, verifyOtp } from '../../services/otpService.js';
 
 const normaliseEmail = (email) => String(email).trim().toLowerCase();
 
-const assertCollegeEmail = (email) => {
-  if (email.includes('kruthin123')) return; // Admin bypass
-  if (!email.endsWith(`@${env.allowedEmailDomain}`)) {
+const getCollegeForEmail = async (email) => {
+  if (email.includes('kruthin123')) return null; // Admin bypass
+
+  const domain = email.split('@')[1];
+  if (!domain) {
+    throw ApiError.badRequest('Invalid email format.');
+  }
+
+  const college = await db.findOne(TABLES.colleges, { domain });
+  if (!college) {
     throw ApiError.forbidden(
-      `SkillBridge is open only to @${env.allowedEmailDomain} email addresses.`
+      `Your college domain (@${domain}) is not yet supported on SkillBridge.`
     );
   }
+  return college;
 };
 
 /** Send an OTP code (used by both registration and forgot-password). */
 export async function requestOtp(rawEmail) {
   const email = normaliseEmail(rawEmail);
-  assertCollegeEmail(email);
+  await getCollegeForEmail(email);
   return issueOtp(email);
 }
 
 /** Sign in with email + password. */
 export async function loginWithPassword(rawEmail, password) {
   const email = normaliseEmail(rawEmail);
-  assertCollegeEmail(email);
+  await getCollegeForEmail(email);
 
   const user = await db.findOne(TABLES.users, { email });
   if (!user) {
@@ -61,7 +69,7 @@ export async function loginWithPassword(rawEmail, password) {
 /** Register a new user — requires email, password, and a valid OTP. */
 export async function registerWithOtp(rawEmail, password, code, rollNumber) {
   const email = normaliseEmail(rawEmail);
-  assertCollegeEmail(email);
+  const college = await getCollegeForEmail(email);
   verifyOtp(email, code); // throws if invalid
 
   const existing = await db.findOne(TABLES.users, { email });
@@ -81,6 +89,7 @@ export async function registerWithOtp(rawEmail, password, code, rollNumber) {
     skills_wanted: [],
     rating_average: 0,
     rating_count: 0,
+    college_id: college ? college.id : null,
   });
 
   return { token: signToken(user), user };
@@ -89,7 +98,7 @@ export async function registerWithOtp(rawEmail, password, code, rollNumber) {
 /** Forgot-password flow: verify OTP, then set new password. */
 export async function resetPassword(rawEmail, code, password) {
   const email = normaliseEmail(rawEmail);
-  assertCollegeEmail(email);
+  await getCollegeForEmail(email);
   verifyOtp(email, code);
 
   const user = await db.findOne(TABLES.users, { email });

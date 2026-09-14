@@ -8,6 +8,21 @@
 create extension if not exists "pgcrypto";
 
 -- ---------------------------------------------------------------------------
+-- colleges
+-- ---------------------------------------------------------------------------
+create table if not exists public.colleges (
+  id         uuid primary key default gen_random_uuid(),
+  domain     text not null unique,
+  name       text not null,
+  created_at timestamptz not null default now()
+);
+
+-- Seed initial college
+insert into public.colleges (domain, name) 
+values ('apollouniversity.edu.in', 'Apollo University') 
+on conflict do nothing;
+
+-- ---------------------------------------------------------------------------
 -- users
 -- ---------------------------------------------------------------------------
 create table if not exists public.users (
@@ -21,10 +36,13 @@ create table if not exists public.users (
   skills_wanted  text[]      not null default '{}',
   rating_average numeric(3,2) not null default 0,
   rating_count   integer     not null default 0,
+  college_id     uuid        references public.colleges(id) on delete set null,
   last_read_at   timestamptz not null default now(),
   created_at     timestamptz not null default now(),
   updated_at     timestamptz not null default now()
 );
+
+create index if not exists users_college_idx on public.users (college_id);
 
 -- ---------------------------------------------------------------------------
 -- listings  -  one table serves both modes (slide 9)
@@ -38,6 +56,7 @@ create table if not exists public.listings (
   title           text not null,
   description     text not null,
   tags            text[] not null default '{}',
+  college_id      uuid references public.colleges(id) on delete cascade,
 
   -- freelance only
   budget          integer,
@@ -72,6 +91,7 @@ create table if not exists public.listings (
 
 create index if not exists listings_mode_status_idx on public.listings (mode, status);
 create index if not exists listings_owner_idx       on public.listings (owner_id);
+create index if not exists listings_college_idx     on public.listings (college_id);
 
 -- ---------------------------------------------------------------------------
 -- bids  -  freelance mode

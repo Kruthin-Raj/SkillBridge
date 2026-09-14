@@ -128,5 +128,8 @@ export const api = {
     unblockUser: (id, payload) => request(`/api/admin/users/${id}/unblock`, { method: 'POST', body: payload }),
     deleteReport: (id) => request(`/api/admin/reports/${id}`, { method: 'DELETE' }),
     deleteListing: (id) => request(`/api/admin/listings/${id}`, { method: 'DELETE' }),
+    getColleges: () => request('/api/admin/colleges'),
+    createCollege: (college) => request('/api/admin/colleges', { method: 'POST', body: college }),
+    deleteCollege: (domain) => request(`/api/admin/colleges/${encodeURIComponent(domain)}`, { method: 'DELETE' }),
   },
 };

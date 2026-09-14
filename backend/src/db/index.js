@@ -36,4 +36,5 @@ export const TABLES = {
   messages: 'messages',
   reports: 'reports',
   admin_actions: 'admin_actions',
+  colleges: 'colleges',
 };

@@ -42,7 +42,25 @@ const statusSchema = z.object({ status: z.enum(LISTING_STATUSES) });
 router.get(
   '/',
   asyncHandler(async (req, res) => {
+    // Attempt to extract token to filter by college
+    let token = null;
+    const header = req.headers.authorization || '';
+    if (header.startsWith('Bearer ')) {
+      token = header.substring(7).trim();
+      if (token === 'null' || token === 'undefined') token = null;
+    }
+    let userCollegeId = null;
+    if (token) {
+      try {
+        const payload = (await import('jsonwebtoken')).default.verify(token, (await import('../../config/env.js')).env.jwtSecret);
+        userCollegeId = payload.college_id;
+      } catch (err) {}
+    }
+
     const where = {};
+    if (userCollegeId) {
+      where.college_id = userCollegeId;
+    }
     if (req.query.owner_id) {
       where.owner_id = req.query.owner_id;
     } else {
@@ -162,6 +180,7 @@ router.post(
     const listing = await db.insert(TABLES.listings, {
       ...payload,
       owner_id: req.user.id,
+      college_id: req.user.college_id,
       status: 'open',
       worker_status: 'todo',
     });
