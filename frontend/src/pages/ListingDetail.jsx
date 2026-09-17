@@ -14,6 +14,7 @@ export default function ListingDetail() {
 
   const [listing, setListing] = useState(null);
   const [bids, setBids] = useState([]);
+  const [teamApps, setTeamApps] = useState([]);
   const [form, setForm] = useState({ amount: '', message: '' });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
@@ -36,6 +37,9 @@ export default function ListingDetail() {
       if (found.mode === 'freelance' && user) {
         const { bids: list } = await api.bids.forListing(id);
         setBids(list);
+      } else if (found.mode === 'team' && user) {
+        const { applications: list } = await api.teams.list(id);
+        setTeamApps(list);
       }
     } catch (err) {
       setError(err.message);
@@ -64,6 +68,17 @@ export default function ListingDetail() {
       await api.bids.create({
         listing_id: id,
         amount: Number(form.amount),
+        message: form.message.trim(),
+      });
+      setForm({ amount: '', message: '' });
+    });
+  };
+
+  const submitTeamApp = (event) => {
+    event.preventDefault();
+    return handleAction(async () => {
+      await api.teams.apply({
+        listing_id: id,
         message: form.message.trim(),
       });
       setForm({ amount: '', message: '' });
@@ -346,10 +361,105 @@ export default function ListingDetail() {
         )}
 
         {/* Exchange mode: propose the swap. */}
-        {user && !isFreelance && !isOwner && listing.status === 'open' && (
+        {user && listing.mode === 'exchange' && !isOwner && listing.status === 'open' && (
           <button type="button" onClick={proposeSwap} className="btn-primary">
             Propose a swap
           </button>
+        )}
+
+        {/* Team mode: apply or accept applications */}
+        {user && isTeam && (
+          <div className="card">
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="font-semibold">Applications ({teamApps.length})</h2>
+              {isOwner && (
+                <button
+                  type="button"
+                  onClick={() => handleAction(() => api.listings.setStatus(id, listing.status === 'open' ? 'closed' : 'open'))}
+                  className="text-xs font-medium underline text-cw-text-2 hover:text-cw-text-1"
+                >
+                  {listing.status === 'open' ? 'Close to new applications' : 'Reopen to new applications'}
+                </button>
+              )}
+            </div>
+
+            <ul className="space-y-3">
+              {teamApps.map((app) => (
+                <li
+                  key={app.id}
+                  className="flex flex-col gap-2 rounded-lg border border-cw-border bg-cw-surface p-3"
+                >
+                  <div className="flex items-start justify-between">
+                    <div className="flex items-center gap-3">
+                      {app.applicant?.avatar_url ? (
+                        <img src={app.applicant.avatar_url} alt="avatar" className="w-8 h-8 rounded-full object-cover" />
+                      ) : (
+                        <div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600 font-bold text-xs">
+                          {app.applicant?.full_name?.charAt(0) || '?'}
+                        </div>
+                      )}
+                      <div>
+                        <p className="font-semibold">{app.applicant?.full_name || 'Student'}</p>
+                        <p className="text-xs text-cw-text-2">{app.applicant?.skills_offered}</p>
+                      </div>
+                    </div>
+                    <span className="chip capitalize">{app.status}</span>
+                  </div>
+                  {app.message && <p className="text-sm text-cw-text-1 mt-1 bg-cw-bg-alt p-2 rounded">{app.message}</p>}
+                  
+                  {isOwner && (
+                    <div className="flex gap-2 mt-2">
+                      {app.status === 'pending' && listing.status === 'open' && (
+                        <button
+                          type="button"
+                          onClick={() => handleAction(() => api.teams.accept(app.id))}
+                          className="btn-primary text-xs py-1"
+                        >
+                          Accept
+                        </button>
+                      )}
+                      {app.status === 'accepted' && (
+                        <button
+                          type="button"
+                          onClick={() => handleAction(() => api.teams.remove(app.id))}
+                          className="btn-ghost text-xs py-1 text-red-500 hover:text-red-600"
+                        >
+                          Remove
+                        </button>
+                      )}
+                    </div>
+                  )}
+                </li>
+              ))}
+              {teamApps.length === 0 && <li className="text-sm text-cw-text-3">No applications yet.</li>}
+            </ul>
+
+            {!isOwner && listing.status === 'open' && teamApps.length === 0 && (
+              <form onSubmit={submitTeamApp} className="mt-4 space-y-3 border-t border-cw-border pt-4">
+                <div>
+                  <label htmlFor="message" className="label">
+                    Why you want to join
+                  </label>
+                  <textarea
+                    id="message"
+                    rows={2}
+                    value={form.message}
+                    onChange={(event) => setForm({ ...form, message: event.target.value })}
+                    placeholder="E.g. I have experience with React and would love to help..."
+                    className="field"
+                  />
+                </div>
+                <button type="submit" className="btn-primary w-full">
+                  Apply to Team
+                </button>
+              </form>
+            )}
+            {!isOwner && listing.status === 'closed' && teamApps.length === 0 && (
+              <div className="mt-4 border-t border-cw-border pt-4 text-sm text-cw-text-3 text-center">
+                This team is currently closed and not accepting new members.
+              </div>
+            )}
+          </div>
         )}
       </div>
 

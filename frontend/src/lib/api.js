@@ -105,6 +105,13 @@ export const api = {
     accept: (id) => request(`/api/exchanges/${id}/accept`, { method: 'POST' }),
   },
 
+  teams: {
+    list: (listingId) => request(`/api/teams?listing_id=${listingId}`),
+    apply: (payload) => request('/api/teams', { method: 'POST', body: payload }),
+    accept: (id) => request(`/api/teams/${id}/accept`, { method: 'POST' }),
+    remove: (id) => request(`/api/teams/${id}/remove`, { method: 'POST' }),
+  },
+
   reviews: {
     forUser: (userId) => request(`/api/reviews?user_id=${userId}`, { auth: false }),
     create: (review) => request('/api/reviews', { method: 'POST', body: review }),

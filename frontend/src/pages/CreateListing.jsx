@@ -31,18 +31,56 @@ export default function CreateListing() {
     const file = event.target.files?.[0];
     if (!file) return;
 
-    if (file.size > 200 * 1024) {
-      setError('Image too large. Please use an image under 200 KB.');
-      return;
-    }
-
     setError('');
+    
     const reader = new FileReader();
-    reader.onload = () => {
-      setImagePreview(reader.result);
-      setImageBase64(reader.result);
-    };
     reader.readAsDataURL(file);
+    
+    reader.onload = (e) => {
+      const img = new Image();
+      img.src = e.target.result;
+      
+      img.onload = () => {
+        const MAX_WIDTH = 1024;
+        const MAX_HEIGHT = 1024;
+        let width = img.width;
+        let height = img.height;
+
+        if (width > height) {
+          if (width > MAX_WIDTH) {
+            height = Math.round((height *= MAX_WIDTH / width));
+            width = MAX_WIDTH;
+          }
+        } else {
+          if (height > MAX_HEIGHT) {
+            width = Math.round((width *= MAX_HEIGHT / height));
+            height = MAX_HEIGHT;
+          }
+        }
+
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, width, height);
+
+        // Compress to JPEG with 0.7 quality
+        const dataUrl = canvas.toDataURL('image/jpeg', 0.7);
+        
+        // Rough estimate of base64 size: length * 3/4
+        const estimatedSize = Math.round((dataUrl.length * 3) / 4);
+        
+        if (estimatedSize > 250 * 1024) {
+          // If still too large, compress more
+          const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.5);
+          setImagePreview(compressedDataUrl);
+          setImageBase64(compressedDataUrl);
+        } else {
+          setImagePreview(dataUrl);
+          setImageBase64(dataUrl);
+        }
+      };
+    };
   };
 
   const removeImage = () => {
@@ -236,6 +274,7 @@ export default function CreateListing() {
               <select
                 id="subType"
                 value={subType}
+                onChange={(e) => setSubType(e.target.value)}
                 className="field"
               >
                 <option value="exchange">Skill Exchange</option>

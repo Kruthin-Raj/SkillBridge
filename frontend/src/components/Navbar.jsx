@@ -102,7 +102,7 @@ export default function Navbar() {
                 </button>
 
                 {dropdownOpen && (
-                  <div className="dropdown animate-fade-in">
+                  <div className="dropdown animate-fade-in !left-0 !right-auto">
                     <div className="px-4 py-2 border-b border-cw-accent/10 bg-cw-bg-alt rounded-t-xl">
                       <p className="text-sm font-semibold text-cw-text-1 truncate">
                         {user.full_name || 'Student'}

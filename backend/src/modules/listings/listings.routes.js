@@ -13,7 +13,7 @@ const router = Router();
  *   exchange  - has skill_offered / skill_wanted, receives matches
  */
 export const LISTING_MODES = ['freelance', 'exchange', 'team'];
-export const LISTING_STATUSES = ['open', 'in_progress', 'completed', 'cancelled'];
+export const LISTING_STATUSES = ['open', 'in_progress', 'completed', 'cancelled', 'closed'];
 
 const baseSchema = z.object({
   title: z.string().min(5).max(120),
@@ -150,6 +150,19 @@ router.get(
               full_name: user.full_name,
               avatar_url: user.avatar_url,
               role: 'exchange_partner'
+            });
+          }
+        }
+      } else if (listing.mode === 'team') {
+        const acceptedTeam = await db.findMany('team_applications', { listing_id: listing.id, status: 'accepted' });
+        for (const app of acceptedTeam) {
+          const user = await db.findOne(TABLES.users, { id: app.applicant_id });
+          if (user) {
+            assigned_users.push({
+              id: user.id,
+              full_name: user.full_name,
+              avatar_url: user.avatar_url,
+              role: 'team_member'
             });
           }
         }
