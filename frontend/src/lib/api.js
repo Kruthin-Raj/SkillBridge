@@ -78,6 +78,7 @@ export const api = {
     forOwner: (ownerId) => request(`/api/listings?owner_id=${ownerId}`, { auth: false }),
     get: (id) => request(`/api/listings/${id}`),
     create: (listing) => request('/api/listings', { method: 'POST', body: listing }),
+    update: (id, listing) => request(`/api/listings/${id}`, { method: 'PATCH', body: listing }),
     setStatus: (id, status) =>
       request(`/api/listings/${id}/status`, { method: 'PATCH', body: { status } }),
     setWorkerStatus: (id, worker_status) =>

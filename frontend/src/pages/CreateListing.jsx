@@ -18,7 +18,6 @@ export default function CreateListing() {
   const navigate = useNavigate();
   const fileInputRef = useRef(null);
   const [mode, setMode] = useState('freelance');
-  const [subType, setSubType] = useState('exchange'); // 'exchange' or 'team'
   const [form, setForm] = useState(emptyForm);
   const [imagePreview, setImagePreview] = useState('');
   const [imageBase64, setImageBase64] = useState('');
@@ -111,17 +110,18 @@ export default function CreateListing() {
     }
 
     if (mode === 'exchange') {
-      if (subType === 'team') {
-        return {
-          ...base,
-          mode: 'team', // override mode in payload
-          people_required: Number(form.people_required),
-        };
-      }
       return {
         ...base,
         skill_offered: form.skill_offered.trim(),
         skill_wanted: form.skill_wanted.trim(),
+      };
+    }
+    
+    if (mode === 'team') {
+      return {
+        ...base,
+        people_required: Number(form.people_required),
+        deadline: new Date(form.deadline).toISOString(),
       };
     }
     return base;
@@ -167,7 +167,7 @@ export default function CreateListing() {
             placeholder={
               mode === 'freelance'
                 ? 'Design a poster for our tech fest'
-                : subType === 'team' ? 'Looking for 3 people for hackathon' : 'I can teach Python, I want to learn Figma'
+                : mode === 'team' ? 'Looking for 3 people for hackathon' : 'I can teach Python, I want to learn Figma'
             }
             className="field"
           />
@@ -265,69 +265,65 @@ export default function CreateListing() {
               />
             </div>
           </div>
-        ) : (
-          <div className="space-y-4">
+        ) : mode === 'exchange' ? (
+          <div className="grid gap-4 sm:grid-cols-2">
             <div>
-              <label htmlFor="subType" className="label">
-                Listing Type
+              <label htmlFor="skill_offered" className="label">
+                Skill you can teach
               </label>
-              <select
-                id="subType"
-                value={subType}
-                onChange={(e) => setSubType(e.target.value)}
+              <input
+                id="skill_offered"
+                required
+                value={form.skill_offered}
+                onChange={update('skill_offered')}
+                placeholder="Python"
                 className="field"
-              >
-                <option value="exchange">Skill Exchange</option>
-                <option value="team">Find Team</option>
-              </select>
+              />
             </div>
-
-            {subType === 'exchange' ? (
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div>
-                  <label htmlFor="skill_offered" className="label">
-                    Skill you can teach
-                  </label>
-                  <input
-                    id="skill_offered"
-                    required
-                    value={form.skill_offered}
-                    onChange={update('skill_offered')}
-                    placeholder="Python"
-                    className="field"
-                  />
-                </div>
-                <div>
-                  <label htmlFor="skill_wanted" className="label">
-                    Skill you want to learn
-                  </label>
-                  <input
-                    id="skill_wanted"
-                    required
-                    value={form.skill_wanted}
-                    onChange={update('skill_wanted')}
-                    placeholder="Figma"
-                    className="field"
-                  />
-                </div>
-              </div>
-            ) : (
-              <div>
-                <label htmlFor="people_required" className="label">
-                  Number of people required
-                </label>
-                <input
-                  id="people_required"
-                  type="number"
-                  min="1"
-                  max="100"
-                  required
-                  value={form.people_required}
-                  onChange={update('people_required')}
-                  className="field"
-                />
-              </div>
-            )}
+            <div>
+              <label htmlFor="skill_wanted" className="label">
+                Skill you want to learn
+              </label>
+              <input
+                id="skill_wanted"
+                required
+                value={form.skill_wanted}
+                onChange={update('skill_wanted')}
+                placeholder="Figma"
+                className="field"
+              />
+            </div>
+          </div>
+        ) : (
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div>
+              <label htmlFor="people_required" className="label">
+                Number of people required
+              </label>
+              <input
+                id="people_required"
+                type="number"
+                min="1"
+                max="100"
+                required
+                value={form.people_required}
+                onChange={update('people_required')}
+                className="field"
+              />
+            </div>
+            <div>
+              <label htmlFor="deadline" className="label">
+                Deadline
+              </label>
+              <input
+                id="deadline"
+                type="date"
+                required
+                value={form.deadline}
+                onChange={update('deadline')}
+                className="field"
+              />
+            </div>
           </div>
         )}
 

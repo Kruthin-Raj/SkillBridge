@@ -141,7 +141,7 @@ export default function Navbar() {
             {user && (
               <Link
                 to="/notifications"
-                className="relative rounded-lg p-2 mr-2 text-cw-text-2 transition hover:bg-cw-bg-alt hover:text-cw-accent z-10"
+                className="relative inline-flex items-center justify-center rounded-lg p-2 mr-2 text-cw-text-2 transition hover:bg-cw-bg-alt hover:text-cw-accent z-10"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
@@ -208,7 +208,7 @@ export default function Navbar() {
               <div className="hidden md:block">
                 <Link
                   to="/notifications"
-                  className="relative rounded-lg p-2 text-cw-text-2 transition hover:bg-cw-bg-alt hover:text-cw-accent z-10"
+                  className="relative inline-flex items-center justify-center rounded-lg p-2 text-cw-text-2 transition hover:bg-cw-bg-alt hover:text-cw-accent z-10"
                   title="Notifications"
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">

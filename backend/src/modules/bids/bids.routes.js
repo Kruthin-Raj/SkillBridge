@@ -22,6 +22,21 @@ router.get(
     if (!listingId) throw ApiError.badRequest('listing_id query parameter is required');
 
     const bids = await db.findMany(TABLES.bids, { listing_id: listingId }, { limit: 100 });
+    
+    // Attach user details for each bid
+    for (const bid of bids) {
+      const user = await db.findOne(TABLES.users, { id: bid.bidder_id });
+      if (user) {
+        bid.bidder = {
+          id: user.id,
+          full_name: user.full_name,
+          avatar_url: user.avatar_url,
+          rating_average: user.rating_average,
+          rating_count: user.rating_count,
+        };
+      }
+    }
+
     res.json({ bids });
   })
 );

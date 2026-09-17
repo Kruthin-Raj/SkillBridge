@@ -5,6 +5,7 @@
 const MODES = [
   { value: 'freelance', label: 'Freelance', hint: 'Paid tasks with bids' },
   { value: 'exchange', label: 'Skill Exchange', hint: 'Swap skills, no money' },
+  { value: 'team', label: 'Team Finder', hint: 'Find teammates for a project' },
 ];
 
 export default function ModeToggle({ mode, onChange }) {
@@ -21,7 +22,7 @@ export default function ModeToggle({ mode, onChange }) {
             aria-pressed={active}
             className={`rounded-lg px-4 py-2 text-sm font-medium transition ${
               active
-                ? `text-white ${option.value === 'freelance' ? 'bg-freelance' : 'bg-exchange'}`
+                ? `text-white ${option.value === 'freelance' ? 'bg-freelance' : option.value === 'team' ? 'bg-indigo-500' : 'bg-exchange'}`
                 : 'text-cw-text-2 hover:bg-cw-bg-alt hover:text-cw-text-1'
             }`}
           >

@@ -37,6 +37,7 @@ const exchangeSchema = baseSchema.extend({
 const teamSchema = baseSchema.extend({
   mode: z.literal('team'),
   people_required: z.number().int().positive().max(100),
+  deadline: z.string().datetime({ message: 'deadline must be an ISO date-time' }),
 });
 
 const createSchema = z.discriminatedUnion('mode', [freelanceSchema, exchangeSchema, teamSchema]);
@@ -203,6 +204,45 @@ router.post(
       worker_status: 'todo',
     });
     res.status(201).json({ listing });
+  })
+);
+
+/** PATCH /api/listings/:id - owner edits the listing details. */
+router.patch(
+  '/:id',
+  requireAuth,
+  asyncHandler(async (req, res) => {
+    const listing = await db.findOne(TABLES.listings, { id: req.params.id });
+    if (!listing) throw ApiError.notFound('Listing not found');
+    if (listing.owner_id !== req.user.id) {
+      throw ApiError.forbidden('Only the person who posted this listing can edit it');
+    }
+    
+    if (listing.status !== 'open') {
+       throw ApiError.forbidden('Cannot edit a listing that is already in progress or completed. If you want to change people required, you can still do that in the post details.');
+    }
+
+    // Force mode, title, and description to remain the same to prevent scams
+    const updates = { 
+      ...req.body, 
+      mode: listing.mode,
+      title: listing.title,
+      description: listing.description
+    };
+    const merged = { ...listing, ...updates };
+
+    // Format dates correctly for validation if they exist
+    if (merged.deadline && typeof merged.deadline === 'object') {
+       merged.deadline = merged.deadline.toISOString();
+    } else if (merged.deadline && typeof merged.deadline === 'string' && !merged.deadline.includes('T')) {
+       // Just in case it's a plain date, make it ISO
+       merged.deadline = new Date(merged.deadline).toISOString();
+    }
+
+    const payload = createSchema.parse(merged);
+
+    const updated = await db.update(TABLES.listings, { id: listing.id }, payload);
+    res.json({ listing: updated });
   })
 );
 
