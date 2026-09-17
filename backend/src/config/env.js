@@ -19,7 +19,6 @@ export const env = {
   jwtSecret: process.env.JWT_SECRET || 'dev-only-insecure-secret-change-me',
   jwtExpiresIn: process.env.JWT_EXPIRES_IN || '7d',
 
-  allowedEmailDomain: (process.env.ALLOWED_EMAIL_DOMAIN || 'apollouniversity.edu.in').toLowerCase(),
 
   otp: {
     length: 6,
