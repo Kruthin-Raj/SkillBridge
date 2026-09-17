@@ -12,8 +12,7 @@ app.listen(env.port, () => {
   console.log(`  health   : http://localhost:${env.port}/health`);
   console.log(`  env      : ${env.nodeEnv}`);
   console.log(`  database : ${db.kind}`);
-  console.log(`  mail     : ${env.mail.driver}`);
-  console.log(`  domain   : @${env.allowedEmailDomain}\n`);
+  console.log(`  mail     : ${env.mail.driver}\n`);
 });
 
 // Never let a swallowed rejection leave the process in a half-dead state.
