@@ -236,8 +236,7 @@ export default function CreateListing() {
               <select
                 id="subType"
                 value={subType}
-                onChange={(e) => setSubType(e.target.value)}
-                className="field bg-white"
+                className="field"
               >
                 <option value="exchange">Skill Exchange</option>
                 <option value="team">Find Team</option>
