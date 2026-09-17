@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import PasswordInput from '../components/PasswordInput';
 
-const COLLEGE_DOMAIN = import.meta.env.VITE_COLLEGE_DOMAIN || 'apollouniversity.edu.in';
+// removed COLLEGE_DOMAIN
 
 export default function Register() {
   const { requestOtp, register } = useAuth();
@@ -119,7 +119,7 @@ export default function Register() {
     <div className="mx-auto max-w-md animate-fade-in">
       <h1 className="text-2xl font-bold">Create your account</h1>
       <p className="mt-2 text-sm text-cw-text-2">
-        Only <strong>@{COLLEGE_DOMAIN}</strong> email addresses can register — verified students only.
+        Only verified college email addresses can register.
       </p>
 
       <form onSubmit={handleSendOtp} className="card mt-6 space-y-4">
@@ -132,7 +132,7 @@ export default function Register() {
             autoComplete="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            placeholder={`yourname@${COLLEGE_DOMAIN}`}
+            placeholder="yourname@yourcollege.edu"
             className="field"
           />
         </div>

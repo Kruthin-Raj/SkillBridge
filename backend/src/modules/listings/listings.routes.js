@@ -12,7 +12,7 @@ const router = Router();
  *   freelance - has a budget and a deadline, receives bids
  *   exchange  - has skill_offered / skill_wanted, receives matches
  */
-export const LISTING_MODES = ['freelance', 'exchange'];
+export const LISTING_MODES = ['freelance', 'exchange', 'team'];
 export const LISTING_STATUSES = ['open', 'in_progress', 'completed', 'cancelled'];
 
 const baseSchema = z.object({
@@ -34,7 +34,12 @@ const exchangeSchema = baseSchema.extend({
   skill_wanted: z.string().min(2).max(40),
 });
 
-const createSchema = z.discriminatedUnion('mode', [freelanceSchema, exchangeSchema]);
+const teamSchema = baseSchema.extend({
+  mode: z.literal('team'),
+  people_required: z.number().int().positive().max(100),
+});
+
+const createSchema = z.discriminatedUnion('mode', [freelanceSchema, exchangeSchema, teamSchema]);
 
 const statusSchema = z.object({ status: z.enum(LISTING_STATUSES) });
 
@@ -241,6 +246,45 @@ router.patch(
 
     const updated = await db.update(TABLES.listings, { id: listing.id }, { worker_status });
     res.json({ listing: updated });
+  })
+);
+
+const peopleRequiredSchema = z.object({ people_required: z.number().int().positive().max(100) });
+
+/** PATCH /api/listings/:id/people - owner updates the number of people required (team mode only). */
+router.patch(
+  '/:id/people',
+  requireAuth,
+  asyncHandler(async (req, res) => {
+    const { people_required } = peopleRequiredSchema.parse(req.body);
+
+    const listing = await db.findOne(TABLES.listings, { id: req.params.id });
+    if (!listing) throw ApiError.notFound('Listing not found');
+    if (listing.owner_id !== req.user.id) {
+      throw ApiError.forbidden('Only the person who posted this listing can update it');
+    }
+    if (listing.mode !== 'team') {
+      throw ApiError.badRequest('Can only update people_required on team listings');
+    }
+
+    const updated = await db.update(TABLES.listings, { id: listing.id }, { people_required });
+    res.json({ listing: updated });
+  })
+);
+
+/** DELETE /api/listings/:id - owner deletes their own listing. */
+router.delete(
+  '/:id',
+  requireAuth,
+  asyncHandler(async (req, res) => {
+    const listing = await db.findOne(TABLES.listings, { id: req.params.id });
+    if (!listing) throw ApiError.notFound('Listing not found');
+    if (listing.owner_id !== req.user.id) {
+      throw ApiError.forbidden('Only the person who posted this listing can delete it');
+    }
+
+    await db.remove(TABLES.listings, { id: listing.id });
+    res.json({ success: true });
   })
 );
 

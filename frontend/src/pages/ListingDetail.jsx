@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { api } from '../lib/api';
 import { useAuth } from '../context/AuthContext';
 import TaskProgress from '../components/TaskProgress';
@@ -18,6 +18,10 @@ export default function ListingDetail() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
+  const navigate = useNavigate();
+
+  const [editingPeople, setEditingPeople] = useState(false);
+  const [editPeopleVal, setEditPeopleVal] = useState('');
 
   const isOwner = user && listing && listing.owner_id === user.id;
   const isParticipant = listing && listing.is_participant;
@@ -66,6 +70,28 @@ export default function ListingDetail() {
     });
   };
 
+  const handleDelete = async () => {
+    if (!window.confirm('Are you sure you want to delete this listing?')) return;
+    setError('');
+    try {
+      await api.listings.delete(id);
+      navigate('/browse');
+    } catch (err) {
+      setError(err.message);
+    }
+  };
+
+  const handleUpdatePeople = async () => {
+    setError('');
+    try {
+      await api.listings.updatePeopleRequired(id, Number(editPeopleVal));
+      setEditingPeople(false);
+      await load();
+    } catch (err) {
+      setError(err.message);
+    }
+  };
+
   const proposeSwap = () =>
     handleAction(() =>
       api.exchanges.propose({ listing_id: id, message: 'I would like to swap skills with you.' })
@@ -75,6 +101,7 @@ export default function ListingDetail() {
   if (!listing) return <p className="text-sm text-red-700">{error || 'Listing not found.'}</p>;
 
   const isFreelance = listing.mode === 'freelance';
+  const isTeam = listing.mode === 'team';
   const isExpired = isFreelance && listing.deadline && new Date(listing.deadline) < new Date();
   
   // Determine who to review (the other participant)
@@ -93,10 +120,10 @@ export default function ListingDetail() {
         <div className="card overflow-hidden">
           <span
             className={`rounded-full px-2.5 py-0.5 text-xs font-semibold text-white ${
-              isExpired ? 'bg-cw-border text-cw-text-1' : isFreelance ? 'bg-freelance' : 'bg-exchange'
+              isExpired ? 'bg-cw-border text-cw-text-1' : isFreelance ? 'bg-freelance' : isTeam ? 'bg-indigo-500' : 'bg-exchange'
             }`}
           >
-            {isExpired ? 'Expired' : isFreelance ? 'Freelance' : 'Exchange'}
+            {isExpired ? 'Expired' : isFreelance ? 'Freelance' : isTeam ? 'Team Finder' : 'Exchange'}
           </span>
 
           {listing.image_url && (
@@ -120,6 +147,15 @@ export default function ListingDetail() {
                 ⚠️ Report Post
               </button>
             )}
+            {isOwner && (
+              <button 
+                onClick={handleDelete}
+                className="text-xs font-semibold text-red-500 hover:text-red-600 bg-red-50 hover:bg-red-100 px-2.5 py-1.5 rounded transition-colors"
+                title="Delete this listing"
+              >
+                Delete Post
+              </button>
+            )}
           </div>
           <p className="mt-2 whitespace-pre-line text-cw-text-1">{listing.description}</p>
 
@@ -137,6 +173,36 @@ export default function ListingDetail() {
                   </dd>
                 </div>
               </>
+            ) : isTeam ? (
+              <div className="col-span-2">
+                <dt className="text-cw-text-2">Looking for</dt>
+                {editingPeople ? (
+                  <dd className="mt-1 flex items-center gap-2">
+                    <input 
+                      type="number" 
+                      min="1" 
+                      max="100" 
+                      className="field max-w-[100px] text-sm" 
+                      value={editPeopleVal} 
+                      onChange={e => setEditPeopleVal(e.target.value)} 
+                    />
+                    <button onClick={handleUpdatePeople} className="btn-primary py-1 px-3 text-xs">Save</button>
+                    <button onClick={() => setEditingPeople(false)} className="btn-ghost py-1 px-3 text-xs">Cancel</button>
+                  </dd>
+                ) : (
+                  <dd className="font-semibold flex items-center gap-2">
+                    {listing.people_required} {listing.people_required === 1 ? 'person' : 'people'}
+                    {isOwner && listing.status === 'open' && (
+                      <button 
+                        onClick={() => { setEditPeopleVal(listing.people_required); setEditingPeople(true); }}
+                        className="text-xs text-indigo-500 hover:underline font-normal"
+                      >
+                        (Edit)
+                      </button>
+                    )}
+                  </dd>
+                )}
+              </div>
             ) : (
               <>
                 <div>

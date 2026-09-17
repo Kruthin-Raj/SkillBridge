@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import PasswordInput from '../components/PasswordInput';
 
-const COLLEGE_DOMAIN = import.meta.env.VITE_COLLEGE_DOMAIN || 'apollouniversity.edu.in';
+// removed COLLEGE_DOMAIN
 
 export default function ForgotPassword() {
   const { requestOtp, resetPassword } = useAuth();
@@ -149,7 +149,7 @@ export default function ForgotPassword() {
             autoComplete="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            placeholder={`yourname@${COLLEGE_DOMAIN}`}
+            placeholder="yourname@yourcollege.edu"
             className="field"
           />
         </div>

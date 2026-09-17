@@ -82,6 +82,9 @@ export const api = {
       request(`/api/listings/${id}/status`, { method: 'PATCH', body: { status } }),
     setWorkerStatus: (id, worker_status) =>
       request(`/api/listings/${id}/worker-status`, { method: 'PATCH', body: { worker_status } }),
+    updatePeopleRequired: (id, people_required) =>
+      request(`/api/listings/${id}/people`, { method: 'PATCH', body: { people_required } }),
+    delete: (id) => request(`/api/listings/${id}`, { method: 'DELETE' }),
   },
 
   messages: {
