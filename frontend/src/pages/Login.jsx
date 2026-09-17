@@ -4,7 +4,7 @@ import { useAuth, isProfileIncomplete } from '../context/AuthContext';
 import PasswordInput from '../components/PasswordInput';
 import ImageModal from '../components/ImageModal';
 
-const COLLEGE_DOMAIN = import.meta.env.VITE_COLLEGE_DOMAIN || 'apollouniversity.edu.in';
+// removed COLLEGE_DOMAIN
 
 export default function Login() {
   const { loginWithPassword } = useAuth();
@@ -35,7 +35,7 @@ export default function Login() {
     <div className="mx-auto max-w-md animate-fade-in">
       <h1 className="text-2xl font-bold">Sign in to SkillBridge</h1>
       <p className="mt-2 text-sm text-cw-text-2">
-        Use your college email address. Only <strong>@{COLLEGE_DOMAIN}</strong> accounts can join.
+        Use your college email address. Only verified college accounts can join.
       </p>
 
       <form onSubmit={handleSubmit} className="card mt-6 space-y-4">
@@ -50,7 +50,7 @@ export default function Login() {
             autoComplete="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            placeholder={`yourname@${COLLEGE_DOMAIN}`}
+            placeholder="yourname@yourcollege.edu"
             className="field"
           />
         </div>

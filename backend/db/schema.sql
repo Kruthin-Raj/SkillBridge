@@ -52,7 +52,7 @@ create index if not exists users_college_idx on public.users (college_id);
 create table if not exists public.listings (
   id              uuid primary key default gen_random_uuid(),
   owner_id        uuid not null references public.users(id) on delete cascade,
-  mode            text not null check (mode in ('freelance', 'exchange')),
+  mode            text not null check (mode in ('freelance', 'exchange', 'team')),
   title           text not null,
   description     text not null,
   tags            text[] not null default '{}',
@@ -66,6 +66,9 @@ create table if not exists public.listings (
   -- exchange only
   skill_offered   text,
   skill_wanted    text,
+
+  -- team only
+  people_required integer,
 
   -- optional attachment (base64 data-url)
   image_url       text not null default '',
@@ -81,10 +84,17 @@ create table if not exists public.listings (
   constraint listings_mode_fields check (
     (mode = 'freelance'
       and budget is not null and deadline is not null
-      and skill_offered is null and skill_wanted is null)
+      and skill_offered is null and skill_wanted is null
+      and people_required is null)
     or
     (mode = 'exchange'
       and skill_offered is not null and skill_wanted is not null
+      and budget is null and deadline is null
+      and people_required is null)
+    or
+    (mode = 'team'
+      and people_required is not null
+      and skill_offered is null and skill_wanted is null
       and budget is null and deadline is null)
   )
 );
