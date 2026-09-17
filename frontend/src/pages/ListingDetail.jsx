@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import { api } from '../lib/api';
 import { useAuth } from '../context/AuthContext';
 import TaskProgress from '../components/TaskProgress';
@@ -7,6 +7,7 @@ import WorkspaceChat from '../components/WorkspaceChat';
 import ParticipantCard from '../components/ParticipantCard';
 import WorkspaceReview from '../components/WorkspaceReview';
 import ReportModal from '../components/ReportModal';
+import ConfirmModal from '../components/ConfirmModal';
 
 export default function ListingDetail() {
   const { id } = useParams();
@@ -14,10 +15,12 @@ export default function ListingDetail() {
 
   const [listing, setListing] = useState(null);
   const [bids, setBids] = useState([]);
+  const [teamApps, setTeamApps] = useState([]);
   const [form, setForm] = useState({ amount: '', message: '' });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const navigate = useNavigate();
 
   const [editingPeople, setEditingPeople] = useState(false);
@@ -36,6 +39,9 @@ export default function ListingDetail() {
       if (found.mode === 'freelance' && user) {
         const { bids: list } = await api.bids.forListing(id);
         setBids(list);
+      } else if (found.mode === 'team' && user) {
+        const { applications: list } = await api.teams.list(id);
+        setTeamApps(list);
       }
     } catch (err) {
       setError(err.message);
@@ -70,8 +76,18 @@ export default function ListingDetail() {
     });
   };
 
+  const submitTeamApp = (event) => {
+    event.preventDefault();
+    return handleAction(async () => {
+      await api.teams.apply({
+        listing_id: id,
+        message: form.message.trim(),
+      });
+      setForm({ amount: '', message: '' });
+    });
+  };
+
   const handleDelete = async () => {
-    if (!window.confirm('Are you sure you want to delete this listing?')) return;
     setError('');
     try {
       await api.listings.delete(id);
@@ -149,7 +165,7 @@ export default function ListingDetail() {
             )}
             {isOwner && (
               <button 
-                onClick={handleDelete}
+                onClick={() => setShowDeleteConfirm(true)}
                 className="text-xs font-semibold text-red-500 hover:text-red-600 bg-red-50 hover:bg-red-100 px-2.5 py-1.5 rounded transition-colors"
                 title="Delete this listing"
               >
@@ -174,35 +190,45 @@ export default function ListingDetail() {
                 </div>
               </>
             ) : isTeam ? (
-              <div className="col-span-2">
-                <dt className="text-cw-text-2">Looking for</dt>
-                {editingPeople ? (
-                  <dd className="mt-1 flex items-center gap-2">
-                    <input 
-                      type="number" 
-                      min="1" 
-                      max="100" 
-                      className="field max-w-[100px] text-sm" 
-                      value={editPeopleVal} 
-                      onChange={e => setEditPeopleVal(e.target.value)} 
-                    />
-                    <button onClick={handleUpdatePeople} className="btn-primary py-1 px-3 text-xs">Save</button>
-                    <button onClick={() => setEditingPeople(false)} className="btn-ghost py-1 px-3 text-xs">Cancel</button>
-                  </dd>
-                ) : (
-                  <dd className="font-semibold flex items-center gap-2">
-                    {listing.people_required} {listing.people_required === 1 ? 'person' : 'people'}
-                    {isOwner && listing.status === 'open' && (
-                      <button 
-                        onClick={() => { setEditPeopleVal(listing.people_required); setEditingPeople(true); }}
-                        className="text-xs text-indigo-500 hover:underline font-normal"
-                      >
-                        (Edit)
-                      </button>
-                    )}
-                  </dd>
+              <>
+                <div className="col-span-2 sm:col-span-1">
+                  <dt className="text-cw-text-2">Looking for</dt>
+                  {editingPeople ? (
+                    <dd className="mt-1 flex items-center gap-2">
+                      <input 
+                        type="number" 
+                        min="1" 
+                        max="100" 
+                        className="field max-w-[100px] text-sm" 
+                        value={editPeopleVal} 
+                        onChange={e => setEditPeopleVal(e.target.value)} 
+                      />
+                      <button onClick={handleUpdatePeople} className="btn-primary py-1 px-3 text-xs">Save</button>
+                      <button onClick={() => setEditingPeople(false)} className="btn-ghost py-1 px-3 text-xs">Cancel</button>
+                    </dd>
+                  ) : (
+                    <dd className="font-semibold flex items-center gap-2">
+                      {listing.people_required} {listing.people_required === 1 ? 'person' : 'people'}
+                      {isOwner && listing.status === 'open' && (
+                        <button 
+                          onClick={() => { setEditPeopleVal(listing.people_required); setEditingPeople(true); }}
+                          className="text-xs text-indigo-500 hover:underline font-normal"
+                        >
+                          (Edit)
+                        </button>
+                      )}
+                    </dd>
+                  )}
+                </div>
+                {listing.deadline && (
+                  <div>
+                    <dt className="text-cw-text-2">Deadline</dt>
+                    <dd className={`font-semibold ${isExpired ? 'text-red-600' : ''}`}>
+                      {new Date(listing.deadline).toLocaleDateString()} {isExpired && '(Passed)'}
+                    </dd>
+                  </div>
                 )}
-              </div>
+              </>
             ) : (
               <>
                 <div>
@@ -282,7 +308,20 @@ export default function ListingDetail() {
                 >
                   <div className="mr-auto">
                     <p className="font-semibold">₹{bid.amount}</p>
-                    <p className="text-sm text-cw-text-2">{bid.message}</p>
+                    <p className="text-sm text-cw-text-2 mb-1">{bid.message}</p>
+                    {bid.bidder && (
+                      <Link to={`/users/${bid.bidder.id}`} className="text-xs flex items-center gap-2 hover:bg-cw-bg-alt p-1 -ml-1 rounded transition-colors w-fit">
+                        {bid.bidder.avatar_url ? (
+                          <img src={bid.bidder.avatar_url} alt="avatar" className="w-5 h-5 rounded-full object-cover" />
+                        ) : (
+                          <div className="w-5 h-5 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600 font-bold" style={{ fontSize: '10px' }}>
+                            {bid.bidder.full_name?.charAt(0) || '?'}
+                          </div>
+                        )}
+                        <span className="font-medium text-cw-text-1">{bid.bidder.full_name}</span>
+                        <span className="text-cw-text-3">• ★ {Number(bid.bidder.rating_average || 0).toFixed(1)}</span>
+                      </Link>
+                    )}
                   </div>
                   <span className="chip capitalize">{bid.status}</span>
                   {isOwner && bid.status === 'pending' && listing.status === 'open' && !isExpired && (
@@ -346,10 +385,105 @@ export default function ListingDetail() {
         )}
 
         {/* Exchange mode: propose the swap. */}
-        {user && !isFreelance && !isOwner && listing.status === 'open' && (
+        {user && listing.mode === 'exchange' && !isOwner && listing.status === 'open' && (
           <button type="button" onClick={proposeSwap} className="btn-primary">
             Propose a swap
           </button>
+        )}
+
+        {/* Team mode: apply or accept applications */}
+        {user && isTeam && (
+          <div className="card">
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="font-semibold">Applications ({teamApps.length})</h2>
+              {isOwner && (
+                <button
+                  type="button"
+                  onClick={() => handleAction(() => api.listings.setStatus(id, listing.status === 'open' ? 'closed' : 'open'))}
+                  className="text-xs font-medium underline text-cw-text-2 hover:text-cw-text-1"
+                >
+                  {listing.status === 'open' ? 'Close to new applications' : 'Reopen to new applications'}
+                </button>
+              )}
+            </div>
+
+            <ul className="space-y-3">
+              {teamApps.map((app) => (
+                <li
+                  key={app.id}
+                  className="flex flex-col gap-2 rounded-lg border border-cw-border bg-cw-surface p-3"
+                >
+                  <div className="flex items-start justify-between">
+                      <Link to={`/users/${app.applicant?.id}`} className="flex items-center gap-3 hover:bg-cw-bg-alt p-1 -ml-1 rounded transition-colors">
+                        {app.applicant?.avatar_url ? (
+                          <img src={app.applicant.avatar_url} alt="avatar" className="w-8 h-8 rounded-full object-cover" />
+                        ) : (
+                          <div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600 font-bold text-xs">
+                            {app.applicant?.full_name?.charAt(0) || '?'}
+                          </div>
+                        )}
+                        <div>
+                          <p className="font-semibold">{app.applicant?.full_name || 'Student'}</p>
+                          <p className="text-xs text-cw-text-2">{app.applicant?.skills_offered}</p>
+                        </div>
+                      </Link>
+                    <span className="chip capitalize">{app.status}</span>
+                  </div>
+                  {app.message && <p className="text-sm text-cw-text-1 mt-1 bg-cw-bg-alt p-2 rounded">{app.message}</p>}
+                  
+                  {isOwner && (
+                    <div className="flex gap-2 mt-2">
+                      {app.status === 'pending' && listing.status === 'open' && (
+                        <button
+                          type="button"
+                          onClick={() => handleAction(() => api.teams.accept(app.id))}
+                          className="btn-primary text-xs py-1"
+                        >
+                          Accept
+                        </button>
+                      )}
+                      {app.status === 'accepted' && (
+                        <button
+                          type="button"
+                          onClick={() => handleAction(() => api.teams.remove(app.id))}
+                          className="btn-ghost text-xs py-1 text-red-500 hover:text-red-600"
+                        >
+                          Remove
+                        </button>
+                      )}
+                    </div>
+                  )}
+                </li>
+              ))}
+              {teamApps.length === 0 && <li className="text-sm text-cw-text-3">No applications yet.</li>}
+            </ul>
+
+            {!isOwner && listing.status === 'open' && teamApps.length === 0 && (
+              <form onSubmit={submitTeamApp} className="mt-4 space-y-3 border-t border-cw-border pt-4">
+                <div>
+                  <label htmlFor="message" className="label">
+                    Why you want to join
+                  </label>
+                  <textarea
+                    id="message"
+                    rows={2}
+                    value={form.message}
+                    onChange={(event) => setForm({ ...form, message: event.target.value })}
+                    placeholder="E.g. I have experience with React and would love to help..."
+                    className="field"
+                  />
+                </div>
+                <button type="submit" className="btn-primary w-full">
+                  Apply to Team
+                </button>
+              </form>
+            )}
+            {!isOwner && listing.status === 'closed' && teamApps.length === 0 && (
+              <div className="mt-4 border-t border-cw-border pt-4 text-sm text-cw-text-3 text-center">
+                This team is currently closed and not accepting new members.
+              </div>
+            )}
+          </div>
         )}
       </div>
 
@@ -392,6 +526,17 @@ export default function ListingDetail() {
           reportedUser={listing.owner || { id: listing.owner_id, full_name: 'Listing Owner' }}
           listingId={listing.id}
           onClose={() => setIsReportModalOpen(false)}
+        />
+      )}
+
+      {showDeleteConfirm && (
+        <ConfirmModal
+          title="Delete Listing"
+          message={`Are you sure you want to permanently delete "${listing.title}"? This cannot be undone.`}
+          confirmText="Delete Post"
+          isDestructive={true}
+          onConfirm={handleDelete}
+          onClose={() => setShowDeleteConfirm(false)}
         />
       )}
     </div>

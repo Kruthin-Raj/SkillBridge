@@ -1,7 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { api } from '../lib/api';
 import { useAuth } from '../context/AuthContext';
 import PasswordInput from '../components/PasswordInput';
+import EditListingModal from '../components/EditListingModal';
+import ConfirmModal from '../components/ConfirmModal';
 
 const toText = (list) => (list ?? []).join(', ');
 const toList = (text) =>
@@ -36,6 +39,9 @@ export default function Profile() {
   const [saving, setSaving] = useState(false);
   const [avatarUploading, setAvatarUploading] = useState(false);
   const [reviews, setReviews] = useState([]);
+  const [myListings, setMyListings] = useState([]);
+  const [editingListing, setEditingListing] = useState(null);
+  const [listingToDelete, setListingToDelete] = useState(null);
 
   const initials = (user.full_name || user.email || '?')
     .split(' ')
@@ -44,17 +50,21 @@ export default function Profile() {
     .toUpperCase()
     .slice(0, 2);
 
-  // Load own reviews
-  const loadReviews = useCallback(async () => {
+  // Load own reviews and listings
+  const loadProfileData = useCallback(async () => {
     try {
-      const { reviews: list } = await api.reviews.forUser(user.id);
-      setReviews(list);
+      const [reviewData, listingsData] = await Promise.all([
+        api.reviews.forUser(user.id).catch(() => ({ reviews: [] })),
+        api.listings.forOwner(user.id).catch(() => ({ listings: [] }))
+      ]);
+      setReviews(reviewData.reviews || []);
+      setMyListings(listingsData.listings || []);
     } catch (_) {
       // silently ignore
     }
   }, [user.id]);
 
-  useEffect(() => { loadReviews(); }, [loadReviews]);
+  useEffect(() => { loadProfileData(); }, [loadProfileData]);
 
   const update = (key) => (event) => setForm((prev) => ({ ...prev, [key]: event.target.value }));
 
@@ -109,8 +119,40 @@ export default function Profile() {
     }
   };
 
+  const handleDeleteListing = async () => {
+    if (!listingToDelete) return;
+    try {
+      await api.listings.delete(listingToDelete.id);
+      setMyListings(myListings.filter(l => l.id !== listingToDelete.id));
+    } catch (err) {
+      alert(err.message);
+    }
+  };
+
   return (
     <div className="mx-auto max-w-xl space-y-6 animate-fade-in">
+      {editingListing && (
+        <EditListingModal 
+          listing={editingListing} 
+          onClose={() => setEditingListing(null)} 
+          onUpdated={() => {
+            setEditingListing(null);
+            loadProfileData();
+          }} 
+        />
+      )}
+      
+      {listingToDelete && (
+        <ConfirmModal
+          title="Delete Listing"
+          message={`Are you sure you want to permanently delete "${listingToDelete.title}"? This cannot be undone.`}
+          confirmText="Delete Post"
+          isDestructive={true}
+          onConfirm={handleDeleteListing}
+          onClose={() => setListingToDelete(null)}
+        />
+      )}
+
       <h1 className="text-2xl font-bold">Your profile</h1>
 
       {/* Avatar section */}
@@ -234,6 +276,57 @@ export default function Profile() {
           {saving ? 'Saving…' : 'Save profile'}
         </button>
       </form>
+
+      {/* My Listings */}
+      <div>
+        <h2 className="text-xl font-bold mb-4">My Listings ({myListings.length})</h2>
+        {myListings.length === 0 ? (
+          <div className="card text-center py-6">
+            <p className="text-sm text-cw-text-2">You haven't posted anything yet.</p>
+            <Link to="/new" className="mt-3 inline-block btn-primary text-xs py-1.5 px-3">Post something</Link>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {myListings.map(listing => (
+              <div key={listing.id} className="card flex flex-col gap-3">
+                <div className="flex items-start justify-between">
+                  <div>
+                    <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-cw-bg-alt text-cw-text-2 capitalize">
+                      {listing.mode}
+                    </span>
+                    <h3 className="font-semibold text-base mt-1 line-clamp-1">{listing.title}</h3>
+                  </div>
+                  <span className={`chip capitalize ${listing.status === 'open' ? 'bg-emerald-100 text-emerald-800' : ''}`}>
+                    {listing.status.replace('_', ' ')}
+                  </span>
+                </div>
+                
+                <p className="text-sm text-cw-text-2 line-clamp-2">{listing.description}</p>
+                
+                <div className="flex gap-2 pt-3 border-t border-cw-border mt-auto">
+                  <Link to={`/listings/${listing.id}`} className="btn-primary py-1 px-3 text-xs bg-cw-bg-alt text-cw-text-1 hover:bg-cw-border border-none shadow-none flex-1 text-center">
+                    View
+                  </Link>
+                  {listing.status === 'open' && (
+                    <button 
+                      onClick={() => setEditingListing(listing)} 
+                      className="btn-primary py-1 px-3 text-xs bg-indigo-50 text-indigo-600 hover:bg-indigo-100 border-none shadow-none flex-1"
+                    >
+                      Edit
+                    </button>
+                  )}
+                  <button 
+                    onClick={() => setListingToDelete(listing)}
+                    className="btn-primary py-1 px-3 text-xs bg-red-50 text-red-600 hover:bg-red-100 border-none shadow-none flex-1"
+                  >
+                    Delete
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
 
       {/* Set password */}
       <SetPasswordCard />

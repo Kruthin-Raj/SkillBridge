@@ -71,6 +71,50 @@ async function buildNotifications(userId) {
     });
   }
 
+  // 3.5 Team applications on user's listings
+  for (const listing of myListings) {
+    if (listing.mode === 'team') {
+      const apps = await db.findMany('team_applications', { listing_id: listing.id }, { limit: 50 });
+      for (const app of apps) {
+        notifications.push({
+          id: `team-app-${app.id}`,
+          type: 'team_application',
+          message: `New application for your team on "${listing.title}"`,
+          listing_id: listing.id,
+          created_at: app.created_at,
+          read: new Date(app.created_at) <= lastRead,
+        });
+      }
+    }
+  }
+
+  // 3.6 Team application status updates for the user
+  const myTeamApps = await db.findMany('team_applications', { applicant_id: userId }, { limit: 100 });
+  for (const app of myTeamApps) {
+    if (app.status === 'accepted') {
+      const listing = await db.findOne(TABLES.listings, { id: app.listing_id });
+      notifications.push({
+        id: `team-accepted-${app.id}`,
+        type: 'team_accepted',
+        message: `You have been selected for the team "${listing?.title || 'a listing'}"!`,
+        listing_id: app.listing_id,
+        created_at: app.updated_at || app.created_at,
+        read: new Date(app.updated_at || app.created_at) <= lastRead,
+      });
+    }
+    if (app.status === 'removed') {
+      const listing = await db.findOne(TABLES.listings, { id: app.listing_id });
+      notifications.push({
+        id: `team-removed-${app.id}`,
+        type: 'team_removed',
+        message: `You have been removed from the team "${listing?.title || 'a listing'}"`,
+        listing_id: app.listing_id,
+        created_at: app.updated_at || app.created_at,
+        read: new Date(app.updated_at || app.created_at) <= lastRead,
+      });
+    }
+  }
+
   // 4. Listings completed (that user posted or worked on)
   for (const listing of myListings) {
     if (listing.status === 'completed') {

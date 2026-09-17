@@ -39,11 +39,13 @@ export default function Browse() {
       <div className="mb-6 flex flex-wrap items-center gap-4">
         <div className="mr-auto">
           <h1 className="text-2xl font-bold">
-            {mode === 'freelance' ? 'Open tasks' : 'Skill swaps'}
+            {mode === 'freelance' ? 'Open tasks' : mode === 'team' ? 'Find a Team' : 'Skill swaps'}
           </h1>
           <p className="text-sm text-cw-text-2">
             {mode === 'freelance'
               ? 'Paid work posted by students on campus.'
+              : mode === 'team'
+              ? 'Join a team for a hackathon or project.'
               : 'Teach what you know, learn what you want. No money involved.'}
           </p>
         </div>
