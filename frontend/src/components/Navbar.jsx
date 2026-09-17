@@ -102,8 +102,8 @@ export default function Navbar() {
                 </button>
 
                 {dropdownOpen && (
-                  <div className="dropdown animate-fade-in border-cw-accent/10 bg-cw-surface shadow-md absolute left-0 mt-2 w-48 rounded-md z-50">
-                    <div className="px-4 py-2 border-b border-cw-accent/10 bg-cw-bg-alt/50 rounded-t-md">
+                  <div className="dropdown animate-fade-in">
+                    <div className="px-4 py-2 border-b border-cw-accent/10 bg-cw-bg-alt rounded-t-xl">
                       <p className="text-sm font-semibold text-cw-text-1 truncate">
                         {user.full_name || 'Student'}
                       </p>
@@ -123,7 +123,7 @@ export default function Navbar() {
                     >
                       Dashboard
                     </Link>
-                    <button type="button" onClick={handleSignOut} className="dropdown-item text-red-600 hover:bg-red-50 w-full text-left rounded-b-md">
+                    <button type="button" onClick={handleSignOut} className="dropdown-item text-red-600 hover:bg-red-500/10 hover:text-red-600 w-full text-left rounded-b-xl">
                       Sign Out
                     </button>
                   </div>
