@@ -2,6 +2,7 @@ import { useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import ModeToggle from '../components/ModeToggle';
 import { api } from '../lib/api';
+import { compressImage } from '../utils/imageCompressor';
 
 const emptyForm = {
   title: '',
@@ -32,54 +33,13 @@ export default function CreateListing() {
 
     setError('');
     
-    const reader = new FileReader();
-    reader.readAsDataURL(file);
-    
-    reader.onload = (e) => {
-      const img = new Image();
-      img.src = e.target.result;
-      
-      img.onload = () => {
-        const MAX_WIDTH = 1024;
-        const MAX_HEIGHT = 1024;
-        let width = img.width;
-        let height = img.height;
-
-        if (width > height) {
-          if (width > MAX_WIDTH) {
-            height = Math.round((height *= MAX_WIDTH / width));
-            width = MAX_WIDTH;
-          }
-        } else {
-          if (height > MAX_HEIGHT) {
-            width = Math.round((width *= MAX_HEIGHT / height));
-            height = MAX_HEIGHT;
-          }
-        }
-
-        const canvas = document.createElement('canvas');
-        canvas.width = width;
-        canvas.height = height;
-        const ctx = canvas.getContext('2d');
-        ctx.drawImage(img, 0, 0, width, height);
-
-        // Compress to JPEG with 0.7 quality
-        const dataUrl = canvas.toDataURL('image/jpeg', 0.7);
-        
-        // Rough estimate of base64 size: length * 3/4
-        const estimatedSize = Math.round((dataUrl.length * 3) / 4);
-        
-        if (estimatedSize > 250 * 1024) {
-          // If still too large, compress more
-          const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.5);
-          setImagePreview(compressedDataUrl);
-          setImageBase64(compressedDataUrl);
-        } else {
-          setImagePreview(dataUrl);
-          setImageBase64(dataUrl);
-        }
-      };
-    };
+    try {
+      const compressedDataUrl = await compressImage(file);
+      setImagePreview(compressedDataUrl);
+      setImageBase64(compressedDataUrl);
+    } catch (err) {
+      setError(err.message || 'Failed to process image');
+    }
   };
 
   const removeImage = () => {

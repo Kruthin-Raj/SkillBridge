@@ -1,4 +1,5 @@
 import { useState, useRef } from 'react';
+import { compressImage } from '../utils/imageCompressor';
 
 export default function AdminActionModal({ isOpen, onClose, onConfirm, user, actionType }) {
   const [message, setMessage] = useState('');
@@ -38,22 +39,12 @@ export default function AdminActionModal({ isOpen, onClose, onConfirm, user, act
     const file = event.target.files?.[0];
     if (!file) return;
 
-    if (file.size > 300 * 1024) {
-      alert('Image too large. Please use an image under 300 KB.');
-      return;
-    }
-
     setUploading(true);
     try {
-      const reader = new FileReader();
-      const base64 = await new Promise((resolve, reject) => {
-        reader.onload = () => resolve(reader.result);
-        reader.onerror = reject;
-        reader.readAsDataURL(file);
-      });
-      setImageUrl(base64);
+      const compressedDataUrl = await compressImage(file);
+      setImageUrl(compressedDataUrl);
     } catch (err) {
-      alert('Failed to process image');
+      alert(err.message || 'Failed to process image');
     } finally {
       setUploading(false);
     }

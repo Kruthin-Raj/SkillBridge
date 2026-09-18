@@ -21,6 +21,11 @@ export default function ListingDetail() {
   const [loading, setLoading] = useState(true);
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  
+  const [editingBidId, setEditingBidId] = useState(null);
+  const [editBidForm, setEditBidForm] = useState({ amount: '', message: '' });
+  const [bidSort, setBidSort] = useState('newest'); // 'newest', 'price-asc', 'price-desc', 'rating-desc'
+
   const navigate = useNavigate();
 
   const [editingPeople, setEditingPeople] = useState(false);
@@ -73,6 +78,17 @@ export default function ListingDetail() {
         message: form.message.trim(),
       });
       setForm({ amount: '', message: '' });
+    });
+  };
+
+  const submitBidEdit = (event, bidId) => {
+    event.preventDefault();
+    return handleAction(async () => {
+      await api.bids.edit(bidId, {
+        amount: Number(editBidForm.amount),
+        message: editBidForm.message.trim(),
+      });
+      setEditingBidId(null);
     });
   };
 
@@ -129,6 +145,18 @@ export default function ListingDetail() {
       targetReviewee = listing.owner;
     }
   }
+
+  const sortedBids = [...bids].sort((a, b) => {
+    if (bidSort === 'price-asc') return a.amount - b.amount;
+    if (bidSort === 'price-desc') return b.amount - a.amount;
+    if (bidSort === 'rating-desc') {
+      const aRating = a.bidder?.rating_average || 0;
+      const bRating = b.bidder?.rating_average || 0;
+      return bRating - aRating;
+    }
+    // newest (default)
+    return new Date(b.created_at) - new Date(a.created_at);
+  });
 
   return (
     <div className="mx-auto max-w-5xl grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -298,14 +326,64 @@ export default function ListingDetail() {
         {/* Freelance mode: place a bid, or (as owner) accept one. */}
         {user && isFreelance && (
           <div className="card">
-            <h2 className="mb-3 font-semibold">Bids ({bids.length})</h2>
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="font-semibold">Bids ({bids.length})</h2>
+              {isOwner && bids.length > 0 && (
+                <select 
+                  className="field py-1 text-xs max-w-[150px]"
+                  value={bidSort}
+                  onChange={(e) => setBidSort(e.target.value)}
+                >
+                  <option value="newest">Newest</option>
+                  <option value="price-asc">Price (Low to High)</option>
+                  <option value="price-desc">Price (High to Low)</option>
+                  <option value="rating-desc">Highest Rated</option>
+                </select>
+              )}
+            </div>
 
             <ul className="space-y-3">
-              {bids.map((bid) => (
-                <li
-                  key={bid.id}
-                  className="flex items-start gap-3 rounded-lg border border-cw-border bg-cw-surface p-3"
-                >
+              {sortedBids.map((bid) => {
+                const isMyBid = user && bid.bidder && bid.bidder.id === user.id;
+                const isEditing = editingBidId === bid.id;
+
+                if (isEditing) {
+                  return (
+                    <li key={bid.id} className="rounded-lg border border-cw-border bg-cw-surface p-3">
+                      <form onSubmit={(e) => submitBidEdit(e, bid.id)} className="space-y-3">
+                        <div>
+                          <label className="label">Amount (₹)</label>
+                          <input
+                            type="number"
+                            min={1} max={100000} required
+                            value={editBidForm.amount}
+                            onChange={e => setEditBidForm({...editBidForm, amount: e.target.value})}
+                            className="field"
+                          />
+                        </div>
+                        <div>
+                          <label className="label">Message</label>
+                          <textarea
+                            rows={2} required minLength={5}
+                            value={editBidForm.message}
+                            onChange={e => setEditBidForm({...editBidForm, message: e.target.value})}
+                            className="field"
+                          />
+                        </div>
+                        <div className="flex gap-2">
+                          <button type="submit" className="btn-primary py-1 px-3 text-sm">Save</button>
+                          <button type="button" onClick={() => setEditingBidId(null)} className="btn-ghost py-1 px-3 text-sm">Cancel</button>
+                        </div>
+                      </form>
+                    </li>
+                  );
+                }
+
+                return (
+                  <li
+                    key={bid.id}
+                    className="flex items-start gap-3 rounded-lg border border-cw-border bg-cw-surface p-3"
+                  >
                   <div className="mr-auto">
                     <p className="font-semibold">₹{bid.amount}</p>
                     <p className="text-sm text-cw-text-2 mb-1">{bid.message}</p>
@@ -322,6 +400,17 @@ export default function ListingDetail() {
                         <span className="text-cw-text-3">• ★ {Number(bid.bidder.rating_average || 0).toFixed(1)}</span>
                       </Link>
                     )}
+                    {isMyBid && bid.status === 'pending' && listing.status === 'open' && !isExpired && (
+                      <button 
+                        onClick={() => {
+                          setEditBidForm({ amount: bid.amount, message: bid.message });
+                          setEditingBidId(bid.id);
+                        }}
+                        className="text-xs text-indigo-500 hover:underline font-medium mt-2 block"
+                      >
+                        Edit Bid
+                      </button>
+                    )}
                   </div>
                   <span className="chip capitalize">{bid.status}</span>
                   {isOwner && bid.status === 'pending' && listing.status === 'open' && !isExpired && (
@@ -334,7 +423,7 @@ export default function ListingDetail() {
                     </button>
                   )}
                 </li>
-              ))}
+              )})}
               {bids.length === 0 && <li className="text-sm text-cw-text-3">No bids yet.</li>}
             </ul>
 

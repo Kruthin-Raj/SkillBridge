@@ -19,6 +19,15 @@ const FEATURES = [
     link: '/browse?mode=exchange',
   },
   {
+    // Team finder feature card
+    icon: '👥',
+    title: 'Team Finder',
+    desc: 'Form teams for projects, hackathons, or startups. Find the right talent on campus.',
+    color: 'from-team/10 to-team/5 border-team/20',
+    accent: 'text-team',
+    link: '/browse?mode=team',
+  },
+  {
     icon: '⭐',
     title: 'Trust & Reviews',
     desc: 'Every completed job builds your campus reputation. Ratings and reviews drive quality.',
@@ -75,17 +84,17 @@ export default function Home() {
 
       {/* Features */}
       <section className="mx-auto max-w-5xl px-4 py-16 relative z-10">
-        <h2 className="text-center text-3xl font-bold text-cw-text-1 font-serif">Two modes, one platform</h2>
+        <h2 className="text-center text-3xl font-bold text-cw-text-1 font-serif">Three modes, one platform</h2>
         <p className="mx-auto mt-2 max-w-lg text-center text-sm text-cw-text-2">
-          Whether you want to earn money or trade knowledge, SkillBridge has you covered.
+          Whether you want to earn money, trade knowledge, or build a team, SkillBridge has you covered.
         </p>
 
-        <div className="mt-10 grid gap-6 sm:grid-cols-3">
+        <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
           {FEATURES.map((f) => (
             <Link
               to={f.link}
               key={f.title}
-              className={`animate-fade-in rounded-2xl border bg-gradient-to-b p-6 ${f.color} transition hover:shadow-md block bg-cw-surface/50`}
+              className={`animate-fade-in rounded-2xl border bg-gradient-to-b p-6 ${f.color} transition hover:shadow-md block bg-cw-surface/50 overflow-hidden`}
             >
               <span className="text-3xl">{f.icon}</span>
               <h3 className={`mt-3 text-lg font-semibold ${f.accent} font-serif`}>{f.title}</h3>

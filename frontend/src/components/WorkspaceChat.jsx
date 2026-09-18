@@ -9,7 +9,7 @@ export default function WorkspaceChat({ listingId }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [sending, setSending] = useState(false);
-  const bottomRef = useRef(null);
+  const containerRef = useRef(null);
 
   const loadMessages = async () => {
     try {
@@ -33,7 +33,9 @@ export default function WorkspaceChat({ listingId }) {
   }, [listingId]);
 
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+    if (containerRef.current) {
+      containerRef.current.scrollTop = containerRef.current.scrollHeight;
+    }
   }, [messages]);
 
   const handleSend = async (e) => {
@@ -60,7 +62,7 @@ export default function WorkspaceChat({ listingId }) {
       
       {error && <p className="mb-2 text-sm text-red-600">{error}</p>}
       
-      <div className="flex-1 overflow-y-auto space-y-4 mb-4 pr-2 custom-scrollbar">
+      <div ref={containerRef} className="flex-1 overflow-y-auto space-y-4 mb-4 pr-2 custom-scrollbar scroll-smooth">
         {messages.length === 0 ? (
           <p className="text-center text-sm text-cw-text-3 my-10">No messages yet. Say hello!</p>
         ) : (
@@ -91,7 +93,6 @@ export default function WorkspaceChat({ listingId }) {
             );
           })
         )}
-        <div ref={bottomRef} />
       </div>
 
       <form onSubmit={handleSend} className="flex gap-2 mt-auto pt-2 border-t border-cw-border">
@@ -101,7 +102,7 @@ export default function WorkspaceChat({ listingId }) {
           onChange={(e) => setContent(e.target.value)}
           placeholder="Type a message..."
           disabled={sending}
-          className="flex-1 input-field py-2"
+          className="flex-1 field py-2"
         />
         <button
           type="submit"

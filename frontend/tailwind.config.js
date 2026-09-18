@@ -7,6 +7,7 @@ export default {
       colors: {
         freelance: '#0f766e',
         exchange: '#6d28d9',
+        team: '#6366f1',
         cw: {
           bg: 'var(--cw-bg)',
           'bg-alt': 'var(--cw-bg-alt)',

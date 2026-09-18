@@ -5,6 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import PasswordInput from '../components/PasswordInput';
 import EditListingModal from '../components/EditListingModal';
 import ConfirmModal from '../components/ConfirmModal';
+import { compressImage } from '../utils/imageCompressor';
 
 const toText = (list) => (list ?? []).join(', ');
 const toList = (text) =>
@@ -72,26 +73,16 @@ export default function Profile() {
     const file = event.target.files?.[0];
     if (!file) return;
 
-    if (file.size > 100 * 1024) {
-      setError('Image too large. Please use an image under 100 KB.');
-      return;
-    }
-
     setAvatarUploading(true);
     setError('');
     try {
-      const reader = new FileReader();
-      const base64 = await new Promise((resolve, reject) => {
-        reader.onload = () => resolve(reader.result);
-        reader.onerror = reject;
-        reader.readAsDataURL(file);
-      });
+      const compressedDataUrl = await compressImage(file, 100);
 
-      const { user: updated } = await api.users.updateAvatar(base64);
+      const { user: updated } = await api.users.updateAvatar(compressedDataUrl);
       setUser(updated);
       setStatus('Avatar updated.');
     } catch (err) {
-      setError(err.message);
+      setError(err.message || 'Failed to process image');
     } finally {
       setAvatarUploading(false);
     }

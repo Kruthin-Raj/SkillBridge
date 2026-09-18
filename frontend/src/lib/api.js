@@ -1,4 +1,8 @@
-export const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000';
+const defaultApiUrl = typeof window !== 'undefined' && window.location.hostname !== 'localhost' 
+  ? `http://${window.location.hostname}:4000` 
+  : 'http://localhost:4000';
+
+export const BASE_URL = import.meta.env.VITE_API_URL || defaultApiUrl;
 const TOKEN_KEY = 'skillbridge.token';
 
 export const tokenStore = {
@@ -96,6 +100,7 @@ export const api = {
   bids: {
     forListing: (listingId) => request(`/api/bids?listing_id=${listingId}`),
     create: (bid) => request('/api/bids', { method: 'POST', body: bid }),
+    edit: (id, data) => request(`/api/bids/${id}`, { method: 'PATCH', body: data }),
     accept: (id) => request(`/api/bids/${id}/accept`, { method: 'POST' }),
   },
 
