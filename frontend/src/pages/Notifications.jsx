@@ -36,6 +36,12 @@ export default function Notifications() {
       const result = await api.notifications.list();
       setNotifications(result.notifications);
       setUnreadCount(result.unread_count);
+      
+      if (result.unread_count > 0) {
+        api.notifications.markRead().catch(err => console.error('Failed to mark read', err));
+        setUnreadCount(0);
+        setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
+      }
     } catch (err) {
       setError(err.message);
     } finally {
@@ -44,16 +50,6 @@ export default function Notifications() {
   }, []);
 
   useEffect(() => { load(); }, [load]);
-
-  const markAllRead = async () => {
-    try {
-      await api.notifications.markRead();
-      setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
-      setUnreadCount(0);
-    } catch (err) {
-      setError(err.message);
-    }
-  };
 
   if (loading) return <p className="text-sm text-cw-text-3">Loading notifications…</p>;
   if (error) return <p className="text-sm text-red-700">{error}</p>;
@@ -64,14 +60,9 @@ export default function Notifications() {
         <div>
           <h1 className="text-2xl font-bold">Notifications</h1>
           <p className="mt-1 text-sm text-cw-text-2">
-            {unreadCount > 0 ? `${unreadCount} unread` : 'All caught up'}
+            All caught up
           </p>
         </div>
-        {unreadCount > 0 && (
-          <button type="button" onClick={markAllRead} className="btn-ghost text-xs">
-            Mark all read
-          </button>
-        )}
       </div>
 
       {notifications.length === 0 && (

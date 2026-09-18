@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import PasswordInput from '../components/PasswordInput';
@@ -18,6 +18,15 @@ export default function Register() {
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
   const [deliveredByEmail, setDeliveredByEmail] = useState(true);
+  const [cooldown, setCooldown] = useState(0);
+
+  useEffect(() => {
+    let timer;
+    if (cooldown > 0) {
+      timer = setInterval(() => setCooldown((c) => c - 1), 1000);
+    }
+    return () => clearInterval(timer);
+  }, [cooldown]);
 
   const handleSendOtp = async (event) => {
     event.preventDefault();
@@ -37,6 +46,7 @@ export default function Register() {
     try {
       const result = await requestOtp(email);
       setDeliveredByEmail(result.deliveredByEmail);
+      setCooldown(60);
       setStep('otp');
     } catch (err) {
       setError(err.message);
@@ -105,10 +115,19 @@ export default function Register() {
 
           <button
             type="button"
-            onClick={() => { setStep('form'); setCode(''); setError(''); }}
+            onClick={() => { setStep('form'); setError(''); }}
             className="btn-ghost w-full"
           >
-            ← Go back
+            ← Go back to edit email
+          </button>
+          
+          <button
+            type="button"
+            onClick={handleSendOtp}
+            disabled={busy || cooldown > 0}
+            className="text-sm font-medium text-cw-accent hover:underline w-full text-center"
+          >
+            {cooldown > 0 ? `Resend code in ${cooldown}s` : 'Resend code'}
           </button>
         </form>
       </div>
@@ -182,16 +201,21 @@ export default function Register() {
           </p>
         )}
 
-        <button type="submit" disabled={busy} className="btn-primary w-full">
-          {busy ? 'Sending code…' : 'Send verification code'}
+        <button type="submit" disabled={busy || cooldown > 0} className="btn-primary w-full">
+          {busy ? 'Sending code…' : cooldown > 0 ? `Wait ${cooldown}s` : 'Send verification code'}
         </button>
 
-        <p className="text-center text-sm text-cw-text-3">
-          Already have an account?{' '}
-          <Link to="/login" className="font-medium text-freelance hover:underline">
-            Sign in
+        <div className="flex items-center justify-between text-sm text-cw-text-3">
+          <Link to="/forgot-password" className="font-medium text-freelance hover:underline">
+            Forgot password?
           </Link>
-        </p>
+          <p>
+            Already have an account?{' '}
+            <Link to="/login" className="font-medium text-freelance hover:underline">
+              Sign in
+            </Link>
+          </p>
+        </div>
       </form>
     </div>
   );

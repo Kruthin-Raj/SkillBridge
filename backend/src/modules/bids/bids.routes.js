@@ -13,6 +13,11 @@ const bidSchema = z.object({
   message: z.string().min(5).max(500),
 });
 
+const editBidSchema = z.object({
+  amount: z.number().int().positive().max(100000).optional(),
+  message: z.string().min(5).max(500).optional(),
+});
+
 /** GET /api/bids?listing_id=... - every bid on one listing. */
 router.get(
   '/',
@@ -70,6 +75,34 @@ router.post(
       status: 'pending',
     });
     res.status(201).json({ bid });
+  })
+);
+
+/** PATCH /api/bids/:id - edit an existing bid. */
+router.patch(
+  '/:id',
+  requireAuth,
+  asyncHandler(async (req, res) => {
+    const payload = editBidSchema.parse(req.body);
+    
+    if (Object.keys(payload).length === 0) {
+      throw ApiError.badRequest('Nothing to update');
+    }
+
+    const bid = await db.findOne(TABLES.bids, { id: req.params.id });
+    if (!bid) throw ApiError.notFound('Bid not found');
+    
+    if (bid.bidder_id !== req.user.id) {
+      throw ApiError.forbidden('You can only edit your own bids');
+    }
+    
+    const listing = await db.findOne(TABLES.listings, { id: bid.listing_id });
+    if (!listing || listing.status !== 'open') {
+      throw ApiError.conflict('Cannot edit bid on a listing that is closed or in progress');
+    }
+
+    const updated = await db.update(TABLES.bids, { id: bid.id }, payload);
+    res.json({ bid: updated });
   })
 );
 

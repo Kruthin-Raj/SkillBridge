@@ -1,5 +1,6 @@
 import { useState, useRef } from 'react';
 import { api } from '../lib/api';
+import { compressImage } from '../utils/imageCompressor';
 
 const REASONS = [
   { value: 'harassment', label: 'Harassment or Abuse' },
@@ -24,23 +25,13 @@ export default function ReportModal({ reportedUser, listingId, onClose }) {
     const file = event.target.files?.[0];
     if (!file) return;
 
-    if (file.size > 300 * 1024) {
-      setError('Image too large. Please use an image under 300 KB.');
-      return;
-    }
-
     setUploading(true);
     setError('');
     try {
-      const reader = new FileReader();
-      const base64 = await new Promise((resolve, reject) => {
-        reader.onload = () => resolve(reader.result);
-        reader.onerror = reject;
-        reader.readAsDataURL(file);
-      });
-      setProofUrl(base64);
+      const compressedDataUrl = await compressImage(file);
+      setProofUrl(compressedDataUrl);
     } catch (err) {
-      setError('Failed to process image');
+      setError(err.message || 'Failed to process image');
     } finally {
       setUploading(false);
     }

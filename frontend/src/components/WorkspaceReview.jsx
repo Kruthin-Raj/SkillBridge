@@ -1,5 +1,6 @@
 import { useState, useRef } from 'react';
 import { api } from '../lib/api';
+import { compressImage } from '../utils/imageCompressor';
 
 export default function WorkspaceReview({ listingId, reviewee, onReviewSubmitted }) {
   const [rating, setRating] = useState(5);
@@ -16,23 +17,13 @@ export default function WorkspaceReview({ listingId, reviewee, onReviewSubmitted
     const file = event.target.files?.[0];
     if (!file) return;
 
-    if (file.size > 300 * 1024) {
-      setError('Image too large. Please use an image under 300 KB.');
-      return;
-    }
-
     setUploading(true);
     setError('');
     try {
-      const reader = new FileReader();
-      const base64 = await new Promise((resolve, reject) => {
-        reader.onload = () => resolve(reader.result);
-        reader.onerror = reject;
-        reader.readAsDataURL(file);
-      });
-      setImageUrl(base64);
+      const compressedDataUrl = await compressImage(file);
+      setImageUrl(compressedDataUrl);
     } catch (err) {
-      setError('Failed to process image');
+      setError(err.message || 'Failed to process image');
     } finally {
       setUploading(false);
     }
