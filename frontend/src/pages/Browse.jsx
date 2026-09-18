@@ -11,6 +11,7 @@ export default function Browse() {
   const [listings, setListings] = useState([]);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
     let cancelled = false;
@@ -33,6 +34,18 @@ export default function Browse() {
       cancelled = true;
     };
   }, [mode]);
+
+  const filteredListings = listings.filter((listing) => {
+    if (!searchQuery) return true;
+    const q = searchQuery.toLowerCase();
+    return (
+      listing.title?.toLowerCase().includes(q) ||
+      listing.description?.toLowerCase().includes(q) ||
+      (listing.tags && listing.tags.some((t) => t.toLowerCase().includes(q))) ||
+      listing.skill_offered?.toLowerCase().includes(q) ||
+      listing.skill_wanted?.toLowerCase().includes(q)
+    );
+  });
 
   return (
     <div>
@@ -58,6 +71,22 @@ export default function Browse() {
         </Link>
       )}
 
+      {/* Search Bar for Posts */}
+      <div className="mb-6 relative">
+        <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-cw-text-3">
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
+        </div>
+        <input
+          type="text"
+          className="field pl-10 w-full"
+          placeholder="Search posts by title, description, or tags..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+        />
+      </div>
+
       {loading && <p className="text-sm text-cw-text-3">Loading listings…</p>}
 
       {error && (
@@ -74,8 +103,16 @@ export default function Browse() {
         </div>
       )}
 
+      {!loading && !error && listings.length > 0 && filteredListings.length === 0 && (
+        <div className="card text-center">
+          <p className="text-sm text-cw-text-2">
+            No posts match your search for "{searchQuery}".
+          </p>
+        </div>
+      )}
+
       <div className="grid gap-4 sm:grid-cols-2">
-        {listings.map((listing) => (
+        {filteredListings.map((listing) => (
           <ListingCard key={listing.id} listing={listing} />
         ))}
       </div>
