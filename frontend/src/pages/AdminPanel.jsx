@@ -144,20 +144,20 @@ export default function AdminPanel() {
         <tbody className="divide-y divide-cw-border">
           {userList.map(u => (
             <tr key={u.id} className="hover:bg-cw-bg-alt/50 transition-colors">
-              <td className="px-6 py-4">
+              <td className="px-6 py-4 whitespace-nowrap">
                 <div className="font-medium text-cw-text-1">{u.full_name || 'Anonymous'}</div>
                 <div className="text-xs text-cw-text-3">{u.email}</div>
               </td>
-              <td className="px-6 py-4 font-mono text-xs">{u.roll_number || '-'}</td>
-              <td className="px-6 py-4">
+              <td className="px-6 py-4 font-mono text-xs whitespace-nowrap">{u.roll_number || '-'}</td>
+              <td className="px-6 py-4 whitespace-nowrap">
                 <span className={`px-2 py-1 rounded-full text-xs font-semibold ${u.warnings_count > 0 ? 'bg-amber-100 text-amber-800' : 'bg-cw-bg text-cw-text-3'}`}>
                   {u.warnings_count || 0}
                 </span>
               </td>
-              <td className="px-6 py-4">
+              <td className="px-6 py-4 whitespace-nowrap">
                 {u.rating_average ? Number(u.rating_average).toFixed(1) : '-'} <span className="text-xs text-cw-text-3">({u.rating_count})</span>
               </td>
-              <td className="px-6 py-4 text-right space-x-2">
+              <td className="px-6 py-4 text-right space-x-2 whitespace-nowrap">
                 {!isBlockedTab ? (
                   <>
                     <button
@@ -261,13 +261,13 @@ export default function AdminPanel() {
               </div>
             )}
 
-            <div className="mt-6 pt-4 border-t border-cw-border flex justify-between items-center text-sm">
+            <div className="mt-6 pt-4 border-t border-cw-border flex flex-col md:flex-row justify-between items-start md:items-center gap-4 text-sm">
               <div className="text-cw-text-2">
                 Reported <span className="font-semibold text-cw-text-1">{r.reported_name || r.reported_email}</span>
                 {' by '}
                 <span className="font-semibold text-cw-text-1">{r.reporter_name || r.reporter_email}</span>
               </div>
-              <div className="space-x-2 flex items-center">
+              <div className="flex flex-wrap items-center gap-2">
                 <button
                   onClick={() => openActionModal({ id: r.reported_user_id, full_name: r.reported_name, email: r.reported_email }, 'warn')}
                   className="btn-ghost py-1.5 px-3 text-xs"
@@ -341,9 +341,9 @@ export default function AdminPanel() {
           <tbody className="divide-y divide-cw-border">
             {colleges.map(c => (
               <tr key={c.id} className="hover:bg-cw-bg-alt/50 transition-colors">
-                <td className="px-6 py-4 font-medium text-cw-text-1">@{c.domain}</td>
-                <td className="px-6 py-4">{c.name}</td>
-                <td className="px-6 py-4 text-right">
+                <td className="px-6 py-4 font-medium text-cw-text-1 whitespace-nowrap">@{c.domain}</td>
+                <td className="px-6 py-4 whitespace-nowrap">{c.name}</td>
+                <td className="px-6 py-4 text-right whitespace-nowrap">
                   <button
                     onClick={() => handleDeleteCollege(c.domain)}
                     className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-red-500/10 text-red-500 hover:bg-red-500/20 transition-colors"
@@ -375,8 +375,8 @@ export default function AdminPanel() {
 
       {error && <div className="p-4 bg-red-50 text-red-700 rounded-lg text-sm">{error}</div>}
 
-      <div className="border-b border-cw-border">
-        <nav className="-mb-px flex space-x-8">
+      <div className="border-b border-cw-border overflow-x-auto">
+        <nav className="-mb-px flex space-x-8 px-2 sm:px-0">
           <button
             onClick={() => { setActiveTab('users'); setSearchQuery(''); }}
             className={`whitespace-nowrap pb-4 px-1 border-b-2 font-medium text-sm transition-colors ${activeTab === 'users'
