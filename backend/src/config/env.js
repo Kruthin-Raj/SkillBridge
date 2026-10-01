@@ -1,5 +1,11 @@
 import 'dotenv/config';
 
+/**
+ * Implementation file for env.
+ * @author = kruthinraj
+ * @date = 2026-08-22
+ */
+
 const toBool = (value, fallback = false) => {
   if (value === undefined || value === '') return fallback;
   return ['1', 'true', 'yes', 'on'].includes(String(value).toLowerCase());

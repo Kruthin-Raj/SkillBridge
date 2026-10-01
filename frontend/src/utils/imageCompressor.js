@@ -1,3 +1,9 @@
+/**
+ * Utility functions for imageCompressor.
+ * @author = kruthinraj
+ * @date = 2026-09-18
+ */
+
 export const compressImage = (file, maxSizeKb = 250) => {
   return new Promise((resolve, reject) => {
     if (!file) {

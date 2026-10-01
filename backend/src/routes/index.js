@@ -12,6 +12,12 @@ import messagesRoutes from '../modules/messages/messages.routes.js';
 import reportsRoutes from '../modules/reports/reports.routes.js';
 import adminRoutes from '../modules/admin/admin.routes.js';
 
+/**
+ * Implementation file for index.
+ * @author = kruthinraj
+ * @date = 2026-08-22
+ */
+
 const router = Router();
 
 router.use('/auth', authRoutes);

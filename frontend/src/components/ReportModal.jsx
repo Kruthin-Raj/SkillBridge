@@ -2,6 +2,12 @@ import { useState, useRef } from 'react';
 import { api } from '../lib/api';
 import { compressImage } from '../utils/imageCompressor';
 
+/**
+ * React component for ReportModal.
+ * @author = kruthinraj
+ * @date = 2026-08-29
+ */
+
 const REASONS = [
   { value: 'harassment', label: 'Harassment or Abuse' },
   { value: 'scam', label: 'Scam or Fraud' },

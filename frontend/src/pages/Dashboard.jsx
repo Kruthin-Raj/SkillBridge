@@ -2,6 +2,12 @@ import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../lib/api';
 
+/**
+ * React page component for Dashboard view.
+ * @author = kruthinraj
+ * @date = 2026-08-27
+ */
+
 const TABS = [
   { key: 'active', label: 'Active Work' },
   { key: 'posted', label: 'My Listings' },

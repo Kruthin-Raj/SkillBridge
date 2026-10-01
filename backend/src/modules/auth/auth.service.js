@@ -5,6 +5,12 @@ import { ApiError } from '../../utils/ApiError.js';
 import { signToken } from '../../middleware/requireAuth.js';
 import { issueOtp, verifyOtp } from '../../services/otpService.js';
 
+/**
+ * Business logic service for auth module.
+ * @author = kruthinraj
+ * @date = 2026-08-22
+ */
+
 const normaliseEmail = (email) => String(email).trim().toLowerCase();
 
 const getCollegeForEmail = async (email) => {

@@ -9,6 +9,12 @@ import WorkspaceReview from '../components/WorkspaceReview';
 import ReportModal from '../components/ReportModal';
 import ConfirmModal from '../components/ConfirmModal';
 
+/**
+ * React page component for ListingDetail view.
+ * @author = kruthinraj
+ * @date = 2026-08-22
+ */
+
 export default function ListingDetail() {
   const { id } = useParams();
   const { user } = useAuth();

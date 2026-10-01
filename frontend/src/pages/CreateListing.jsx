@@ -4,6 +4,12 @@ import ModeToggle from '../components/ModeToggle';
 import { api } from '../lib/api';
 import { compressImage } from '../utils/imageCompressor';
 
+/**
+ * React page component for CreateListing view.
+ * @author = kruthinraj
+ * @date = 2026-08-22
+ */
+
 const emptyForm = {
   title: '',
   description: '',

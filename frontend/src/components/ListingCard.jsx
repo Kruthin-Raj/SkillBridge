@@ -1,5 +1,11 @@
 import { Link } from 'react-router-dom';
 
+/**
+ * React component for ListingCard.
+ * @author = kruthinraj
+ * @date = 2026-08-22
+ */
+
 const formatDate = (value) =>
   value ? new Date(value).toLocaleDateString(undefined, { day: 'numeric', month: 'short' }) : '';
 

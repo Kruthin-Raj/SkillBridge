@@ -5,6 +5,12 @@ import { ApiError } from '../../utils/ApiError.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
 import { requireAuth } from '../../middleware/requireAuth.js';
 
+/**
+ * Express API routes for teams module.
+ * @author = kruthinraj
+ * @date = 2026-09-17
+ */
+
 const router = Router();
 
 const applySchema = z.object({

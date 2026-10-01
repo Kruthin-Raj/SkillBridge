@@ -2,6 +2,12 @@ import { useRef, useState, useEffect } from 'react';
 import { api } from '../lib/api';
 import { compressImage } from '../utils/imageCompressor';
 
+/**
+ * React component for EditListingModal.
+ * @author = kruthinraj
+ * @date = 2026-09-17
+ */
+
 export default function EditListingModal({ listing, onClose, onUpdated }) {
   const fileInputRef = useRef(null);
   

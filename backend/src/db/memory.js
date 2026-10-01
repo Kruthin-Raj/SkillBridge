@@ -1,6 +1,12 @@
 import { randomUUID } from 'node:crypto';
 
 /**
+ * Database configuration and drivers for memory.
+ * @author = kruthinraj
+ * @date = 2026-08-22
+ */
+
+/**
  * In-memory stand-in for Supabase, used only while SUPABASE_URL /
  * SUPABASE_SERVICE_ROLE_KEY are unset. It lets the whole app run end to end
  * before the database exists. Everything is lost when the server restarts.

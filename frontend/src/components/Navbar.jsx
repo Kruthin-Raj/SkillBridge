@@ -3,6 +3,12 @@ import { Link, NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { api, BASE_URL } from '../lib/api';
 
+/**
+ * React component for Navbar.
+ * @author = kruthinraj
+ * @date = 2026-08-22
+ */
+
 const linkClass = ({ isActive }) =>
   `rounded-lg px-3 py-1.5 text-sm font-medium transition relative z-10 ${isActive ? 'bg-cw-accent text-white shadow-sm' : 'text-cw-text-2 hover:bg-cw-bg-alt hover:text-cw-text-1'
   }`;

@@ -20,6 +20,12 @@ import About from './pages/About';
 import Support from './pages/Support';
 import AdminPanel from './pages/AdminPanel';
 
+/**
+ * Implementation file for App.
+ * @author = kruthinraj
+ * @date = 2026-08-22
+ */
+
 export default function App() {
   return (
     <div className="min-h-screen">

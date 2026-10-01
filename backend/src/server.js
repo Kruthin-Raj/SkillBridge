@@ -2,6 +2,12 @@ import { createApp } from './app.js';
 import { db } from './db/index.js';
 import { assertConfig, env } from './config/env.js';
 
+/**
+ * Implementation file for server.
+ * @author = kruthinraj
+ * @date = 2026-08-22
+ */
+
 assertConfig();
 
 const app = createApp();

@@ -4,6 +4,12 @@ import { ApiError } from '../utils/ApiError.js';
 import { sendMail } from './mailer.js';
 
 /**
+ * Implementation file for otpService.
+ * @author = kruthinraj
+ * @date = 2026-08-22
+ */
+
+/**
  * One-time passwords, kept in memory.
  *
  * Memory is fine here: an OTP lives for ten minutes and a restart simply means

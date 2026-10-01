@@ -1,5 +1,11 @@
 import { useState } from 'react';
 
+/**
+ * React component for PasswordInput.
+ * @author = kruthinraj
+ * @date = 2026-08-31
+ */
+
 export default function PasswordInput({ id, value, onChange, placeholder, required, minLength, autoComplete }) {
   const [show, setShow] = useState(false);
   

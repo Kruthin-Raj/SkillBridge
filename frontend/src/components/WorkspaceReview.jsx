@@ -2,6 +2,12 @@ import { useState, useRef } from 'react';
 import { api } from '../lib/api';
 import { compressImage } from '../utils/imageCompressor';
 
+/**
+ * React component for WorkspaceReview.
+ * @author = kruthinraj
+ * @date = 2026-08-29
+ */
+
 export default function WorkspaceReview({ listingId, reviewee, onReviewSubmitted }) {
   const [rating, setRating] = useState(5);
   const [comment, setComment] = useState('');

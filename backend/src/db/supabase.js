@@ -3,6 +3,12 @@ import { env } from '../config/env.js';
 import { ApiError } from '../utils/ApiError.js';
 
 /**
+ * Database configuration and drivers for supabase.
+ * @author = kruthinraj
+ * @date = 2026-08-22
+ */
+
+/**
  * Server-side Supabase client. It uses the service-role key, which bypasses
  * Row Level Security, so this module must never be imported by the frontend.
  * Every request is authorised in our own middleware before it reaches here.

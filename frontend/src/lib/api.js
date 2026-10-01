@@ -1,3 +1,9 @@
+/**
+ * Library utility for api.
+ * @author = kruthinraj
+ * @date = 2026-08-22
+ */
+
 const defaultApiUrl = typeof window !== 'undefined' && window.location.hostname !== 'localhost' 
   ? `http://${window.location.hostname}:4000` 
   : 'http://localhost:4000';

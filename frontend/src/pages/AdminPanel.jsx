@@ -4,6 +4,12 @@ import { api } from '../lib/api';
 import AdminActionModal from '../components/AdminActionModal';
 import ImageModal from '../components/ImageModal';
 
+/**
+ * React page component for AdminPanel view.
+ * @author = kruthinraj
+ * @date = 2026-09-03
+ */
+
 export default function AdminPanel() {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('users');

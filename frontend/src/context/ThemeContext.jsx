@@ -1,5 +1,11 @@
 import { createContext, useContext, useEffect, useState } from 'react';
 
+/**
+ * React context provider for ThemeContext.
+ * @author = kruthinraj
+ * @date = 2026-08-29
+ */
+
 const ThemeContext = createContext();
 
 export function ThemeProvider({ children }) {

@@ -2,6 +2,12 @@ import { isSupabaseConfigured } from '../config/env.js';
 import { memoryDb } from './memory.js';
 
 /**
+ * Database configuration and drivers for index.
+ * @author = kruthinraj
+ * @date = 2026-08-22
+ */
+
+/**
  * Single data-access entry point.
  *
  * Both drivers expose the same five methods, so no module above this layer

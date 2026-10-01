@@ -2,6 +2,12 @@ import { useCallback, useEffect, useState } from 'react';
 import ListingCard from '../components/ListingCard';
 import { api } from '../lib/api';
 
+/**
+ * React page component for Exchanges view.
+ * @author = kruthinraj
+ * @date = 2026-08-22
+ */
+
 export default function Exchanges() {
   const [matches, setMatches] = useState([]);
   const [exchanges, setExchanges] = useState([]);

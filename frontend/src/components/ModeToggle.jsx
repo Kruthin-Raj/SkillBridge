@@ -1,4 +1,10 @@
 /**
+ * React component for ModeToggle.
+ * @author = kruthinraj
+ * @date = 2026-08-22
+ */
+
+/**
  * The single toggle from slide 4 that switches the marketplace between
  * paid freelancing and free skill exchange.
  */

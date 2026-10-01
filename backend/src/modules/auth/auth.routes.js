@@ -11,6 +11,12 @@ import {
   setPassword,
 } from './auth.service.js';
 
+/**
+ * Express API routes for auth module.
+ * @author = kruthinraj
+ * @date = 2026-08-22
+ */
+
 const router = Router();
 
 const emailSchema = z.object({

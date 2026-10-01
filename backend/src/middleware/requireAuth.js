@@ -4,6 +4,12 @@ import { db, TABLES } from '../db/index.js';
 import { ApiError } from '../utils/ApiError.js';
 
 /**
+ * Express middleware for requireAuth.
+ * @author = kruthinraj
+ * @date = 2026-08-22
+ */
+
+/**
  * Reads the Bearer token, verifies it and puts the caller on `req.user`.
  * Every route that touches user-owned data must sit behind this.
  */

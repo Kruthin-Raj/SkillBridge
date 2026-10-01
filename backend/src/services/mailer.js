@@ -1,6 +1,12 @@
 import nodemailer from 'nodemailer';
 import { env } from '../config/env.js';
 
+/**
+ * Implementation file for mailer.
+ * @author = kruthinraj
+ * @date = 2026-08-22
+ */
+
 let transporter = null;
 
 const getTransporter = () => {

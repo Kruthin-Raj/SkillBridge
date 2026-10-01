@@ -5,6 +5,12 @@ import ModeToggle from '../components/ModeToggle';
 import { api } from '../lib/api';
 import { useAuth } from '../context/AuthContext';
 
+/**
+ * React page component for Browse view.
+ * @author = kruthinraj
+ * @date = 2026-08-22
+ */
+
 export default function Browse() {
   const { user } = useAuth();
   const [mode, setMode] = useState('freelance');
