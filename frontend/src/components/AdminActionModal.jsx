@@ -1,6 +1,12 @@
 import { useState, useRef } from 'react';
 import { compressImage } from '../utils/imageCompressor';
 
+/**
+ * React component for AdminActionModal.
+ * @author = kruthinraj
+ * @date = 2026-09-03
+ */
+
 export default function AdminActionModal({ isOpen, onClose, onConfirm, user, actionType }) {
   const [message, setMessage] = useState('');
   const [imageUrl, setImageUrl] = useState('');

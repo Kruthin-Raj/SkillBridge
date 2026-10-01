@@ -1,6 +1,12 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { api, tokenStore } from '../lib/api';
 
+/**
+ * React context provider for AuthContext.
+ * @author = kruthinraj
+ * @date = 2026-08-22
+ */
+
 const AuthContext = createContext(null);
 
 /** Returns true if the profile is considered "empty" and needs setup. */

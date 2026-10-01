@@ -4,6 +4,12 @@ import { useAuth, isProfileIncomplete } from '../context/AuthContext';
 import PasswordInput from '../components/PasswordInput';
 import ImageModal from '../components/ImageModal';
 
+/**
+ * React page component for Login view.
+ * @author = kruthinraj
+ * @date = 2026-08-22
+ */
+
 // removed COLLEGE_DOMAIN
 
 export default function Login() {

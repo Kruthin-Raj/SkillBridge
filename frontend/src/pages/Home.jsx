@@ -1,6 +1,12 @@
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
+/**
+ * React page component for Home view.
+ * @author = kruthinraj
+ * @date = 2026-08-27
+ */
+
 const FEATURES = [
   {
     icon: '💼',

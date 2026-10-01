@@ -7,6 +7,12 @@ import EditListingModal from '../components/EditListingModal';
 import ConfirmModal from '../components/ConfirmModal';
 import { compressImage } from '../utils/imageCompressor';
 
+/**
+ * React page component for Profile view.
+ * @author = kruthinraj
+ * @date = 2026-08-22
+ */
+
 const toText = (list) => (list ?? []).join(', ');
 const toList = (text) =>
   text

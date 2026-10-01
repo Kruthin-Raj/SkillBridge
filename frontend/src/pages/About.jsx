@@ -1,3 +1,9 @@
+/**
+ * React page component for About view.
+ * @author = kruthinraj
+ * @date = 2026-09-03
+ */
+
 export default function About() {
   return (
     <div className="mx-auto max-w-3xl space-y-8 animate-fade-in py-8">

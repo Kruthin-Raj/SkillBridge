@@ -1,5 +1,11 @@
 import { useEffect } from 'react';
 
+/**
+ * React component for ImageModal.
+ * @author = kruthinraj
+ * @date = 2026-09-03
+ */
+
 export default function ImageModal({ src, alt, onClose }) {
   useEffect(() => {
     const handleEscape = (e) => {

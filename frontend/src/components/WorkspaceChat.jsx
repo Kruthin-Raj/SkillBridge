@@ -2,6 +2,12 @@ import { useState, useEffect, useRef } from 'react';
 import { api } from '../lib/api';
 import { useAuth } from '../context/AuthContext';
 
+/**
+ * React component for WorkspaceChat.
+ * @author = kruthinraj
+ * @date = 2026-08-29
+ */
+
 export default function WorkspaceChat({ listingId }) {
   const { user } = useAuth();
   const [messages, setMessages] = useState([]);

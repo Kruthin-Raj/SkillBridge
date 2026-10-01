@@ -1,5 +1,11 @@
 import { Link } from 'react-router-dom';
 
+/**
+ * React page component for NotFound view.
+ * @author = kruthinraj
+ * @date = 2026-08-22
+ */
+
 export default function NotFound() {
   return (
     <div className="mx-auto max-w-md text-center">

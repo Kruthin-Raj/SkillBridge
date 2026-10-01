@@ -2,6 +2,12 @@ import { ZodError } from 'zod';
 import { isDev } from '../config/env.js';
 import { ApiError } from '../utils/ApiError.js';
 
+/**
+ * Express middleware for errorHandler.
+ * @author = kruthinraj
+ * @date = 2026-08-22
+ */
+
 export function notFound(req, _res, next) {
   next(ApiError.notFound(`No route matches ${req.method} ${req.originalUrl}`));
 }

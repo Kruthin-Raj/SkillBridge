@@ -1,6 +1,12 @@
 import { useState } from 'react';
 import { api } from '../lib/api';
 
+/**
+ * React component for TaskProgress.
+ * @author = kruthinraj
+ * @date = 2026-08-29
+ */
+
 const OPTIONS = [
   { value: 'todo', label: 'To Do', color: 'bg-cw-bg text-cw-text-1 border border-cw-border' },
   { value: 'in_progress', label: 'In Progress', color: 'bg-cw-accent/20 text-cw-accent-light border border-cw-accent/30' },

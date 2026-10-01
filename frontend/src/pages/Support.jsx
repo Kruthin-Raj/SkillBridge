@@ -1,3 +1,9 @@
+/**
+ * React page component for Support view.
+ * @author = kruthinraj
+ * @date = 2026-09-03
+ */
+
 export default function Support() {
   return (
     <div className="mx-auto max-w-2xl space-y-6 animate-fade-in py-12 text-center">

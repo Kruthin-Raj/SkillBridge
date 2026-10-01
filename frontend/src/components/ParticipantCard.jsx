@@ -2,6 +2,12 @@ import { useState } from 'react';
 import ReportModal from './ReportModal';
 import { useAuth } from '../context/AuthContext';
 
+/**
+ * React component for ParticipantCard.
+ * @author = kruthinraj
+ * @date = 2026-08-29
+ */
+
 export default function ParticipantCard({ user, role, listingId }) {
   const { user: currentUser } = useAuth();
   const [reportOpen, setReportOpen] = useState(false);

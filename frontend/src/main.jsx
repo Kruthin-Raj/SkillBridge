@@ -6,6 +6,12 @@ import { AuthProvider } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
 import './index.css';
 
+/**
+ * Implementation file for main.
+ * @author = kruthinraj
+ * @date = 2026-08-22
+ */
+
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
     <BrowserRouter>

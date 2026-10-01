@@ -3,6 +3,12 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import PasswordInput from '../components/PasswordInput';
 
+/**
+ * React page component for ForgotPassword view.
+ * @author = kruthinraj
+ * @date = 2026-08-28
+ */
+
 // removed COLLEGE_DOMAIN
 
 export default function ForgotPassword() {

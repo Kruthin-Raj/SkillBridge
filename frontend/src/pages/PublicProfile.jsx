@@ -4,6 +4,12 @@ import { api } from '../lib/api';
 import ReportModal from '../components/ReportModal';
 import ImageModal from '../components/ImageModal';
 
+/**
+ * React page component for PublicProfile view.
+ * @author = kruthinraj
+ * @date = 2026-08-27
+ */
+
 const Stars = ({ rating }) => (
   <span className="inline-flex gap-0.5">
     {[1, 2, 3, 4, 5].map((n) => (

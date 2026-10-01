@@ -3,6 +3,12 @@ import { Link } from 'react-router-dom';
 import { api } from '../lib/api';
 import ImageModal from '../components/ImageModal';
 
+/**
+ * React page component for Notifications view.
+ * @author = kruthinraj
+ * @date = 2026-08-27
+ */
+
 const TYPE_CONFIG = {
   new_bid: { icon: '💰', color: 'bg-freelance', label: 'New Bid' },
   bid_accepted: { icon: '✅', color: 'bg-emerald-500', label: 'Bid Accepted' },

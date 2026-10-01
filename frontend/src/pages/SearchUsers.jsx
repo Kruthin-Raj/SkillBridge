@@ -2,6 +2,12 @@ import { useEffect, useState } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
 import { api } from '../lib/api';
 
+/**
+ * React page component for SearchUsers view.
+ * @author = kruthinraj
+ * @date = 2026-09-03
+ */
+
 export default function SearchUsers() {
   const [searchParams] = useSearchParams();
   const query = searchParams.get('q') || '';

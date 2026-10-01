@@ -3,6 +3,12 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { api } from '../lib/api';
 
+/**
+ * React page component for ProfileSetup view.
+ * @author = kruthinraj
+ * @date = 2026-08-28
+ */
+
 const toList = (text) =>
   text.split(',').map((item) => item.trim()).filter(Boolean);
 

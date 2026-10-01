@@ -3,6 +3,12 @@ import { db, TABLES } from '../../db/index.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
 import { requireAuth } from '../../middleware/requireAuth.js';
 
+/**
+ * Express API routes for notifications module.
+ * @author = kruthinraj
+ * @date = 2026-08-27
+ */
+
 const router = Router();
 
 /**

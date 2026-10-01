@@ -6,6 +6,12 @@ import { env, isDev } from './config/env.js';
 import routes from './routes/index.js';
 import { errorHandler, notFound } from './middleware/errorHandler.js';
 
+/**
+ * Implementation file for app.
+ * @author = kruthinraj
+ * @date = 2026-08-22
+ */
+
 export function createApp() {
   const app = express();
 

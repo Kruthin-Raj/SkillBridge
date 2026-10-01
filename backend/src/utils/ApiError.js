@@ -1,4 +1,10 @@
 /**
+ * Implementation file for ApiError.
+ * @author = kruthinraj
+ * @date = 2026-08-22
+ */
+
+/**
  * Error type that carries an HTTP status code, so controllers can `throw`
  * and the central error handler knows what to send back.
  */
