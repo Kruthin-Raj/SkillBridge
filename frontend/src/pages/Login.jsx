@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth, isProfileIncomplete } from '../context/AuthContext';
 import PasswordInput from '../components/PasswordInput';
 import ImageModal from '../components/ImageModal';
+import { cleanErrorMessage } from '../lib/api';
 
 /**
  * React page component for Login view.
@@ -78,7 +79,7 @@ export default function Login() {
 
         {errorObj && (
           <div role="alert" className="rounded-lg bg-red-50 p-4 border border-red-200">
-            <p className="text-sm font-medium text-red-700">{errorObj.message}</p>
+            <p className="text-sm font-medium text-red-700">{cleanErrorMessage(errorObj.message)}</p>
             {errorObj.details?.image_url && (
               <div className="mt-3">
                 <p className="text-xs text-red-600 mb-1 font-semibold uppercase tracking-wider">Proof / Attachment</p>

@@ -12,6 +12,20 @@ export function notFound(req, _res, next) {
   next(ApiError.notFound(`No route matches ${req.method} ${req.originalUrl}`));
 }
 
+const sanitizeErrorMessage = (text) => {
+  if (!text || typeof text !== 'string') return text;
+  if (
+    /<[a-z][\s\S]*>/i.test(text) ||
+    text.includes('<!DOCTYPE') ||
+    text.includes('<html') ||
+    text.includes('<body') ||
+    /521|502|503|504|cloudflare|web server is down/i.test(text)
+  ) {
+    return "Shhh... it's bedtime right now! 😴 I'm busy taking a quick nap, try again later.";
+  }
+  return text;
+};
+
 /* eslint-disable-next-line no-unused-vars -- Express identifies error middleware by arity */
 export function errorHandler(err, _req, res, _next) {
   if (err instanceof ZodError) {
@@ -25,13 +39,16 @@ export function errorHandler(err, _req, res, _next) {
   }
 
   if (err instanceof ApiError) {
-    return res.status(err.status).json({ error: err.message, details: err.details });
+    const cleanMessage = sanitizeErrorMessage(err.message);
+    const cleanDetails = typeof err.details === 'string' ? sanitizeErrorMessage(err.details) : err.details;
+    return res.status(err.status).json({ error: cleanMessage, details: cleanDetails });
   }
 
   // Anything reaching here is unexpected - always surface it in the log.
   console.error('[unhandled]', err);
+  const cleanDetails = isDev ? sanitizeErrorMessage(err?.message) : undefined;
   return res.status(500).json({
     error: 'Internal server error',
-    details: isDev ? err.message : undefined,
+    details: cleanDetails,
   });
 }
