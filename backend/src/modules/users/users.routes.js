@@ -62,22 +62,31 @@ router.get(
       } catch (err) {}
     }
 
-    let query = supabase
-      .from(TABLES.users)
-      .select('*')
-      .neq('email', 'kruthin123@gmail.com')
-      .or(`full_name.ilike.%${q}%,email.ilike.%${q}%`);
+    try {
+      let query = supabase
+        .from(TABLES.users)
+        .select('*')
+        .neq('email', 'kruthin123@gmail.com')
+        .or(`full_name.ilike.%${q}%,email.ilike.%${q}%`);
+        
+      if (userCollegeId) {
+        query = query.eq('college_id', userCollegeId);
+      }
       
-    if (userCollegeId) {
-      query = query.eq('college_id', userCollegeId);
+      const { data, error } = await query.limit(20);
+        
+      if (error) {
+        console.error('[User Search Error]', error);
+        throw new ApiError(503, "Shhh... it's bedtime right now! 😴 I'm busy taking a quick nap, try again later.");
+      }
+      
+      const users = (data || []).map(toPublicProfile);
+      res.json({ users });
+    } catch (err) {
+      if (err instanceof ApiError) throw err;
+      console.error('[User Search Error]', err);
+      throw new ApiError(503, "Shhh... it's bedtime right now! 😴 I'm busy taking a quick nap, try again later.");
     }
-    
-    const { data, error } = await query.limit(20);
-      
-    if (error) throw ApiError.badRequest('Search failed');
-    
-    const users = (data || []).map(toPublicProfile);
-    res.json({ users });
   })
 );
 

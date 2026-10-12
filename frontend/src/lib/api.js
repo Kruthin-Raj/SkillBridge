@@ -17,14 +17,30 @@ export const tokenStore = {
   clear: () => localStorage.removeItem(TOKEN_KEY),
 };
 
+export const cleanErrorMessage = (msg) => {
+  if (!msg || typeof msg !== 'string') return 'An unexpected error occurred. Please try again.';
+  if (
+    /<[a-z][\s\S]*>/i.test(msg) ||
+    msg.includes('<!DOCTYPE') ||
+    msg.includes('<html') ||
+    msg.includes('<body') ||
+    /521|502|503|504|cloudflare|web server is down/i.test(msg) ||
+    /database service is temporarily unavailable/i.test(msg)
+  ) {
+    return "Shhh... it's bedtime right now! 😴 I'm busy taking a quick nap, try again later.";
+  }
+  return msg;
+};
+
 export class ApiError extends Error {
   constructor(status, message, details) {
     // When the server returns field-level validation details, append them
     // to the message so the UI shows what actually went wrong.
+    const sanitized = cleanErrorMessage(message);
     const fullMessage =
       Array.isArray(details) && details.length
-        ? `${message}: ${details.map((d) => `${d.field ? d.field + ' – ' : ''}${d.message}`).join(', ')}`
-        : message;
+        ? `${sanitized}: ${details.map((d) => `${d.field ? d.field + ' – ' : ''}${d.message}`).join(', ')}`
+        : sanitized;
     super(fullMessage);
     this.status = status;
     this.details = details;
@@ -40,13 +56,29 @@ async function request(path, { method = 'GET', body, auth = true } = {}) {
   const token = tokenStore.get();
   if (auth && token) headers.Authorization = `Bearer ${token}`;
 
-  const response = await fetch(`${BASE_URL}${path}`, {
-    method,
-    headers,
-    body: body === undefined ? undefined : JSON.stringify(body),
-  });
+  let response;
+  try {
+    response = await fetch(`${BASE_URL}${path}`, {
+      method,
+      headers,
+      body: body === undefined ? undefined : JSON.stringify(body),
+    });
+  } catch (err) {
+    throw new ApiError(
+      0,
+      "Shhh... it's bedtime right now! 😴 I'm busy taking a quick nap, try again later."
+    );
+  }
 
-  const payload = await response.json().catch(() => ({}));
+  let payload = {};
+  const contentType = response.headers.get('content-type') || '';
+  if (contentType.includes('application/json')) {
+    payload = await response.json().catch(() => ({}));
+  } else {
+    // If the server / proxy returned raw HTML or plain text (e.g. 502/504 Bad Gateway / Cloudflare 521)
+    const rawText = await response.text().catch(() => '');
+    payload = { error: cleanErrorMessage(rawText || response.statusText) };
+  }
 
   if (!response.ok) {
     // An expired or tampered token should not leave the UI in a signed-in state.
@@ -54,7 +86,8 @@ async function request(path, { method = 'GET', body, auth = true } = {}) {
       tokenStore.clear();
       window.dispatchEvent(new Event('unauthorized'));
     }
-    throw new ApiError(response.status, payload.error || response.statusText, payload.details);
+    const rawError = payload.error || response.statusText || 'Request failed';
+    throw new ApiError(response.status, cleanErrorMessage(rawError), payload.details);
   }
 
   return payload;
