@@ -145,6 +145,7 @@ export const api = {
     forListing: (listingId) => request(`/api/bids?listing_id=${listingId}`),
     create: (bid) => request('/api/bids', { method: 'POST', body: bid }),
     edit: (id, data) => request(`/api/bids/${id}`, { method: 'PATCH', body: data }),
+    delete: (id) => request(`/api/bids/${id}`, { method: 'DELETE' }),
     accept: (id) => request(`/api/bids/${id}/accept`, { method: 'POST' }),
   },
 

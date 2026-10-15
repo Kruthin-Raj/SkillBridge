@@ -115,11 +115,12 @@ create table if not exists public.bids (
   listing_id uuid not null references public.listings(id) on delete cascade,
   bidder_id  uuid not null references public.users(id)    on delete cascade,
   amount     integer not null check (amount > 0),
-  message    text not null default '',
-  status     text not null default 'pending'
-               check (status in ('pending', 'accepted', 'rejected', 'withdrawn')),
-  created_at timestamptz not null default now(),
-  updated_at timestamptz not null default now(),
+  message      text not null default '',
+  is_anonymous boolean not null default false,
+  status       text not null default 'pending'
+                 check (status in ('pending', 'accepted', 'rejected', 'withdrawn')),
+  created_at   timestamptz not null default now(),
+  updated_at   timestamptz not null default now(),
 
   -- One bid per student per listing.
   unique (listing_id, bidder_id)
