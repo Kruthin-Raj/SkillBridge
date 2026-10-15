@@ -19,6 +19,7 @@ import SearchUsers from './pages/SearchUsers';
 import About from './pages/About';
 import Support from './pages/Support';
 import AdminPanel from './pages/AdminPanel';
+import PrivacyPolicy from './pages/PrivacyPolicy';
 
 /**
  * Implementation file for App.
@@ -39,6 +40,7 @@ export default function App() {
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/about" element={<About />} />
           <Route path="/support" element={<Support />} />
+          <Route path="/privacy" element={<PrivacyPolicy />} />
           <Route path="/listings/:id" element={<ListingDetail />} />
           <Route path="/users/:id" element={<PublicProfile />} />
           <Route path="/search" element={<SearchUsers />} />
@@ -105,9 +107,10 @@ export default function App() {
       </main>
 
       <footer className="mt-auto border-t border-cw-accent/10 bg-cw-surface/50 py-6">
-        <div className="mx-auto max-w-5xl px-4 flex items-center justify-center gap-6 text-sm text-cw-text-3">
+        <div className="mx-auto max-w-5xl px-4 flex flex-wrap items-center justify-center gap-6 text-sm text-cw-text-3">
           <span>&copy; {new Date().getFullYear()} SkillBridge</span>
           <Link to="/about" className="hover:text-cw-text-1 transition-colors">About</Link>
+          <Link to="/privacy" className="hover:text-cw-text-1 transition-colors">Privacy Policy</Link>
           <Link to="/support" className="hover:text-cw-text-1 transition-colors">Support</Link>
         </div>
       </footer>

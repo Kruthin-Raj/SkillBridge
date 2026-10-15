@@ -211,6 +211,13 @@ export default function Register() {
           {busy ? 'Sending code…' : cooldown > 0 ? `Wait ${cooldown}s` : 'Send verification code'}
         </button>
 
+        <p className="text-[11px] text-cw-text-3 text-center">
+          By registering, you agree to our{' '}
+          <Link to="/privacy" className="underline hover:text-cw-text-1">
+            Privacy Policy
+          </Link>.
+        </p>
+
         <div className="flex items-center justify-between text-sm text-cw-text-3">
           <Link to="/forgot-password" className="font-medium text-freelance hover:underline">
             Forgot password?
