@@ -1,9 +1,10 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import ListingCard from '../components/ListingCard';
 import ModeToggle from '../components/ModeToggle';
 import { api } from '../lib/api';
 import { useAuth } from '../context/AuthContext';
+import { scoreFuzzyMatch } from '../utils/fuzzySearch';
 
 /**
  * React page component for Browse view.
@@ -41,17 +42,26 @@ export default function Browse() {
     };
   }, [mode]);
 
-  const filteredListings = listings.filter((listing) => {
-    if (!searchQuery) return true;
-    const q = searchQuery.toLowerCase();
-    return (
-      listing.title?.toLowerCase().includes(q) ||
-      listing.description?.toLowerCase().includes(q) ||
-      (listing.tags && listing.tags.some((t) => t.toLowerCase().includes(q))) ||
-      listing.skill_offered?.toLowerCase().includes(q) ||
-      listing.skill_wanted?.toLowerCase().includes(q)
-    );
-  });
+  const filteredListings = useMemo(() => {
+    if (!searchQuery.trim()) return listings;
+    const scored = [];
+    for (const listing of listings) {
+      const combinedText = [
+        listing.title || '',
+        listing.description || '',
+        Array.isArray(listing.tags) ? listing.tags.join(' ') : '',
+        listing.skill_offered || '',
+        listing.skill_wanted || '',
+        listing.owner?.full_name || '',
+      ].join(' ');
+      const score = scoreFuzzyMatch(searchQuery, combinedText);
+      if (score >= 0.55) {
+        scored.push({ listing, score });
+      }
+    }
+    scored.sort((a, b) => b.score - a.score);
+    return scored.map((s) => s.listing);
+  }, [listings, searchQuery]);
 
   return (
     <div>

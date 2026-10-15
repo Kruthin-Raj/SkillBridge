@@ -116,6 +116,11 @@ export const api = {
       request('/api/users/me/avatar', { method: 'PATCH', body: { avatar_url } }),
   },
 
+  search: {
+    all: (q, type = 'all') =>
+      request(`/api/search?q=${encodeURIComponent(q)}${type ? `&type=${type}` : ''}`),
+  },
+
   listings: {
     list: (mode) => request(`/api/listings${mode ? `?mode=${mode}` : ''}`, { auth: false }),
     forOwner: (ownerId) => request(`/api/listings?owner_id=${ownerId}`, { auth: false }),

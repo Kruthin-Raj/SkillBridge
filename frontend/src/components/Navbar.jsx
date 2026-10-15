@@ -182,7 +182,7 @@ export default function Navbar() {
             <input
               type="text"
               className="block w-full rounded-full border border-cw-border bg-cw-bg-alt/50 pl-10 pr-4 py-2 md:py-1.5 text-sm text-cw-text-1 focus:border-cw-accent focus:bg-cw-surface focus:outline-none focus:ring-1 focus:ring-cw-accent transition"
-              placeholder="Search users..."
+              placeholder="Search users, posts, skills..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />

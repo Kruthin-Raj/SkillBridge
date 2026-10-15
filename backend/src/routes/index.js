@@ -12,6 +12,7 @@ import messagesRoutes from '../modules/messages/messages.routes.js';
 import reportsRoutes from '../modules/reports/reports.routes.js';
 import adminRoutes from '../modules/admin/admin.routes.js';
 import supportRoutes from '../modules/support/support.routes.js';
+import searchRoutes from '../modules/search/search.routes.js';
 
 /**
  * Implementation file for index.
@@ -34,5 +35,6 @@ router.use('/messages', messagesRoutes);
 router.use('/reports', reportsRoutes);
 router.use('/admin', adminRoutes);
 router.use('/support', supportRoutes);
+router.use('/search', searchRoutes);
 
 export default router;
