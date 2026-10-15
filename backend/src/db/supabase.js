@@ -1,6 +1,7 @@
 import { createClient } from '@supabase/supabase-js';
 import { env } from '../config/env.js';
 import { ApiError } from '../utils/ApiError.js';
+import { memoryDb } from './memory.js';
 
 /**
  * Database configuration and drivers for supabase.
@@ -55,6 +56,15 @@ const fail = (error) => {
   throw new ApiError(isDowntime ? 503 : 500, cleanMessage);
 };
 
+const isMissingTable = (err) =>
+  err?.code === '42P01' ||
+  (typeof err?.message === 'string' && (
+    err.message.includes('does not exist') ||
+    err.message.includes('relation') ||
+    err.message.includes('schema cache') ||
+    err.message.includes('Could not find the table')
+  ));
+
 const applyWhere = (query, where = {}) =>
   Object.entries(where).reduce((acc, [column, value]) => acc.eq(column, value), query);
 
@@ -64,10 +74,14 @@ export const supabaseDb = {
   async insert(table, row) {
     try {
       const { data, error } = await supabase.from(table).insert(row).select().single();
-      if (error) fail(error);
+      if (error) {
+        if (isMissingTable(error)) return memoryDb.insert(table, row);
+        fail(error);
+      }
       return data;
     } catch (err) {
       if (err instanceof ApiError) throw err;
+      if (isMissingTable(err)) return memoryDb.insert(table, row);
       fail(err);
     }
   },
@@ -77,10 +91,14 @@ export const supabaseDb = {
       const { data, error } = await applyWhere(supabase.from(table).select('*'), where)
         .limit(1)
         .maybeSingle();
-      if (error) fail(error);
+      if (error) {
+        if (isMissingTable(error)) return memoryDb.findOne(table, where);
+        fail(error);
+      }
       return data;
     } catch (err) {
       if (err instanceof ApiError) throw err;
+      if (isMissingTable(err)) return memoryDb.findOne(table, where);
       fail(err);
     }
   },
@@ -91,10 +109,14 @@ export const supabaseDb = {
       const { data, error } = await applyWhere(supabase.from(table).select('*'), where)
         .order(orderBy, { ascending })
         .limit(limit);
-      if (error) fail(error);
+      if (error) {
+        if (isMissingTable(error)) return memoryDb.findMany(table, where, options);
+        fail(error);
+      }
       return data ?? [];
     } catch (err) {
       if (err instanceof ApiError) throw err;
+      if (isMissingTable(err)) return memoryDb.findMany(table, where, options);
       fail(err);
     }
   },
@@ -104,10 +126,14 @@ export const supabaseDb = {
       const { data, error } = await applyWhere(supabase.from(table).update(patch), where)
         .select()
         .maybeSingle();
-      if (error) fail(error);
+      if (error) {
+        if (isMissingTable(error)) return memoryDb.update(table, where, patch);
+        fail(error);
+      }
       return data;
     } catch (err) {
       if (err instanceof ApiError) throw err;
+      if (isMissingTable(err)) return memoryDb.update(table, where, patch);
       fail(err);
     }
   },
@@ -116,10 +142,14 @@ export const supabaseDb = {
     try {
       const { data, error } = await applyWhere(supabase.from(table).update(patch), where)
         .select();
-      if (error) fail(error);
+      if (error) {
+        if (isMissingTable(error)) return memoryDb.updateMany(table, where, patch);
+        fail(error);
+      }
       return data ? data.length : 0;
     } catch (err) {
       if (err instanceof ApiError) throw err;
+      if (isMissingTable(err)) return memoryDb.updateMany(table, where, patch);
       fail(err);
     }
   },
@@ -127,12 +157,17 @@ export const supabaseDb = {
   async remove(table, where) {
     try {
       const { error } = await applyWhere(supabase.from(table).delete(), where);
-      if (error) fail(error);
+      if (error) {
+        if (isMissingTable(error)) return memoryDb.remove(table, where);
+        fail(error);
+      }
       return true;
     } catch (err) {
       if (err instanceof ApiError) throw err;
+      if (isMissingTable(err)) return memoryDb.remove(table, where);
       fail(err);
     }
   },
 };
+
 
