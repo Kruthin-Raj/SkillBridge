@@ -36,6 +36,8 @@ create table if not exists public.users (
   skills_wanted  text[]      not null default '{}',
   rating_average numeric(3,2) not null default 0,
   rating_count   integer     not null default 0,
+  warnings_count integer     not null default 0,
+  is_blocked     boolean     not null default false,
   college_id     uuid        references public.colleges(id) on delete set null,
   last_read_at   timestamptz not null default now(),
   created_at     timestamptz not null default now(),
@@ -74,7 +76,7 @@ create table if not exists public.listings (
   image_url       text not null default '',
 
   status          text not null default 'open'
-                    check (status in ('open', 'in_progress', 'completed', 'cancelled')),
+                    check (status in ('open', 'in_progress', 'completed', 'cancelled', 'closed')),
   worker_status   text not null default 'todo'
                     check (worker_status in ('todo', 'in_progress', 'review')),
   created_at      timestamptz not null default now(),
@@ -183,6 +185,40 @@ create table if not exists public.messages (
 create index if not exists messages_listing_idx on public.messages (listing_id);
 
 -- ---------------------------------------------------------------------------
+-- team_applications  -  team finder applications
+-- ---------------------------------------------------------------------------
+create table if not exists public.team_applications (
+  id           uuid primary key default gen_random_uuid(),
+  listing_id   uuid not null references public.listings(id) on delete cascade,
+  applicant_id uuid not null references public.users(id)    on delete cascade,
+  message      text not null default '',
+  status       text not null default 'pending'
+                 check (status in ('pending', 'accepted', 'rejected', 'removed')),
+  created_at   timestamptz not null default now(),
+  updated_at   timestamptz not null default now(),
+
+  -- One application per student per listing.
+  unique (listing_id, applicant_id)
+);
+
+create index if not exists team_applications_listing_idx on public.team_applications (listing_id);
+create index if not exists team_applications_applicant_idx on public.team_applications (applicant_id);
+
+-- ---------------------------------------------------------------------------
+-- admin_actions  -  audit log of warnings, blocks, and unblocks
+-- ---------------------------------------------------------------------------
+create table if not exists public.admin_actions (
+  id         uuid primary key default gen_random_uuid(),
+  user_id    uuid not null references public.users(id) on delete cascade,
+  action     text not null check (action in ('warn', 'block', 'unblock')),
+  message    text not null default '',
+  image_url  text not null default '',
+  created_at timestamptz not null default now()
+);
+
+create index if not exists admin_actions_user_idx on public.admin_actions (user_id);
+
+-- ---------------------------------------------------------------------------
 -- reports  -  dispute resolution and safety
 -- ---------------------------------------------------------------------------
 create table if not exists public.reports (
@@ -239,15 +275,17 @@ create index if not exists support_messages_ticket_idx on public.support_message
 -- bypasses RLS. We still enable RLS with no permissive policies so that a
 -- leaked anon key cannot read the tables directly.
 -- ---------------------------------------------------------------------------
-alter table public.users            enable row level security;
-alter table public.listings         enable row level security;
-alter table public.bids             enable row level security;
-alter table public.exchanges        enable row level security;
-alter table public.reviews          enable row level security;
-alter table public.messages         enable row level security;
-alter table public.reports          enable row level security;
-alter table public.support_tickets  enable row level security;
-alter table public.support_messages enable row level security;
+alter table public.users             enable row level security;
+alter table public.listings          enable row level security;
+alter table public.bids              enable row level security;
+alter table public.exchanges         enable row level security;
+alter table public.reviews           enable row level security;
+alter table public.messages          enable row level security;
+alter table public.team_applications enable row level security;
+alter table public.admin_actions     enable row level security;
+alter table public.reports           enable row level security;
+alter table public.support_tickets   enable row level security;
+alter table public.support_messages  enable row level security;
 
 -- ---------------------------------------------------------------------------
 -- keep updated_at honest
@@ -265,7 +303,7 @@ $$;
 do $$
 declare t text;
 begin
-  foreach t in array array['users', 'listings', 'bids', 'exchanges', 'reports', 'support_tickets'] loop
+  foreach t in array array['users', 'listings', 'bids', 'exchanges', 'team_applications', 'reports', 'support_tickets'] loop
     execute format('drop trigger if exists touch_%1$s on public.%1$I', t);
     execute format(
       'create trigger touch_%1$s before update on public.%1$I

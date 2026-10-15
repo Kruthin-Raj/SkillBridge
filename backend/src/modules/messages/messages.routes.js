@@ -54,6 +54,19 @@ async function assertParticipant(listingId, userId) {
     return listing;
   }
 
+  // For teams, check if user is an accepted team member
+  if (listing.mode === 'team') {
+    const acceptedTeam = await db.findOne('team_applications', {
+      listing_id: listingId,
+      applicant_id: userId,
+      status: 'accepted',
+    });
+    if (!acceptedTeam) {
+      throw ApiError.forbidden('You are not a participant in this team');
+    }
+    return listing;
+  }
+
   throw ApiError.forbidden('You are not a participant in this listing');
 }
 
