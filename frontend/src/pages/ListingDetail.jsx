@@ -23,14 +23,15 @@ export default function ListingDetail() {
   const [listing, setListing] = useState(null);
   const [bids, setBids] = useState([]);
   const [teamApps, setTeamApps] = useState([]);
-  const [form, setForm] = useState({ amount: '', message: '' });
+  const [form, setForm] = useState({ amount: '', message: '', is_anonymous: true });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deletingBidId, setDeletingBidId] = useState(null);
   
   const [editingBidId, setEditingBidId] = useState(null);
-  const [editBidForm, setEditBidForm] = useState({ amount: '', message: '' });
+  const [editBidForm, setEditBidForm] = useState({ amount: '', message: '', is_anonymous: true });
   const [bidSort, setBidSort] = useState('newest'); // 'newest', 'price-asc', 'price-desc', 'rating-desc'
 
   const navigate = useNavigate();
@@ -83,8 +84,9 @@ export default function ListingDetail() {
         listing_id: id,
         amount: Number(form.amount),
         message: form.message.trim(),
+        is_anonymous: Boolean(form.is_anonymous),
       });
-      setForm({ amount: '', message: '' });
+      setForm({ amount: '', message: '', is_anonymous: true });
     });
   };
 
@@ -94,6 +96,7 @@ export default function ListingDetail() {
       await api.bids.edit(bidId, {
         amount: Number(editBidForm.amount),
         message: editBidForm.message.trim(),
+        is_anonymous: Boolean(editBidForm.is_anonymous),
       });
       setEditingBidId(null);
     });
@@ -338,8 +341,20 @@ export default function ListingDetail() {
         {/* Freelance mode: place a bid, or (as owner) accept one. */}
         {user && isFreelance && (
           <div className="card">
-            <div className="flex items-center justify-between mb-3">
-              <h2 className="font-semibold">Bids ({bids.length})</h2>
+            <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
+              <div className="flex items-center gap-2">
+                <h2 className="font-semibold">Bids ({bids.length})</h2>
+                {isOwner && (
+                  <span className="text-[10px] bg-emerald-500/10 text-emerald-600 border border-emerald-500/20 px-2 py-0.5 rounded-full font-medium">
+                    🛡️ Owner View: All profiles visible
+                  </span>
+                )}
+                {!isOwner && (
+                  <span className="text-[10px] text-cw-text-3 hidden sm:inline">
+                    🔒 Peer privacy enabled
+                  </span>
+                )}
+              </div>
               {isOwner && bids.length > 0 && (
                 <select 
                   className="field py-1 text-xs max-w-[150px]"
@@ -356,7 +371,10 @@ export default function ListingDetail() {
 
             <ul className="space-y-3">
               {sortedBids.map((bid) => {
-                const isMyBid = user && bid.bidder && bid.bidder.id === user.id;
+                const isMyBid = user && (
+                  (bid.bidder && bid.bidder.id === user.id) ||
+                  bid.bidder_id === user.id
+                );
                 const isEditing = editingBidId === bid.id;
 
                 if (isEditing) {
@@ -382,9 +400,35 @@ export default function ListingDetail() {
                             className="field"
                           />
                         </div>
-                        <div className="flex gap-2">
-                          <button type="submit" className="btn-primary py-1 px-3 text-sm">Save</button>
-                          <button type="button" onClick={() => setEditingBidId(null)} className="btn-ghost py-1 px-3 text-sm">Cancel</button>
+                        <label className="flex items-start gap-2 cursor-pointer bg-cw-bg-alt/70 p-2.5 rounded-lg border border-cw-border">
+                          <input
+                            type="checkbox"
+                            checked={editBidForm.is_anonymous}
+                            onChange={(e) => setEditBidForm({ ...editBidForm, is_anonymous: e.target.checked })}
+                            className="mt-0.5 rounded border-cw-border text-cw-accent focus:ring-cw-accent"
+                          />
+                          <div className="text-xs">
+                            <span className="font-semibold text-cw-text-1">Keep my name anonymous to other students</span>
+                            <p className="text-cw-text-3 text-[11px] mt-0.5">
+                              The listing owner can always view your full profile and rating, but other students will only see "Anonymous Student".
+                            </p>
+                          </div>
+                        </label>
+                        <div className="flex items-center justify-between pt-1">
+                          <div className="flex gap-2">
+                            <button type="submit" className="btn-primary py-1 px-3 text-sm">Save</button>
+                            <button type="button" onClick={() => setEditingBidId(null)} className="btn-ghost py-1 px-3 text-sm">Cancel</button>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setEditingBidId(null);
+                              setDeletingBidId(bid.id);
+                            }}
+                            className="text-xs text-red-500 hover:text-red-600 hover:underline font-medium"
+                          >
+                            Withdraw Bid
+                          </button>
                         </div>
                       </form>
                     </li>
@@ -400,28 +444,77 @@ export default function ListingDetail() {
                     <p className="font-semibold">₹{bid.amount}</p>
                     <p className="text-sm text-cw-text-2 mb-1">{bid.message}</p>
                     {bid.bidder && (
-                      <Link to={`/users/${bid.bidder.id}`} className="text-xs flex items-center gap-2 hover:bg-cw-bg-alt p-1 -ml-1 rounded transition-colors w-fit">
-                        {bid.bidder.avatar_url ? (
-                          <img src={bid.bidder.avatar_url} alt="avatar" className="w-5 h-5 rounded-full object-cover" />
+                      <div className="flex items-center gap-2 flex-wrap">
+                        {bid.bidder.id ? (
+                          <Link
+                            to={`/users/${bid.bidder.id}`}
+                            className="text-xs flex items-center gap-2 hover:bg-cw-bg-alt p-1 -ml-1 rounded transition-colors w-fit"
+                          >
+                            {bid.bidder.avatar_url ? (
+                              <img src={bid.bidder.avatar_url} alt="avatar" className="w-5 h-5 rounded-full object-cover" />
+                            ) : (
+                              <div className="w-5 h-5 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600 font-bold" style={{ fontSize: '10px' }}>
+                                {bid.bidder.full_name?.charAt(0) || '?'}
+                              </div>
+                            )}
+                            <span className="font-medium text-cw-text-1">{bid.bidder.full_name}</span>
+                            {isMyBid && (
+                              <span className="text-[10px] text-cw-accent font-semibold">(You)</span>
+                            )}
+                            <span className="text-cw-text-3">• ★ {Number(bid.bidder.rating_average || 0).toFixed(1)}</span>
+                          </Link>
                         ) : (
-                          <div className="w-5 h-5 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600 font-bold" style={{ fontSize: '10px' }}>
-                            {bid.bidder.full_name?.charAt(0) || '?'}
+                          <div className="text-xs flex items-center gap-2 p-1 -ml-1 text-cw-text-2 w-fit">
+                            <div className="w-5 h-5 rounded-full bg-slate-200 dark:bg-zinc-700 flex items-center justify-center text-cw-text-3" style={{ fontSize: '10px' }}>
+                              🔒
+                            </div>
+                            <span className="font-medium text-cw-text-2">{bid.bidder.full_name}</span>
+                            <span className="text-cw-text-3">• ★ {Number(bid.bidder.rating_average || 0).toFixed(1)}</span>
                           </div>
                         )}
-                        <span className="font-medium text-cw-text-1">{bid.bidder.full_name}</span>
-                        <span className="text-cw-text-3">• ★ {Number(bid.bidder.rating_average || 0).toFixed(1)}</span>
-                      </Link>
+
+                        {isOwner && bid.is_anonymous && (
+                          <span className="text-[10px] bg-amber-500/10 text-amber-600 border border-amber-500/20 px-1.5 py-0.5 rounded" title="Only you (the owner) see this profile. Other students see 'Anonymous Student'.">
+                            🔒 Anonymous to others
+                          </span>
+                        )}
+
+                        {isMyBid && (
+                          <span className={`text-[10px] px-1.5 py-0.5 rounded border ${
+                            bid.is_anonymous
+                              ? 'bg-amber-500/10 text-amber-600 border-amber-500/20'
+                              : 'bg-blue-500/10 text-blue-600 border-blue-500/20'
+                          }`}>
+                            {bid.is_anonymous ? '🔒 Anonymous to peers' : '🌐 Name public'}
+                          </span>
+                        )}
+                      </div>
                     )}
                     {isMyBid && bid.status === 'pending' && listing.status === 'open' && !isExpired && (
-                      <button 
-                        onClick={() => {
-                          setEditBidForm({ amount: bid.amount, message: bid.message });
-                          setEditingBidId(bid.id);
-                        }}
-                        className="text-xs text-indigo-500 hover:underline font-medium mt-2 block"
-                      >
-                        Edit Bid
-                      </button>
+                      <div className="flex items-center gap-3 mt-2">
+                        <button 
+                          type="button"
+                          onClick={() => {
+                            setEditBidForm({
+                              amount: bid.amount,
+                              message: bid.message,
+                              is_anonymous: typeof bid.is_anonymous === 'boolean' ? bid.is_anonymous : true,
+                            });
+                            setEditingBidId(bid.id);
+                          }}
+                          className="text-xs text-indigo-500 hover:underline font-medium"
+                        >
+                          Edit Bid
+                        </button>
+                        <span className="text-cw-text-3 text-xs">&bull;</span>
+                        <button
+                          type="button"
+                          onClick={() => setDeletingBidId(bid.id)}
+                          className="text-xs text-red-500 hover:text-red-600 hover:underline font-medium"
+                        >
+                          Withdraw Bid
+                        </button>
+                      </div>
                     )}
                   </div>
                   <span className="chip capitalize">{bid.status}</span>
@@ -472,6 +565,20 @@ export default function ListingDetail() {
                     className="field"
                   />
                 </div>
+                <label className="flex items-start gap-2 cursor-pointer bg-cw-bg-alt/70 p-2.5 rounded-lg border border-cw-border">
+                  <input
+                    type="checkbox"
+                    checked={form.is_anonymous}
+                    onChange={(e) => setForm({ ...form, is_anonymous: e.target.checked })}
+                    className="mt-0.5 rounded border-cw-border text-cw-accent focus:ring-cw-accent"
+                  />
+                  <div className="text-xs">
+                    <span className="font-semibold text-cw-text-1">Keep my name anonymous to other students</span>
+                    <p className="text-cw-text-3 text-[11px] mt-0.5">
+                      The task owner can always view your full profile and rating, but other students will only see "Anonymous Student".
+                    </p>
+                  </div>
+                </label>
                 <button type="submit" className="btn-primary w-full">
                   Place bid
                 </button>
@@ -650,6 +757,22 @@ export default function ListingDetail() {
           isDestructive={true}
           onConfirm={handleDelete}
           onClose={() => setShowDeleteConfirm(false)}
+        />
+      )}
+
+      {deletingBidId && (
+        <ConfirmModal
+          title="Withdraw Your Bid"
+          message="Are you sure you want to withdraw and delete your bid? You can always submit a new bid later while this listing remains open."
+          confirmText="Withdraw Bid"
+          isDestructive={true}
+          onConfirm={() => {
+            handleAction(async () => {
+              await api.bids.delete(deletingBidId);
+              setDeletingBidId(null);
+            });
+          }}
+          onClose={() => setDeletingBidId(null)}
         />
       )}
     </div>
