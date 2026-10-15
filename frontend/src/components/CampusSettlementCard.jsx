@@ -376,7 +376,7 @@ export default function CampusSettlementCard({
           onClick={() => setShowQrModal(false)}
         >
           <div
-            className="relative w-full max-w-sm rounded-2xl bg-cw-surface border border-cw-border p-6 shadow-2xl text-center space-y-4"
+            className="relative w-full max-w-sm max-h-[90vh] overflow-y-auto rounded-2xl bg-cw-surface border border-cw-border p-5 sm:p-6 shadow-2xl text-center space-y-4"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Close button */}
@@ -401,7 +401,7 @@ export default function CampusSettlementCard({
             </div>
 
             {/* QR Image in high-contrast white card */}
-            <div className="mx-auto w-64 h-64 bg-white p-3 rounded-2xl shadow-inner border border-gray-200 flex items-center justify-center">
+            <div className="mx-auto w-52 h-52 sm:w-64 sm:h-64 bg-white p-3 rounded-2xl shadow-inner border border-gray-200 flex items-center justify-center">
               <img
                 src={displayQr}
                 alt={`UPI QR Code for ${freelancer?.full_name || 'Freelancer'}`}

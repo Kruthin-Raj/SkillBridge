@@ -438,11 +438,11 @@ export default function ListingDetail() {
                 return (
                   <li
                     key={bid.id}
-                    className="flex items-start gap-3 rounded-lg border border-cw-border bg-cw-surface p-3"
+                    className="flex flex-col sm:flex-row sm:items-start justify-between gap-3 rounded-lg border border-cw-border bg-cw-surface p-3"
                   >
-                  <div className="mr-auto">
-                    <p className="font-semibold">₹{bid.amount}</p>
-                    <p className="text-sm text-cw-text-2 mb-1">{bid.message}</p>
+                  <div className="min-w-0 flex-1">
+                    <p className="font-semibold text-cw-text-1">₹{bid.amount}</p>
+                    <p className="text-sm text-cw-text-2 mb-1 break-words">{bid.message}</p>
                     {bid.bidder && (
                       <div className="flex items-center gap-2 flex-wrap">
                         {bid.bidder.id ? (
@@ -517,16 +517,18 @@ export default function ListingDetail() {
                       </div>
                     )}
                   </div>
-                  <span className="chip capitalize">{bid.status}</span>
-                  {isOwner && bid.status === 'pending' && listing.status === 'open' && !isExpired && (
-                    <button
-                      type="button"
-                      onClick={() => handleAction(() => api.bids.accept(bid.id))}
-                      className="btn-primary"
-                    >
-                      Accept
-                    </button>
-                  )}
+                  <div className="flex items-center sm:flex-col sm:items-end justify-between sm:justify-start gap-2 shrink-0 pt-2 sm:pt-0 border-t sm:border-t-0 border-cw-border/50">
+                    <span className="chip capitalize">{bid.status}</span>
+                    {isOwner && bid.status === 'pending' && listing.status === 'open' && !isExpired && (
+                      <button
+                        type="button"
+                        onClick={() => handleAction(() => api.bids.accept(bid.id))}
+                        className="btn-primary py-1.5 px-3 text-xs"
+                      >
+                        Accept
+                      </button>
+                    )}
+                  </div>
                 </li>
               )})}
               {bids.length === 0 && <li className="text-sm text-cw-text-3">No bids yet.</li>}
