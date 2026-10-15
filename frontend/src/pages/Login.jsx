@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth, isProfileIncomplete } from '../context/AuthContext';
 import PasswordInput from '../components/PasswordInput';
 import ImageModal from '../components/ImageModal';
+import Logo from '../components/Logo';
 import { cleanErrorMessage } from '../lib/api';
 
 /**
@@ -40,10 +41,15 @@ export default function Login() {
 
   return (
     <div className="mx-auto max-w-md animate-fade-in">
-      <h1 className="text-2xl font-bold">Sign in to SkillBridge</h1>
-      <p className="mt-2 text-sm text-cw-text-2">
-        Use your college email address. Only verified college accounts can join.
-      </p>
+      <div className="flex items-center gap-3 mb-4">
+        <Logo size="md" />
+        <div>
+          <h1 className="text-2xl font-bold">Sign in to SkillBridge</h1>
+          <p className="text-xs text-cw-text-2 mt-0.5">
+            Verified campus peer freelancing &amp; skill exchange
+          </p>
+        </div>
+      </div>
 
       <form onSubmit={handleSubmit} className="card mt-6 space-y-4">
         <div>
