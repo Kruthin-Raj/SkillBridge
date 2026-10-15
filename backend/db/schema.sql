@@ -38,6 +38,8 @@ create table if not exists public.users (
   rating_count   integer     not null default 0,
   warnings_count integer     not null default 0,
   is_blocked     boolean     not null default false,
+  upi_id         text        default '',
+  upi_qr_url     text        default '',
   college_id     uuid        references public.colleges(id) on delete set null,
   last_read_at   timestamptz not null default now(),
   created_at     timestamptz not null default now(),

@@ -40,6 +40,7 @@ export default function Profile() {
     bio: user.bio ?? '',
     skills_offered: toText(user.skills_offered),
     skills_wanted: toText(user.skills_wanted),
+    upi_id: user.upi_id || localStorage.getItem(`skillbridge_upi_${user.id}`) || '',
   });
   const [status, setStatus] = useState('');
   const [error, setError] = useState('');
@@ -101,12 +102,19 @@ export default function Profile() {
     setSaving(true);
 
     try {
-      const { user: updated } = await api.users.updateMe({
+      if (form.upi_id) {
+        localStorage.setItem(`skillbridge_upi_${user.id}`, form.upi_id.trim());
+      }
+      const patch = {
         full_name: form.full_name.trim(),
         bio: form.bio.trim(),
         skills_offered: toList(form.skills_offered),
         skills_wanted: toList(form.skills_wanted),
-      });
+      };
+      if (form.upi_id) {
+        patch.upi_id = form.upi_id.trim();
+      }
+      const { user: updated } = await api.users.updateMe(patch);
       setUser(updated);
       setStatus('Profile saved.');
     } catch (err) {
@@ -254,6 +262,26 @@ export default function Profile() {
             placeholder="Figma, Public speaking"
             className="field"
           />
+        </div>
+
+        {/* Campus Payment Details (UPI) */}
+        <div className="border-t border-cw-border pt-4 space-y-2">
+          <div className="flex items-center gap-1.5">
+            <span className="text-base">💳</span>
+            <label htmlFor="upi_id" className="label !mb-0 font-semibold text-cw-text-1">
+              Campus UPI ID <span className="font-normal text-cw-text-3">(for receiving gig payments)</span>
+            </label>
+          </div>
+          <input
+            id="upi_id"
+            value={form.upi_id || ''}
+            onChange={update('upi_id')}
+            placeholder="e.g. yourname@okaxis, 9876543210@paytm"
+            className="field text-sm"
+          />
+          <p className="text-[11px] text-cw-text-3">
+            Shared with task owners in your active gigs so they can easily pay you via PhonePe, GPay, or Paytm directly.
+          </p>
         </div>
 
         <p className="text-xs text-cw-text-3">

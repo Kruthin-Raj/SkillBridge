@@ -1,5 +1,6 @@
 import { Route, Routes, Link } from 'react-router-dom';
 import Navbar from './components/Navbar';
+import Logo from './components/Logo';
 import ProtectedRoute from './components/ProtectedRoute';
 import Home from './pages/Home';
 import Browse from './pages/Browse';
@@ -107,11 +108,17 @@ export default function App() {
       </main>
 
       <footer className="mt-auto border-t border-cw-accent/10 bg-cw-surface/50 py-6">
-        <div className="mx-auto max-w-5xl px-4 flex flex-wrap items-center justify-center gap-6 text-sm text-cw-text-3">
-          <span>&copy; {new Date().getFullYear()} SkillBridge</span>
-          <Link to="/about" className="hover:text-cw-text-1 transition-colors">About</Link>
-          <Link to="/privacy" className="hover:text-cw-text-1 transition-colors">Privacy Policy</Link>
-          <Link to="/support" className="hover:text-cw-text-1 transition-colors">Support</Link>
+        <div className="mx-auto max-w-5xl px-4 flex flex-wrap items-center justify-between gap-4 text-sm text-cw-text-3">
+          <div className="flex items-center gap-2">
+            <Logo size="xs" />
+            <span className="font-semibold text-cw-text-1">SkillBridge</span>
+            <span className="text-xs text-cw-text-3 hidden sm:inline">&bull; &copy; {new Date().getFullYear()} Campus Platform</span>
+          </div>
+          <div className="flex items-center gap-6">
+            <Link to="/about" className="hover:text-cw-text-1 transition-colors">About</Link>
+            <Link to="/privacy" className="hover:text-cw-text-1 transition-colors">Privacy Policy</Link>
+            <Link to="/support" className="hover:text-cw-text-1 transition-colors">Support</Link>
+          </div>
         </div>
       </footer>
     </div>

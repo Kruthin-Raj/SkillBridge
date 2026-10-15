@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Link, NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { api, BASE_URL } from '../lib/api';
+import Logo from './Logo';
 
 /**
  * React component for Navbar.
@@ -137,8 +138,11 @@ export default function Navbar() {
               </div>
             )}
 
-            <Link to="/" className="text-xl font-bold tracking-tight font-serif text-cw-text-1">
-              Skill<span className="text-cw-accent italic">Bridge</span>
+            <Link to="/" className="flex items-center gap-2.5 group">
+              <Logo size="sm" />
+              <span className="text-xl font-bold tracking-tight font-serif text-cw-text-1">
+                Skill<span className="text-cw-accent italic">Bridge</span>
+              </span>
             </Link>
           </div>
 

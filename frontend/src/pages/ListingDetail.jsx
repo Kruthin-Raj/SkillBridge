@@ -8,6 +8,7 @@ import ParticipantCard from '../components/ParticipantCard';
 import WorkspaceReview from '../components/WorkspaceReview';
 import ReportModal from '../components/ReportModal';
 import ConfirmModal from '../components/ConfirmModal';
+import CampusSettlementCard from '../components/CampusSettlementCard';
 
 /**
  * React page component for ListingDetail view.
@@ -151,6 +152,11 @@ export default function ListingDetail() {
       targetReviewee = listing.owner;
     }
   }
+
+  const acceptedBid = bids.find((b) => b.status === 'accepted') || null;
+  const freelancerUser =
+    listing.assigned_users?.find((u) => u.role === 'freelancer') ||
+    (acceptedBid ? acceptedBid.bidder : null);
 
   const sortedBids = [...bids].sort((a, b) => {
     if (bidSort === 'price-asc') return a.amount - b.amount;
@@ -607,6 +613,18 @@ export default function ListingDetail() {
               />
             ))}
           </div>
+        )}
+
+        {/* Direct Campus Settlement (Freelance tasks) */}
+        {isFreelance && isParticipant && (listing.status === 'in_progress' || listing.status === 'completed') && (
+          <CampusSettlementCard
+            listing={listing}
+            acceptedBid={acceptedBid}
+            currentUser={user}
+            isOwner={isOwner}
+            freelancer={freelancerUser}
+            onNotifyChat={(msg) => api.messages.send(listing.id, msg).catch(() => {})}
+          />
         )}
 
         {user && isParticipant && listing.status === 'in_progress' && (

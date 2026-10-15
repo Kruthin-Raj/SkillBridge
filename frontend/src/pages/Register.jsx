@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import PasswordInput from '../components/PasswordInput';
+import Logo from '../components/Logo';
 
 /**
  * React page component for Register view.
@@ -79,10 +80,15 @@ export default function Register() {
   if (step === 'otp') {
     return (
       <div className="mx-auto max-w-md animate-fade-in">
-        <h1 className="text-2xl font-bold">Verify your email</h1>
-        <p className="mt-2 text-sm text-cw-text-2">
-          We sent a 6-digit code to <strong>{email}</strong>.
-        </p>
+        <div className="flex items-center gap-3 mb-4">
+          <Logo size="md" />
+          <div>
+            <h1 className="text-2xl font-bold">Verify your email</h1>
+            <p className="text-xs text-cw-text-2 mt-0.5">
+              Code sent to <strong>{email}</strong>
+            </p>
+          </div>
+        </div>
 
         {deliveredByEmail === false && (
           <p className="mt-3 rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-800">
@@ -142,10 +148,15 @@ export default function Register() {
 
   return (
     <div className="mx-auto max-w-md animate-fade-in">
-      <h1 className="text-2xl font-bold">Create your account</h1>
-      <p className="mt-2 text-sm text-cw-text-2">
-        Only verified college email addresses can register.
-      </p>
+      <div className="flex items-center gap-3 mb-4">
+        <Logo size="md" />
+        <div>
+          <h1 className="text-2xl font-bold">Create your account</h1>
+          <p className="text-xs text-cw-text-2 mt-0.5">
+            Only verified college email addresses can register
+          </p>
+        </div>
+      </div>
 
       <form onSubmit={handleSendOtp} className="card mt-6 space-y-4">
         <div>

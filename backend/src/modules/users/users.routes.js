@@ -19,6 +19,7 @@ const profileSchema = z.object({
   bio: z.string().max(500).optional(),
   skills_offered: z.array(z.string().min(1).max(40)).max(20).optional(),
   skills_wanted: z.array(z.string().min(1).max(40)).max(20).optional(),
+  upi_id: z.string().max(80).optional(),
 });
 
 const avatarSchema = z.object({
@@ -33,6 +34,7 @@ const toPublicProfile = (user) => ({
   avatar_url: user.avatar_url ?? '',
   skills_offered: user.skills_offered ?? [],
   skills_wanted: user.skills_wanted ?? [],
+  upi_id: user.upi_id ?? '',
   rating_average: user.rating_average ?? 0,
   rating_count: user.rating_count ?? 0,
   created_at: user.created_at,
@@ -116,7 +118,18 @@ router.patch(
   requireAuth,
   asyncHandler(async (req, res) => {
     const patch = profileSchema.parse(req.body);
-    const user = await db.update(TABLES.users, { id: req.user.id }, patch);
+    let user;
+    try {
+      user = await db.update(TABLES.users, { id: req.user.id }, patch);
+    } catch (err) {
+      if (patch.upi_id && err.message && err.message.includes('upi_id')) {
+        const fallbackPatch = { ...patch };
+        delete fallbackPatch.upi_id;
+        user = await db.update(TABLES.users, { id: req.user.id }, fallbackPatch);
+      } else {
+        throw err;
+      }
+    }
     if (!user) throw ApiError.notFound('User not found');
     res.json({ user });
   })
