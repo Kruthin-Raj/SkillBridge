@@ -92,17 +92,19 @@ export default function Exchanges() {
 
         <ul className="mt-4 space-y-3">
           {exchanges.map((exchange) => (
-            <li key={exchange.id} className="card flex items-center gap-3">
-              <div className="mr-auto">
-                <p className="text-sm text-cw-text-1">{exchange.message}</p>
+            <li key={exchange.id} className="card flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div className="mr-auto min-w-0">
+                <p className="text-sm text-cw-text-1 break-words">{exchange.message}</p>
                 <p className="mt-1 text-xs text-cw-text-3">Listing {exchange.listing_id}</p>
               </div>
-              <span className="chip capitalize">{exchange.status}</span>
-              {exchange.status === 'pending' && (
-                <button type="button" onClick={() => accept(exchange.id)} className="btn-primary">
-                  Accept
-                </button>
-              )}
+              <div className="flex items-center gap-2 self-end sm:self-auto">
+                <span className="chip capitalize">{exchange.status}</span>
+                {exchange.status === 'pending' && (
+                  <button type="button" onClick={() => accept(exchange.id)} className="btn-primary py-1 px-3 text-xs">
+                    Accept
+                  </button>
+                )}
+              </div>
             </li>
           ))}
           {exchanges.length === 0 && (
