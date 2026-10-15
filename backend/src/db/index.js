@@ -43,4 +43,6 @@ export const TABLES = {
   reports: 'reports',
   admin_actions: 'admin_actions',
   colleges: 'colleges',
+  support_tickets: 'support_tickets',
+  support_messages: 'support_messages',
 };

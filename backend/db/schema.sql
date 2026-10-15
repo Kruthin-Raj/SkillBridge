@@ -202,19 +202,52 @@ create table if not exists public.reports (
 create index if not exists reports_reported_user_idx on public.reports (reported_user_id);
 
 -- ---------------------------------------------------------------------------
+-- support_tickets & support_messages  -  helpdesk and support chat system
+-- ---------------------------------------------------------------------------
+create table if not exists public.support_tickets (
+  id          uuid primary key default gen_random_uuid(),
+  user_id     uuid not null references public.users(id) on delete cascade,
+  category    text not null default 'general',
+  subject     text not null,
+  description text not null,
+  proof_url   text,
+  status      text not null default 'open' check (status in ('open', 'in_progress', 'resolved', 'closed')),
+  priority    text not null default 'medium' check (priority in ('low', 'medium', 'high', 'urgent')),
+  created_at  timestamptz not null default now(),
+  updated_at  timestamptz not null default now()
+);
+
+create index if not exists support_tickets_user_idx on public.support_tickets (user_id);
+create index if not exists support_tickets_status_idx on public.support_tickets (status);
+
+create table if not exists public.support_messages (
+  id              uuid primary key default gen_random_uuid(),
+  ticket_id       uuid not null references public.support_tickets(id) on delete cascade,
+  sender_id       uuid not null references public.users(id) on delete cascade,
+  is_admin        boolean not null default false,
+  content         text not null,
+  attachment_url  text,
+  created_at      timestamptz not null default now()
+);
+
+create index if not exists support_messages_ticket_idx on public.support_messages (ticket_id);
+
+-- ---------------------------------------------------------------------------
 -- Row Level Security
 --
 -- The Express API is the only client and it uses the service-role key, which
 -- bypasses RLS. We still enable RLS with no permissive policies so that a
 -- leaked anon key cannot read the tables directly.
 -- ---------------------------------------------------------------------------
-alter table public.users     enable row level security;
-alter table public.listings  enable row level security;
-alter table public.bids      enable row level security;
-alter table public.exchanges enable row level security;
-alter table public.reviews   enable row level security;
-alter table public.messages  enable row level security;
-alter table public.reports   enable row level security;
+alter table public.users            enable row level security;
+alter table public.listings         enable row level security;
+alter table public.bids             enable row level security;
+alter table public.exchanges        enable row level security;
+alter table public.reviews          enable row level security;
+alter table public.messages         enable row level security;
+alter table public.reports          enable row level security;
+alter table public.support_tickets  enable row level security;
+alter table public.support_messages enable row level security;
 
 -- ---------------------------------------------------------------------------
 -- keep updated_at honest
@@ -232,7 +265,7 @@ $$;
 do $$
 declare t text;
 begin
-  foreach t in array array['users', 'listings', 'bids', 'exchanges', 'reports'] loop
+  foreach t in array array['users', 'listings', 'bids', 'exchanges', 'reports', 'support_tickets'] loop
     execute format('drop trigger if exists touch_%1$s on public.%1$I', t);
     execute format(
       'create trigger touch_%1$s before update on public.%1$I
@@ -240,3 +273,4 @@ begin
   end loop;
 end;
 $$;
+

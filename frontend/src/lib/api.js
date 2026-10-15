@@ -186,5 +186,26 @@ export const api = {
     getColleges: () => request('/api/admin/colleges'),
     createCollege: (college) => request('/api/admin/colleges', { method: 'POST', body: college }),
     deleteCollege: (domain) => request(`/api/admin/colleges/${encodeURIComponent(domain)}`, { method: 'DELETE' }),
+    getSupportTickets: () => request('/api/support/admin/tickets'),
+    deleteSupportTicket: (id) => request(`/api/support/admin/tickets/${id}`, { method: 'DELETE' }),
+  },
+
+  support: {
+    createTicket: (payload) => request('/api/support/tickets', { method: 'POST', body: payload }),
+    myTickets: () => request('/api/support/tickets/mine'),
+    getMessages: (ticketId) => request(`/api/support/tickets/${ticketId}/messages`),
+    sendMessage: (ticketId, content, attachment_url) =>
+      request(`/api/support/tickets/${ticketId}/messages`, {
+        method: 'POST',
+        body: { content, attachment_url },
+      }),
+    updateStatus: (ticketId, status) =>
+      request(`/api/support/tickets/${ticketId}/status`, {
+        method: 'PATCH',
+        body: { status },
+      }),
+    getAllTickets: () => request('/api/support/admin/tickets'),
+    deleteTicket: (ticketId) =>
+      request(`/api/support/admin/tickets/${ticketId}`, { method: 'DELETE' }),
   },
 };
