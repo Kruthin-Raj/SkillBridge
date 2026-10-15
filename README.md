@@ -1,89 +1,123 @@
 # SkillBridge
 
-**A Unified Campus Platform for Student Freelancing and Skill Exchange**
+**A Unified Campus Platform for Student Freelancing, Skill Exchange, and Team Building**
 
+---
 
-## What it is
+## What It Is
 
-A web app open only to verified students of the college. One toggle switches the
-marketplace between two modes:
+SkillBridge is a verified campus marketplace designed exclusively for college students. One unified interface connects students across three core collaboration modes:
 
-| Mode | How it works | Money |
+| Mode | How it Works | Type |
 | --- | --- | --- |
-| **Freelance** | A student posts a task with a budget and a deadline. Others bid. The poster accepts a bid, the work is delivered. | Paid |
-| **Skill Exchange** | A student states a skill they can teach and one they want to learn. The system finds a matching student and both teach each other. | Free |
+| **Freelance** | A student posts a task with a budget and deadline. Other students submit bids. Once accepted, work is delivered and reviewed. | Paid Work |
+| **Skill Exchange** | A student lists skills they can teach and skills they want to learn. The system matches compatible students for mutual learning. | Peer-to-Peer Learning |
+| **Team Finder** | Students assemble teams for hackathons, capstones, and campus competitions by specifying required skills and team sizes. | Team Collaboration |
 
-Both modes share **one listings table, one profile and one rating**, which is what
-keeps the app small.
-
----
-
-## Current state — base setup
-
-This repository is the scaffold, not the finished project. What is already wired up:
-
-- Express API with all five resources routed, validated and authorised
-- User authentication with email-OTP, roll numbers, and JWTs restricted to the college domain
-- Pluggable mailer: prints the OTP to the terminal or sends real email once SMTP is set up
-- In-memory data store for local dev, alongside full Supabase integration
-- React + Tailwind client with Mode Toggle, Browse, Post, Dashboard, Global Search, and Profiles
-- Full Review UI with base64 image uploading support
-- Real-time Notifications system using Server-Sent Events (SSE)
-- Admin Panel for user management, reporting, warning, and blocking accounts
-- Lightbox (Image Modal) for inspecting proof attachments and review images
-- Static About and Support pages integrated into the UI
-
-What is deliberately left as follow-up work is listed under [Not built yet](#not-built-yet).
+All modes share **one listings table, one public student profile, and one unified trust & rating system**, keeping the application lightweight and cohesive.
 
 ---
 
-## Tech stack
+## Key Features
+
+- **Typo-Tolerant Smart Search**:
+  - Global fuzzy search powered by Damerau-Levenshtein distance and sliding-window token scoring.
+  - Automatically matches students, skills, and posts even with typos (e.g., `pyhton` ➔ `Python`, `desgn` ➔ `Design`, `pster` ➔ `Poster`).
+  - Scoped to campus access permissions (`college_id`).
+  - Search results hub (`/search`) with categorized tabs: **All**, **Students**, and **Posts & Tasks**.
+  - In-page live fuzzy filtering on the `/browse` page.
+
+- **Campus Authentication & Security**:
+  - Email OTP verification restricted to verified college email domains (e.g., `@apollouniversity.edu.in`).
+  - Custom JWTs with college scoping and roll number verification.
+  - Pluggable mail driver (console logger for local dev, SMTP for production).
+
+- **In-App Messaging & Collaboration**:
+  - Project/listing chat between posters and accepted workers.
+  - Team application and member management for hackathons and projects.
+
+- **Support & Ticketing System**:
+  - Students can raise support tickets with proof/screenshot attachments.
+  - Two-way live chat between students and campus admins on support tickets.
+
+- **Real-Time Notifications**:
+  - Server-Sent Events (SSE) stream live unread notification counts and alerts directly to the navbar.
+
+- **Trust & Reviews**:
+  - Star ratings, text reviews, and image proof attachments after gig completion.
+  - Campus reporting system with administrative review, warning, and blocking tools.
+
+- **Admin Management Panel**:
+  - College domain management, active student directory, listing moderation, report handling, and live support chat desk.
+
+---
+
+## Tech Stack
 
 | Layer | Technology |
 | --- | --- |
-| Frontend | React 18 (Vite), Tailwind CSS, React Router |
-| Backend | Node.js, Express, Zod, JSON Web Tokens |
-| Database | Supabase (PostgreSQL) |
-| Auth | Email OTP → own JWT (not Supabase Auth) |
-| Mail | Nodemailer (console driver in dev, Gmail SMTP in prod) |
-| Deployment | Netlify (frontend) + Render (backend) |
+| **Frontend** | React 18 (Vite), Tailwind CSS, React Router, Server-Sent Events |
+| **Backend** | Node.js, Express, Zod validation, JSON Web Tokens (JWT) |
+| **Database** | Supabase (PostgreSQL with Row Level Security & connection pooling) |
+| **Search Engine** | Custom typo-tolerant Damerau-Levenshtein fuzzy matching engine |
+| **Mailing** | Nodemailer (Console driver for dev, SMTP for production) |
+| **Deployment** | Vercel / Netlify (Frontend) + Render / Cloud Run (Backend) |
 
 ---
 
-## Project layout
+## Project Layout
 
 ```
 SkillBridge/
 ├── backend/
-│   ├── db/schema.sql               # paste into the Supabase SQL editor
+│   ├── db/
+│   │   ├── schema.sql              # Supabase PostgreSQL schema
+│   │   ├── index.js                # Database client router
+│   │   └── supabase.js             # Supabase client & connection handler
 │   ├── .env.example
 │   └── src/
-│       ├── server.js               # entry point
-│       ├── app.js                  # express app, cors, /health, error handling
-│       ├── config/env.js           # every env var is read here and nowhere else
-│       ├── db/                     # index.js picks supabase.js or memory.js
+│       ├── server.js               # Server entry point
+│       ├── app.js                  # Express setup, middleware, error handler
+│       ├── config/env.js           # Centralized environment config
 │       ├── middleware/             # requireAuth, errorHandler
 │       ├── services/               # mailer.js, otpService.js
-│       ├── modules/                # auth, users, listings, bids, exchanges, reviews
-│       └── utils/                  # ApiError, asyncHandler
+│       ├── utils/                  # ApiError, asyncHandler, fuzzySearch.js
+│       ├── routes/index.js         # Top-level API router
+│       └── modules/
+│           ├── admin/              # User management, reports, colleges
+│           ├── auth/               # OTP request, verify, login, register, password reset
+│           ├── bids/               # Freelance bids and bid acceptance
+│           ├── dashboard/          # User analytics, active gigs, earnings
+│           ├── exchanges/          # Skill swap proposals and matches
+│           ├── listings/           # Freelance, exchange, and team listings
+│           ├── messages/           # In-app listing direct messaging
+│           ├── notifications/      # SSE notification streaming and read status
+│           ├── reports/            # Community reports and flagging
+│           ├── reviews/            # Gig ratings, reviews, and proof images
+│           ├── search/             # Typo-tolerant unified search
+│           ├── support/            # Support tickets and admin live chat
+│           ├── teams/              # Team finder applications and approvals
+│           └── users/              # Student profiles, avatars, skill tags
 └── frontend/
     ├── .env.example
     └── src/
-        ├── App.jsx                 # routes
-        ├── lib/api.js              # every network call goes through here
-        ├── context/AuthContext.jsx
+        ├── App.jsx                 # Routes and application shell
+        ├── lib/api.js              # Centralized API client
+        ├── context/AuthContext.jsx # Authentication state provider
+        ├── utils/fuzzySearch.js    # Client-side typo-tolerant fuzzy matching
         ├── components/             # Navbar, ModeToggle, ListingCard, ProtectedRoute, ImageModal
-        └── pages/                  # Login, VerifyOtp, Browse, CreateListing, Dashboard, SearchUsers,
-                                    # ListingDetail, Exchanges, Profile, PublicProfile, AdminPanel, NotFound
+        └── pages/                  # Home, Browse, CreateListing, Dashboard, Exchanges,
+                                    # SearchUsers, ListingDetail, Profile, PublicProfile,
+                                    # Support, About, AdminPanel, Login, Register, NotFound
 ```
 
 ---
 
-## Running it locally
+## Running Locally
 
 Requires **Node.js 18.17 or newer**.
 
-### 1. Backend
+### 1. Backend Setup
 
 ```bash
 cd backend
@@ -92,15 +126,15 @@ cp .env.example .env      # Windows PowerShell: Copy-Item .env.example .env
 npm run dev
 ```
 
-Generate a value for `JWT_SECRET`:
+Generate a random string for `JWT_SECRET`:
 
 ```bash
 node -e "console.log(require('crypto').randomBytes(48).toString('hex'))"
 ```
 
-The API starts on <http://localhost:4000>. Check <http://localhost:4000/health>.
+The API runs at <http://localhost:4000>. Health check: <http://localhost:4000/health>.
 
-### 2. Frontend
+### 2. Frontend Setup
 
 In a second terminal:
 
@@ -111,169 +145,136 @@ cp .env.example .env      # Windows PowerShell: Copy-Item .env.example .env
 npm run dev
 ```
 
-The app opens at <http://localhost:5173>.
+The frontend runs at <http://localhost:5173>.
 
-### 3. Sign in and read the OTP from the terminal
+### 3. Sign In & Terminal OTP
 
-With `MAIL_DRIVER=console` (the default), no email is sent — the code is printed
-in the **backend** terminal:
+With `MAIL_DRIVER=console` (the default in development), verification codes are printed directly to the **backend terminal**:
 
 ```
 ================================================================
   MAIL (console driver - nothing was actually sent)
 ================================================================
-  To      : kruthin@apollouniversity.edu.in
+  To      : student@apollouniversity.edu.in
   Subject : Your SkillBridge verification code: 428193
 ================================================================
   Your verification code is: 428193
 ================================================================
 ```
 
-Type that code into the verify screen and you are in. The verify page also shows a
-banner reminding you to check the terminal whenever the console driver is active.
-
-> With no Supabase credentials set, data lives in memory and is wiped on every
-> restart. That is expected until step 5.
+Enter the code into the verification screen to complete sign in.
 
 ---
 
-## Environment variables
-
-Copy each `.env.example` to `.env` and fill in the blanks. **`.env` files are
-gitignored — never commit real values.**
+## Environment Variables
 
 ### `backend/.env`
 
-| Variable | Required | Default | What it does |
+| Variable | Required | Default | Description |
 | --- | --- | --- | --- |
-| `NODE_ENV` | no | `development` | `production` makes config problems fatal instead of warnings |
-| `PORT` | no | `4000` | Port the API listens on. Render sets this for you |
-| `CORS_ORIGIN` | no | `http://localhost:5173` | Comma-separated list of allowed frontend origins. Add the Netlify URL for production |
-| `JWT_SECRET` | **yes** | — | Long random string used to sign login tokens. Required in production |
-| `JWT_EXPIRES_IN` | no | `7d` | How long a login lasts |
-| `ALLOWED_EMAIL_DOMAIN` | no | `apollouniversity.edu.in` | Only this email domain can sign up — our student mail domain |
-| `OTP_TTL_MINUTES` | no | `10` | How long a code stays valid |
-| `MAIL_DRIVER` | no | `console` | `console` prints the OTP to the terminal, `smtp` actually sends it |
-| `MAIL_FROM` | no | `SkillBridge <no-reply@skillbridge.local>` | From header on the OTP email |
-| `SMTP_HOST` | if `smtp` | `smtp.gmail.com` | SMTP server |
-| `SMTP_PORT` | if `smtp` | `587` | `587` for STARTTLS, `465` for SSL |
-| `SMTP_SECURE` | if `smtp` | `false` | `false` for port 587, `true` for port 465 |
-| `SMTP_USER` | if `smtp` | — | The full Gmail address sending the mail |
-| `SMTP_PASS` | if `smtp` | — | Gmail **App Password**, not the account password |
-| `SUPABASE_URL` | for real DB | — | Project URL from Supabase → Settings → API |
-| `SUPABASE_SERVICE_ROLE_KEY` | for real DB | — | `service_role` key. **Server only** — it bypasses RLS, so it must never reach the browser |
+| `NODE_ENV` | No | `development` | Environment mode (`development` or `production`) |
+| `PORT` | No | `4000` | Port Express listens on |
+| `CORS_ORIGIN` | No | `http://localhost:5173` | Allowed frontend origins (comma-separated) |
+| `JWT_SECRET` | **Yes** | — | Secret key used to sign JWT authentication tokens |
+| `JWT_EXPIRES_IN` | No | `7d` | Token expiration duration |
+| `ALLOWED_EMAIL_DOMAIN` | No | `apollouniversity.edu.in` | Default allowed student email domain |
+| `OTP_TTL_MINUTES` | No | `10` | Lifetime of one-time login passwords |
+| `MAIL_DRIVER` | No | `console` | `console` (terminal output) or `smtp` (real email delivery) |
+| `MAIL_FROM` | No | `SkillBridge <no-reply@skillbridge.local>` | Outgoing email sender header |
+| `SMTP_HOST` | If `smtp` | `smtp.gmail.com` | SMTP server host |
+| `SMTP_PORT` | If `smtp` | `587` | `587` (STARTTLS) or `465` (SSL) |
+| `SMTP_SECURE` | If `smtp` | `false` | `false` for port 587, `true` for port 465 |
+| `SMTP_USER` | If `smtp` | — | Gmail or SMTP account username |
+| `SMTP_PASS` | If `smtp` | — | Gmail App Password (16 characters) |
+| `SUPABASE_URL` | For DB | — | Supabase Project URL (`https://xyz.supabase.co`) |
+| `SUPABASE_SERVICE_ROLE_KEY` | For DB | — | Supabase `service_role` key (Server-only, bypasses RLS) |
 
 ### `frontend/.env`
 
-| Variable | Required | Default | What it does |
+| Variable | Required | Default | Description |
 | --- | --- | --- | --- |
-| `VITE_API_URL` | **yes** | `http://localhost:4000` | Base URL of the Express API. Set to the Render URL in production |
-| `VITE_COLLEGE_DOMAIN` | no | `apollouniversity.edu.in` | Shown on the login screen as a hint. Keep it identical to `ALLOWED_EMAIL_DOMAIN` |
-
-Everything prefixed `VITE_` is bundled into the JavaScript the browser downloads,
-so **no secret ever belongs in `frontend/.env`**.
+| `VITE_API_URL` | **Yes** | `http://localhost:4000` | Base URL of the SkillBridge Express API |
+| `VITE_COLLEGE_DOMAIN` | No | `apollouniversity.edu.in` | Display hint for the college login screen |
 
 ---
 
-## Turning on real email
+## API Reference
 
-The OTP flow is already complete — switching from terminal output to real Gmail
-delivery is an `.env` change only, no code change.
+All endpoints are prefixed with `/api`. Protected routes require `Authorization: Bearer <token>`.
 
-1. Create the Gmail account SkillBridge will send from.
-2. Turn on **2-Step Verification** on that account (Google requires it before App
-   Passwords appear).
-3. Go to <https://myaccount.google.com/apppasswords> and create an App Password.
-   You get a 16-character string.
-4. In `backend/.env`:
-
-   ```ini
-   MAIL_DRIVER=smtp
-   MAIL_FROM="SkillBridge <yourskillbridge@gmail.com>"
-   SMTP_HOST=smtp.gmail.com
-   SMTP_PORT=587
-   SMTP_SECURE=false
-   SMTP_USER=yourskillbridge@gmail.com
-   SMTP_PASS=the16charapppassword
-   ```
-
-5. Restart the backend. The next code is emailed instead of printed, and the
-   "check your terminal" banner disappears from the verify screen automatically.
-
-If SMTP is selected but the credentials are missing, the request fails with a clear
-error rather than silently dropping the email.
-
----
-
-## Connecting Supabase
-
-1. Create a project at <https://supabase.com>.
-2. **SQL Editor → New query** → paste all of `backend/db/schema.sql` → **Run**.
-3. **Settings → API** → copy the Project URL and the `service_role` key.
-4. Put them in `backend/.env` as `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY`.
-5. Restart the backend. The startup banner should now read `database : supabase`
-   instead of `database : memory`.
-
-RLS is enabled on every table with no permissive policies. Only the Express API,
-holding the service-role key, can read or write — a leaked anon key gets nothing.
-
----
-
-## API reference
-
-All routes are under `/api`. Authenticated routes need `Authorization: Bearer <token>`.
-
-| Method | Route | Auth | Purpose |
+### Authentication & Users
+| Method | Route | Auth | Description |
 | --- | --- | --- | --- |
-| `GET` | `/health` | — | Service status, active DB and mail driver |
-| `POST` | `/api/auth/request-otp` | — | Send a code to a college email |
-| `POST` | `/api/auth/verify-otp` | — | Exchange a code for a JWT |
-| `GET` | `/api/auth/me` | ✓ | The signed-in student |
-| `GET` | `/api/users/:id` | — | Public profile and trust score |
-| `PATCH` | `/api/users/me` | ✓ | Edit name, bio and skill lists |
-| `GET` | `/api/listings?mode=` | — | Browse open listings |
-| `GET` | `/api/listings/:id` | — | One listing |
-| `POST` | `/api/listings` | ✓ | Post a task or a skill swap |
-| `PATCH` | `/api/listings/:id/status` | ✓ | Owner moves the gig along |
-| `GET` | `/api/bids?listing_id=` | ✓ | Bids on a listing |
-| `POST` | `/api/bids` | ✓ | Place a bid |
-| `POST` | `/api/bids/:id/accept` | ✓ | Owner accepts a bid |
-| `GET` | `/api/exchanges/matches` | ✓ | Students whose skills line up with yours |
-| `GET` | `/api/exchanges` | ✓ | Swaps you are part of |
-| `POST` | `/api/exchanges` | ✓ | Propose a swap |
-| `POST` | `/api/exchanges/:id/accept` | ✓ | Accept a swap |
-| `GET` | `/api/reviews?user_id=` | — | Reviews for a student |
-| `POST` | `/api/reviews` | ✓ | Rate the other side after completion |
+| `POST` | `/api/auth/request-otp` | — | Request a one-time verification code |
+| `POST` | `/api/auth/login` | — | Sign in with email and password |
+| `POST` | `/api/auth/register` | — | Complete new student registration |
+| `GET` | `/api/auth/me` | ✓ | Fetch current authenticated student profile |
+| `GET` | `/api/users/search?q=` | — | Typo-tolerant user and skill search |
+| `GET` | `/api/users/:id` | — | Public student profile, trust score, and reviews |
+| `PATCH` | `/api/users/me` | ✓ | Update bio, skills offered, and skills wanted |
+| `PATCH` | `/api/users/me/avatar` | ✓ | Upload/update profile avatar |
+
+### Unified Search
+| Method | Route | Auth | Description |
+| --- | --- | --- | --- |
+| `GET` | `/api/search?q=&type=` | — / ✓ | Smart typo-tolerant search across users and listings with campus scoping |
+
+### Listings & Collaboration
+| Method | Route | Auth | Description |
+| --- | --- | --- | --- |
+| `GET` | `/api/listings` | — / ✓ | Browse listings filtered by mode (`freelance`, `exchange`, `team`) |
+| `GET` | `/api/listings/:id` | — / ✓ | Detailed view of a single listing |
+| `POST` | `/api/listings` | ✓ | Create a freelance task, skill swap, or team posting |
+| `PATCH` | `/api/listings/:id` | ✓ | Update listing details |
+| `PATCH` | `/api/listings/:id/status` | ✓ | Update status (`open`, `in_progress`, `completed`, `cancelled`) |
+| `DELETE` | `/api/listings/:id` | ✓ | Delete a listing (owner only) |
+
+### Bids, Exchanges & Teams
+| Method | Route | Auth | Description |
+| --- | --- | --- | --- |
+| `GET` | `/api/bids?listing_id=` | ✓ | Retrieve bids on a freelance task |
+| `POST` | `/api/bids` | ✓ | Place a bid on a freelance task |
+| `POST` | `/api/bids/:id/accept` | ✓ | Accept a bid (listing owner) |
+| `GET` | `/api/exchanges/matches` | ✓ | Get matching students for skill swaps |
+| `GET` | `/api/exchanges` | ✓ | Get user's skill swap proposals |
+| `POST` | `/api/exchanges` | ✓ | Propose a skill exchange |
+| `POST` | `/api/exchanges/:id/accept` | ✓ | Accept a proposed skill swap |
+| `GET` | `/api/teams?listing_id=` | ✓ | View team applications for a team post |
+| `POST` | `/api/teams` | ✓ | Apply to join a team |
+| `POST` | `/api/teams/:id/accept` | ✓ | Accept a team member application |
+| `POST` | `/api/teams/:id/remove` | ✓ | Remove a member from a team |
+
+### Messages & Support
+| Method | Route | Auth | Description |
+| --- | --- | --- | --- |
+| `GET` | `/api/messages/:listing_id` | ✓ | Fetch project messages for a listing |
+| `POST` | `/api/messages/:listing_id` | ✓ | Send a message within a listing |
+| `POST` | `/api/support/tickets` | ✓ | Submit a new support ticket with optional attachment |
+| `GET` | `/api/support/tickets/mine` | ✓ | Retrieve current student's support tickets |
+| `GET` | `/api/support/tickets/:id/messages` | ✓ | Get live conversation for a support ticket |
+| `POST` | `/api/support/tickets/:id/messages` | ✓ | Send a message on a support ticket |
+| `PATCH` | `/api/support/tickets/:id/status` | ✓ | Update ticket status (Admin or owner) |
+
+### Notifications, Reviews & Reports
+| Method | Route | Auth | Description |
+| --- | --- | --- | --- |
+| `GET` | `/api/notifications` | ✓ | Fetch user notifications list |
+| `GET` | `/api/notifications/stream` | ✓ | Real-time SSE notification stream |
+| `PATCH` | `/api/notifications/read` | ✓ | Mark all notifications as read |
+| `GET` | `/api/reviews?user_id=` | — | Get verified reviews for a student |
+| `POST` | `/api/reviews` | ✓ | Submit a review and rating after gig completion |
+| `POST` | `/api/reports` | ✓ | Report a student profile or listing |
 
 ---
 
-## Not built yet
-
-
-Deliberate gaps, roughly in the order the timeline expects them:
-
-- Tag filtering and advanced search filters on the Browse page
-- Pagination (every list is capped at 50 rows)
-- Rate limiting on `request-otp`
-- Automated tests
-- Deployment to Netlify and Render
-
-Future scope from the report: Team Finder mode, in-app chat, UPI/Razorpay escrow.
-
----
-
-## Working on this together
+## Contributing & Git Workflow
 
 ```bash
-git checkout -b feature/your-thing
-# ...make changes...
-git add <specific files>
-git commit -m "Add your thing"
-git push -u origin feature/your-thing
+git checkout -b feature/your-feature
+# ... make changes ...
+git add <specific-files>
+git commit -m "Implement feature: description"
+git push -u origin feature/your-feature
 ```
 
-Open a pull request rather than pushing to `main`, so the other person sees the
-change before it lands.
-
-**Before your first commit, confirm no `.env` file is staged** — `git status`
-should never list one. The root `.gitignore` already covers them.
+> **Security Note**: Never commit `.env` files or credentials. The root `.gitignore` protects environment files by default.

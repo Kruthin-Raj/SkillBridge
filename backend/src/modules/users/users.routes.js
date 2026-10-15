@@ -38,7 +38,9 @@ const toPublicProfile = (user) => ({
   created_at: user.created_at,
 });
 
-/** GET /api/users/search?q=... - search for public users. */
+import { fuzzyFilterAndSort } from '../../utils/fuzzySearch.js';
+
+/** GET /api/users/search?q=... - search for public users with typo tolerance. */
 router.get(
   '/search',
   asyncHandler(async (req, res) => {
@@ -66,21 +68,29 @@ router.get(
       let query = supabase
         .from(TABLES.users)
         .select('*')
-        .neq('email', 'kruthin123@gmail.com')
-        .or(`full_name.ilike.%${q}%,email.ilike.%${q}%`);
+        .neq('email', 'kruthin123@gmail.com');
         
       if (userCollegeId) {
         query = query.eq('college_id', userCollegeId);
       }
       
-      const { data, error } = await query.limit(20);
+      const { data, error } = await query.limit(200);
         
       if (error) {
         console.error('[User Search Error]', error);
         throw new ApiError(503, "Shhh... it's bedtime right now! 😴 I'm busy taking a quick nap, try again later.");
       }
       
-      const users = (data || []).map(toPublicProfile);
+      const eligibleUsers = (data || []).filter(u => u.status !== 'blocked');
+      const userTextExtractor = (u) => [
+        u.full_name || '',
+        u.bio || '',
+        Array.isArray(u.skills_offered) ? u.skills_offered.join(' ') : '',
+        Array.isArray(u.skills_wanted) ? u.skills_wanted.join(' ') : '',
+      ].join(' ');
+
+      const matched = fuzzyFilterAndSort(eligibleUsers, q, userTextExtractor, 0.55);
+      const users = matched.map(toPublicProfile).slice(0, 30);
       res.json({ users });
     } catch (err) {
       if (err instanceof ApiError) throw err;
