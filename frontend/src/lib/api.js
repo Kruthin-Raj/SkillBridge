@@ -133,6 +133,9 @@ export const api = {
       request(`/api/listings/${id}/worker-status`, { method: 'PATCH', body: { worker_status } }),
     updatePeopleRequired: (id, people_required) =>
       request(`/api/listings/${id}/people`, { method: 'PATCH', body: { people_required } }),
+    getSettlement: (id) => request(`/api/listings/${id}/settlement`),
+    updateSettlement: (id, settlement) =>
+      request(`/api/listings/${id}/settlement`, { method: 'PATCH', body: settlement }),
     delete: (id) => request(`/api/listings/${id}`, { method: 'DELETE' }),
   },
 

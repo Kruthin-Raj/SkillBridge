@@ -64,12 +64,19 @@ export default function ListingDetail() {
     }
   }, [id, user]);
 
+  // Real-time live polling (every 3 seconds, just like WorkspaceChat)
   useEffect(() => {
     load();
+    const interval = setInterval(() => {
+      if (document.visibilityState === 'visible' && !document.hidden) {
+        load();
+      }
+    }, 3000);
+    return () => clearInterval(interval);
   }, [load]);
 
-  // Automatically refresh when window regains focus, tab becomes visible, or after payment/sync
-  useLiveRefresh(load, { intervalMs: 8000, enabled: Boolean(id) });
+  // Also auto-refresh immediately when window regains focus or after cross-tab events
+  useLiveRefresh(load, { intervalMs: 3000, enabled: Boolean(id) });
 
   const handleAction = async (action) => {
     setError('');
@@ -296,13 +303,17 @@ export default function ListingDetail() {
           </dl>
 
           {isOwner && listing.status === 'in_progress' && (
-            <button
-              type="button"
-              onClick={() => handleAction(() => api.listings.setStatus(id, 'completed'))}
-              className="btn-ghost mt-4"
-            >
-              Mark as completed
-            </button>
+            <div className="mt-4 pt-3 border-t border-cw-border/60 flex items-center justify-between flex-wrap gap-2">
+              <span className="text-xs text-cw-text-2 font-medium">Task in progress &bull; Finish work &amp; settlement</span>
+              <button
+                type="button"
+                onClick={() => handleAction(() => api.listings.setStatus(id, 'completed'))}
+                className="btn-primary py-2 px-4 text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white flex items-center gap-1.5 shadow"
+              >
+                <span>✓</span>
+                <span>Mark as Completed</span>
+              </button>
+            </div>
           )}
         </div>
 
@@ -698,6 +709,34 @@ export default function ListingDetail() {
                 This team is currently closed and not accepting new members.
               </div>
             )}
+          </div>
+        )}
+
+        {/* BIG HORIZONTAL "MARK AS COMPLETED" BUTTON AT THE BOTTOM */}
+        {isOwner && listing.status === 'in_progress' && (
+          <div className="card border-2 border-emerald-500/50 bg-gradient-to-r from-emerald-500/15 via-emerald-500/10 to-cw-surface p-5 sm:p-6 shadow-xl rounded-2xl space-y-3 animate-fade-in">
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 rounded-2xl bg-emerald-600 text-white flex items-center justify-center text-2xl font-bold flex-shrink-0 shadow-md">
+                ✓
+              </div>
+              <div>
+                <h3 className="font-extrabold text-base sm:text-lg text-cw-text-1">
+                  Ready to Finalize and Close this Task?
+                </h3>
+                <p className="text-xs text-cw-text-2 mt-0.5">
+                  Work is finished and payment is settled? Click below to officially close this task, release reviews, and update your records.
+                </p>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => handleAction(() => api.listings.setStatus(id, 'completed'))}
+              className="btn-primary w-full py-4 px-6 text-base sm:text-lg font-black bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl shadow-lg flex items-center justify-center gap-3 transition transform active:scale-[0.99] border-2 border-emerald-400/40"
+            >
+              <span className="text-2xl">🎉</span>
+              <span>Mark Task as Completed</span>
+            </button>
           </div>
         )}
       </div>

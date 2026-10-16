@@ -76,6 +76,43 @@ export default function CampusSettlementCard({
     }
   }, [settlement.method]);
 
+  // Real-time backend settlement polling (every 3s just like WorkspaceChat)
+  useEffect(() => {
+    let isMounted = true;
+    const fetchSettlement = async () => {
+      try {
+        const res = await api.listings.getSettlement(listing.id);
+        if (!isMounted) return;
+        if (res?.settlement) {
+          const s = res.settlement;
+          setSettlement((prev) => {
+            if (prev.status !== s.status || prev.method !== s.method) {
+              return { ...prev, status: s.status, method: s.method || prev.method };
+            }
+            return prev;
+          });
+          if (s.method) setSelectedMethod(s.method);
+          if (s.upi_id && !activeUpi) {
+            setActiveUpi(s.upi_id);
+            setCustomUpi(s.upi_id);
+          }
+        }
+      } catch (_) {}
+    };
+
+    fetchSettlement();
+    const interval = setInterval(() => {
+      if (document.visibilityState === 'visible' && !document.hidden) {
+        fetchSettlement();
+      }
+    }, 3000);
+
+    return () => {
+      isMounted = false;
+      clearInterval(interval);
+    };
+  }, [listing.id]);
+
   // Sync if freelancer prop changes
   useEffect(() => {
     if (freelancer?.upi_id) {
@@ -138,6 +175,7 @@ export default function CampusSettlementCard({
     if (freelancer?.id) {
       localStorage.setItem(`skillbridge_upi_${freelancer.id}`, clean);
     }
+    api.listings.updateSettlement(listing.id, { upi_id: clean }).catch(() => {});
     triggerAppRefresh();
     if (onNotifyChat && clean) {
       onNotifyChat(`💳 Freelancer updated receiving UPI ID to: ${clean}`);
@@ -170,6 +208,8 @@ export default function CampusSettlementCard({
       localStorage.setItem(storageKey, JSON.stringify(updated));
     } catch (_) {}
 
+    // Save to shared backend settlement store
+    api.listings.updateSettlement(listing.id, { status: 'sent', method: chosenMethod }).catch(() => {});
     triggerAppRefresh();
 
     if (onNotifyChat) {
@@ -190,6 +230,8 @@ export default function CampusSettlementCard({
       localStorage.setItem(storageKey, JSON.stringify(updated));
     } catch (_) {}
 
+    // Save to shared backend settlement store
+    api.listings.updateSettlement(listing.id, { status: settlement.status || 'sent', method: newMethod }).catch(() => {});
     triggerAppRefresh();
 
     if (onNotifyChat) {
@@ -208,6 +250,8 @@ export default function CampusSettlementCard({
     try {
       localStorage.setItem(storageKey, JSON.stringify(updated));
     } catch (_) {}
+
+    api.listings.updateSettlement(listing.id, { status: 'pending' }).catch(() => {});
     triggerAppRefresh();
     if (onNotifyChat) {
       onNotifyChat(`ℹ️ Payment status was reset to Pending by the task owner.`);
@@ -221,6 +265,8 @@ export default function CampusSettlementCard({
     try {
       localStorage.setItem(storageKey, JSON.stringify(updated));
     } catch (_) {}
+
+    api.listings.updateSettlement(listing.id, { status: 'confirmed' }).catch(() => {});
     triggerAppRefresh();
     if (onNotifyChat) {
       onNotifyChat(
@@ -239,6 +285,7 @@ export default function CampusSettlementCard({
       try {
         localStorage.setItem(storageKey, JSON.stringify(updated));
       } catch (_) {}
+      api.listings.updateSettlement(listing.id, { status: 'confirmed' }).catch(() => {});
       triggerAppRefresh();
       if (onNotifyChat) {
         onNotifyChat(`🎉 Task Completed: Task has been marked as completed and closed by the owner.`);
