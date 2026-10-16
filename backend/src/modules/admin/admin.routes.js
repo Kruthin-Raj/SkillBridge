@@ -3,6 +3,7 @@ import { db, TABLES } from '../../db/index.js';
 import { ApiError } from '../../utils/ApiError.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
 import { requireAuth } from '../../middleware/requireAuth.js';
+import { getUserLastLogin } from '../../services/loginTracker.js';
 
 /**
  * Express API routes for admin module.
@@ -19,7 +20,7 @@ const requireAdmin = (req, res, next) => {
   next();
 };
 
-/** GET /api/admin/users - Get all users (Admin only) */
+/** GET /api/admin/users - Get all users with last login and activity status (Admin only) */
 router.get(
   '/users',
   requireAuth,
@@ -28,11 +29,40 @@ router.get(
     const users = await db.findMany(
       TABLES.users,
       {},
-      { orderBy: 'created_at', ascending: false, limit: 100 }
+      { orderBy: 'created_at', ascending: false, limit: 250 }
     );
     // Exclude the admin from the management list
     const filteredUsers = users.filter(u => u.email !== 'kruthin123@gmail.com');
-    res.json({ users: filteredUsers });
+
+    const enrichedUsers = filteredUsers.map((u) => {
+      const lastLogin = getUserLastLogin(u);
+      const lastLoginDate = lastLogin ? new Date(lastLogin) : new Date(u.created_at || 0);
+      const now = Date.now();
+      const diffMs = Math.max(0, now - lastLoginDate.getTime());
+      const diffMinutes = Math.floor(diffMs / (1000 * 60));
+      const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+      const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+      // Real-time online & last seen status:
+      // Online Now: active within the last 10 minutes
+      const isOnline = !u.is_blocked && diffMinutes <= 10;
+      // Seen Today: active within the last 24 hours
+      const isSeenToday = !u.is_blocked && diffHours < 24;
+
+      return {
+        ...u,
+        last_seen_at: lastLogin,
+        last_login_at: lastLogin,
+        is_online: isOnline,
+        is_seen_today: isSeenToday,
+        is_active: isOnline || isSeenToday,
+        diff_minutes: diffMinutes,
+        diff_hours: diffHours,
+        diff_days: diffDays,
+      };
+    });
+
+    res.json({ users: enrichedUsers });
   })
 );
 

@@ -13,6 +13,9 @@ import ImageModal from '../components/ImageModal';
 export default function AdminPanel() {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('users');
+  const [userFilter, setUserFilter] = useState('all'); // 'all' | 'online' | 'today' | 'offline' | 'blocked'
+  const [userSort, setUserSort] = useState('recent_seen'); // 'recent_seen' | 'oldest_seen' | 'newest_joined' | 'name' | 'warnings'
+  const [refreshingUsers, setRefreshingUsers] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [users, setUsers] = useState([]);
   const [reports, setReports] = useState([]);
@@ -66,6 +69,28 @@ export default function AdminPanel() {
   useEffect(() => {
     loadData();
   }, []);
+
+  // Real-time live auto-refresh for online and active students every 15 seconds
+  useEffect(() => {
+    if (activeTab !== 'users') return;
+    const interval = setInterval(() => {
+      api.admin.getUsers().then((data) => {
+        if (data?.users) setUsers(data.users);
+      }).catch(() => {});
+    }, 15000);
+    return () => clearInterval(interval);
+  }, [activeTab]);
+
+  const handleManualRefreshUsers = async () => {
+    setRefreshingUsers(true);
+    try {
+      const data = await api.admin.getUsers();
+      if (data?.users) setUsers(data.users);
+    } catch (_) {}
+    finally {
+      setRefreshingUsers(false);
+    }
+  };
 
   const loadTicketMessages = async (ticketId, isSilent = false) => {
     if (!isSilent) setLoadingMessages(true);
@@ -227,112 +252,567 @@ export default function AdminPanel() {
     loadData();
   };
 
-  const filteredUsers = users.filter(u => {
-    const q = searchQuery.toLowerCase();
-    return (
-      (u.full_name || '').toLowerCase().includes(q) ||
-      (u.email || '').toLowerCase().includes(q) ||
-      (u.roll_number || '').toLowerCase().includes(q)
-    );
+  // Helper to format last seen with relative time and detailed timestamp
+  const formatLastSeen = (timestamp, isOnlineExplicit) => {
+    if (!timestamp) {
+      return {
+        status: 'Never seen',
+        relative: 'Never seen',
+        full: 'No activity recorded yet',
+        isOnline: false,
+        isToday: false,
+      };
+    }
+    const date = new Date(timestamp);
+    if (isNaN(date.getTime())) {
+      return {
+        status: 'Unknown',
+        relative: 'Unknown',
+        full: '',
+        isOnline: false,
+        isToday: false,
+      };
+    }
+
+    const now = new Date();
+    const diffMs = Math.max(0, now.getTime() - date.getTime());
+    const diffSec = Math.floor(diffMs / 1000);
+    const diffMin = Math.floor(diffSec / 60);
+    const diffHours = Math.floor(diffMin / 60);
+    const diffDays = Math.floor(diffHours / 24);
+
+    const full = date.toLocaleString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true,
+    });
+
+    const isOnline = isOnlineExplicit || diffMin <= 10;
+    const isToday =
+      diffHours < 24 &&
+      date.getDate() === now.getDate() &&
+      date.getMonth() === now.getMonth() &&
+      date.getFullYear() === now.getFullYear();
+
+    if (isOnline) {
+      return {
+        status: 'Online Now',
+        relative: diffMin < 1 ? 'Online now' : `Active ${diffMin}m ago`,
+        full,
+        isOnline: true,
+        isToday: true,
+      };
+    }
+
+    if (diffMin < 60) {
+      return {
+        status: `Seen ${diffMin}m ago`,
+        relative: `${diffMin}m ago`,
+        full,
+        isOnline: false,
+        isToday: true,
+      };
+    }
+
+    const timeStr = date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+
+    if (isToday) {
+      return {
+        status: `Today, ${timeStr}`,
+        relative: `Today at ${timeStr}`,
+        full,
+        isOnline: false,
+        isToday: true,
+      };
+    }
+
+    if (diffDays <= 1) {
+      return {
+        status: `Yesterday, ${timeStr}`,
+        relative: `Yesterday at ${timeStr}`,
+        full,
+        isOnline: false,
+        isToday: false,
+      };
+    }
+
+    if (diffDays <= 7) {
+      return {
+        status: `${diffDays}d ago`,
+        relative: `${diffDays} days ago`,
+        full,
+        isOnline: false,
+        isToday: false,
+      };
+    }
+
+    return {
+      status: date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+      relative: date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+      full,
+      isOnline: false,
+      isToday: false,
+    };
+  };
+
+  // Derive real-time active, online, and last seen status for each user
+  const processedUsers = users.map((u) => {
+    const lastSeen = u.last_seen_at || u.last_login_at || u.updated_at || u.created_at;
+    const lastSeenDate = lastSeen ? new Date(lastSeen) : new Date(u.created_at || 0);
+    const now = Date.now();
+    const diffMs = Math.max(0, now - lastSeenDate.getTime());
+    const diffMinutes = Math.floor(diffMs / (1000 * 60));
+    const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+    // Real-time online: active within last 10 minutes
+    const isOnlineNow = !u.is_blocked && (Boolean(u.is_online) || diffMinutes <= 10);
+    // Active today: seen in the last 24 hours
+    const isSeenToday = !u.is_blocked && (Boolean(u.is_seen_today) || diffHours < 24);
+    // Offline: not seen in the last 24 hours
+    const isOffline = !u.is_blocked && !isOnlineNow && !isSeenToday;
+
+    return {
+      ...u,
+      resolved_last_seen: lastSeen,
+      is_online_now: isOnlineNow,
+      is_seen_today: isSeenToday,
+      is_offline: isOffline,
+      diff_minutes: diffMinutes,
+      diff_hours: diffHours,
+      diff_days: diffDays,
+    };
   });
 
-  const activeUsers = filteredUsers.filter(u => !u.is_blocked);
-  const blockedUsers = filteredUsers.filter(u => u.is_blocked);
+  const totalUsersCount = processedUsers.length;
+  const totalOnlineCount = processedUsers.filter((u) => u.is_online_now).length;
+  const totalSeenTodayCount = processedUsers.filter((u) => u.is_seen_today && !u.is_online_now).length;
+  const totalOfflineCount = processedUsers.filter((u) => u.is_offline).length;
+  const totalBlockedCount = processedUsers.filter((u) => u.is_blocked).length;
 
-  const renderUserTable = (userList, isBlockedTab) => (
-    <div className="bg-cw-surface rounded-xl border border-cw-border overflow-hidden">
-      <table className="w-full text-left text-sm text-cw-text-2">
-        <thead className="bg-cw-bg-alt text-xs uppercase text-cw-text-3">
-          <tr>
-            <th className="px-4 py-3 sm:px-6 sm:py-4 font-semibold">User</th>
-            <th className="px-4 py-3 sm:px-6 sm:py-4 font-semibold">Roll No</th>
-            <th className="px-4 py-3 sm:px-6 sm:py-4 font-semibold">Warnings</th>
-            <th className="px-4 py-3 sm:px-6 sm:py-4 font-semibold">Trust Score</th>
-            <th className="px-4 py-3 sm:px-6 sm:py-4 font-semibold text-right">Actions</th>
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-cw-border">
-          {userList.map(u => (
-            <tr key={u.id} className="hover:bg-cw-bg-alt/50 transition-colors">
-              <td className="px-4 py-3 sm:px-6 sm:py-4">
-                <div className="font-medium text-cw-text-1 truncate max-w-[200px]">{u.full_name || 'Anonymous'}</div>
-                <div className="text-xs text-cw-text-3 truncate max-w-[200px]">{u.email}</div>
-              </td>
-              <td className="px-4 py-3 sm:px-6 sm:py-4 font-mono text-xs">{u.roll_number || '-'}</td>
-              <td className="px-4 py-3 sm:px-6 sm:py-4">
-                <span className={`px-2 py-1 rounded-full text-xs font-semibold ${u.warnings_count > 0 ? 'bg-amber-100 text-amber-800' : 'bg-cw-bg text-cw-text-3'}`}>
-                  {u.warnings_count || 0}
-                </span>
-              </td>
-              <td className="px-4 py-3 sm:px-6 sm:py-4">
-                {u.rating_average ? Number(u.rating_average).toFixed(1) : '-'} <span className="text-xs text-cw-text-3">({u.rating_count})</span>
-              </td>
-              <td className="px-4 py-3 sm:px-6 sm:py-4 text-right space-x-2">
-                {!isBlockedTab ? (
-                  <>
-                    <button
-                      onClick={() => openActionModal(u, 'warn')}
-                      className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-amber-500/10 text-amber-500 hover:bg-amber-500/20 transition-colors"
-                    >
-                      Warn
-                    </button>
-                    <button
-                      onClick={() => openActionModal(u, 'block')}
-                      className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-red-500/10 text-red-500 hover:bg-red-500/20 transition-colors"
-                    >
-                      Block
-                    </button>
-                  </>
-                ) : (
-                  <button
-                    onClick={() => openActionModal(u, 'unblock')}
-                    className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500/20 transition-colors"
-                  >
-                    Unblock
-                  </button>
-                )}
-              </td>
-            </tr>
-          ))}
-          {userList.length === 0 && (
-            <tr>
-              <td colSpan="5" className="px-6 py-8 text-center text-cw-text-3">No users found.</td>
-            </tr>
-          )}
-        </tbody>
-      </table>
-    </div>
-  );
+  // Filter users based on searchQuery and userFilter
+  const filteredUsers = processedUsers.filter((u) => {
+    const q = searchQuery.toLowerCase().trim();
+    const matchesSearch =
+      !q ||
+      (u.full_name || '').toLowerCase().includes(q) ||
+      (u.email || '').toLowerCase().includes(q) ||
+      (u.roll_number || '').toLowerCase().includes(q);
+
+    if (!matchesSearch) return false;
+
+    if (userFilter === 'online') return u.is_online_now;
+    if (userFilter === 'today') return u.is_seen_today;
+    if (userFilter === 'offline') return u.is_offline;
+    if (userFilter === 'blocked') return u.is_blocked;
+    return true; // 'all'
+  });
+
+  // Sort users
+  const sortedUsers = [...filteredUsers].sort((a, b) => {
+    if (userSort === 'recent_seen') {
+      const aTime = a.resolved_last_seen ? new Date(a.resolved_last_seen).getTime() : 0;
+      const bTime = b.resolved_last_seen ? new Date(b.resolved_last_seen).getTime() : 0;
+      return bTime - aTime;
+    }
+    if (userSort === 'oldest_seen') {
+      const aTime = a.resolved_last_seen ? new Date(a.resolved_last_seen).getTime() : 0;
+      const bTime = b.resolved_last_seen ? new Date(b.resolved_last_seen).getTime() : 0;
+      return aTime - bTime;
+    }
+    if (userSort === 'newest_joined') {
+      const aTime = a.created_at ? new Date(a.created_at).getTime() : 0;
+      const bTime = b.created_at ? new Date(b.created_at).getTime() : 0;
+      return bTime - aTime;
+    }
+    if (userSort === 'name') {
+      return (a.full_name || a.email || '').localeCompare(b.full_name || b.email || '');
+    }
+    if (userSort === 'warnings') {
+      return (b.warnings_count || 0) - (a.warnings_count || 0);
+    }
+    return 0;
+  });
 
   const renderUsersTab = () => (
-    <div className="space-y-4">
-      <div className="flex justify-between items-center">
-        <input
-          type="search"
-          placeholder="Search by name, email, or roll no..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="field max-w-sm"
-        />
+    <div className="space-y-6">
+      {/* 4 Interactive KPI Metric Cards */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+        {/* Card 1: All Students */}
+        <div
+          onClick={() => setUserFilter('all')}
+          className={`card p-4 sm:p-5 cursor-pointer transition-all border ${
+            userFilter === 'all'
+              ? 'border-cw-accent shadow-md bg-cw-accent/5 ring-2 ring-cw-accent/20'
+              : 'border-cw-border hover:border-cw-accent/40 hover:bg-cw-bg-alt/30'
+          }`}
+        >
+          <div className="flex items-center justify-between text-cw-text-3 mb-2">
+            <span className="text-xs font-semibold uppercase tracking-wider">All Students</span>
+            <span className="text-lg" role="img" aria-label="Students">👥</span>
+          </div>
+          <div className="text-2xl sm:text-3xl font-bold text-cw-text-1">
+            {totalUsersCount}
+          </div>
+          <p className="text-xs text-cw-text-3 mt-1">Total registered accounts</p>
+        </div>
+
+        {/* Card 2: Online Now / Current Active */}
+        <div
+          onClick={() => setUserFilter('online')}
+          className={`card p-4 sm:p-5 cursor-pointer transition-all border ${
+            userFilter === 'online'
+              ? 'border-emerald-500 shadow-md bg-emerald-500/5 ring-2 ring-emerald-500/20'
+              : 'border-cw-border hover:border-emerald-500/40 hover:bg-cw-bg-alt/30'
+          }`}
+        >
+          <div className="flex items-center justify-between text-emerald-600 dark:text-emerald-400 mb-2">
+            <span className="text-xs font-semibold uppercase tracking-wider">Online Now</span>
+            <span className="relative flex h-3 w-3">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
+            </span>
+          </div>
+          <div className="text-2xl sm:text-3xl font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-2">
+            {totalOnlineCount}
+            <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 border border-emerald-500/20">
+              Active Now
+            </span>
+          </div>
+          <p className="text-xs text-cw-text-3 mt-1">Active in last 10 minutes</p>
+        </div>
+
+        {/* Card 3: Active Today */}
+        <div
+          onClick={() => setUserFilter('today')}
+          className={`card p-4 sm:p-5 cursor-pointer transition-all border ${
+            userFilter === 'today'
+              ? 'border-amber-500 shadow-md bg-amber-500/5 ring-2 ring-amber-500/20'
+              : 'border-cw-border hover:border-amber-500/40 hover:bg-cw-bg-alt/30'
+          }`}
+        >
+          <div className="flex items-center justify-between text-amber-600 dark:text-amber-400 mb-2">
+            <span className="text-xs font-semibold uppercase tracking-wider">Active Today</span>
+            <span className="text-lg" role="img" aria-label="Clock">🕒</span>
+          </div>
+          <div className="text-2xl sm:text-3xl font-bold text-amber-600 dark:text-amber-400">
+            {totalSeenTodayCount}
+          </div>
+          <p className="text-xs text-cw-text-3 mt-1">Seen in the last 24 hours</p>
+        </div>
+
+        {/* Card 4: Offline / Inactive */}
+        <div
+          onClick={() => setUserFilter('offline')}
+          className={`card p-4 sm:p-5 cursor-pointer transition-all border ${
+            userFilter === 'offline'
+              ? 'border-slate-500 shadow-md bg-slate-500/5 ring-2 ring-slate-500/20'
+              : 'border-cw-border hover:border-slate-500/40 hover:bg-cw-bg-alt/30'
+          }`}
+        >
+          <div className="flex items-center justify-between text-cw-text-3 mb-2">
+            <span className="text-xs font-semibold uppercase tracking-wider">Offline</span>
+            <span className="text-lg" role="img" aria-label="Offline">💤</span>
+          </div>
+          <div className="text-2xl sm:text-3xl font-bold text-cw-text-2">
+            {totalOfflineCount}
+          </div>
+          <p className="text-xs text-cw-text-3 mt-1">No activity today</p>
+        </div>
       </div>
-      {renderUserTable(activeUsers, false)}
+
+      {/* Filter and Search Bar */}
+      <div className="flex flex-col md:flex-row gap-3 justify-between items-stretch md:items-center">
+        {/* Filter Pills */}
+        <div className="flex flex-wrap gap-1.5 p-1 bg-cw-bg-alt/60 rounded-xl border border-cw-border text-xs">
+          {[
+            { key: 'all', label: 'All Students', count: totalUsersCount },
+            {
+              key: 'online',
+              label: 'Online Now',
+              count: totalOnlineCount,
+              dot: 'bg-emerald-500',
+              pulse: true,
+            },
+            {
+              key: 'today',
+              label: 'Active Today',
+              count: totalSeenTodayCount,
+              dot: 'bg-amber-500',
+            },
+            {
+              key: 'offline',
+              label: 'Offline',
+              count: totalOfflineCount,
+              dot: 'bg-slate-400',
+            },
+            {
+              key: 'blocked',
+              label: 'Blocked',
+              count: totalBlockedCount,
+              dot: 'bg-red-500',
+            },
+          ].map((item) => (
+            <button
+              key={item.key}
+              onClick={() => setUserFilter(item.key)}
+              className={`px-3 py-1.5 rounded-lg font-medium transition-all flex items-center gap-1.5 ${
+                userFilter === item.key
+                  ? 'bg-cw-surface text-cw-text-1 shadow-sm font-semibold'
+                  : 'text-cw-text-2 hover:text-cw-text-1'
+              }`}
+            >
+              {item.dot && (
+                <span
+                  className={`w-2 h-2 rounded-full ${item.dot} ${item.pulse ? 'animate-pulse' : ''}`}
+                />
+              )}
+              <span>{item.label}</span>
+              <span className="text-xs text-cw-text-3">({item.count})</span>
+            </button>
+          ))}
+        </div>
+
+        {/* Search, Sort, and Live Refresh Controls */}
+        <div className="flex flex-wrap items-center gap-2">
+          <input
+            type="search"
+            placeholder="Search student, email, roll no..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="field text-xs py-2 w-full sm:w-56"
+          />
+
+          <select
+            value={userSort}
+            onChange={(e) => setUserSort(e.target.value)}
+            className="field text-xs py-2 w-full sm:w-44 bg-cw-surface"
+          >
+            <option value="recent_seen">🟢 Online / Recent First</option>
+            <option value="oldest_seen">💤 Longest Offline First</option>
+            <option value="newest_joined">📅 Newest Registered</option>
+            <option value="name">🔤 Name (A - Z)</option>
+            <option value="warnings">⚠️ Most Warnings</option>
+          </select>
+
+          <button
+            type="button"
+            onClick={handleManualRefreshUsers}
+            disabled={refreshingUsers}
+            title="Refresh student status now"
+            className="btn-ghost text-xs py-2 px-3 flex items-center gap-1.5 border border-cw-border rounded-lg text-cw-text-2 hover:text-cw-text-1"
+          >
+            <span className={refreshingUsers ? 'animate-spin inline-block' : 'inline-block'}>
+              🔄
+            </span>
+            <span className="hidden sm:inline">Refresh</span>
+          </button>
+        </div>
+      </div>
+
+      {/* Users Table */}
+      <div className="bg-cw-surface rounded-xl border border-cw-border overflow-hidden shadow-sm">
+        <div className="overflow-x-auto">
+          <table className="w-full text-left text-sm text-cw-text-2">
+            <thead className="bg-cw-bg-alt text-xs uppercase text-cw-text-3 border-b border-cw-border">
+              <tr>
+                <th className="px-4 py-3.5 sm:px-6 font-semibold">Student / User</th>
+                <th className="px-4 py-3.5 font-semibold">Roll No</th>
+                <th className="px-4 py-3.5 font-semibold">Current Status</th>
+                <th className="px-4 py-3.5 font-semibold">Last Seen</th>
+                <th className="px-4 py-3.5 font-semibold">Joined Date</th>
+                <th className="px-4 py-3.5 font-semibold">Trust Score</th>
+                <th className="px-4 py-3.5 font-semibold">Warnings</th>
+                <th className="px-4 py-3.5 sm:px-6 font-semibold text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-cw-border">
+              {sortedUsers.map((u) => {
+                const seenInfo = formatLastSeen(u.resolved_last_seen, u.is_online_now);
+                const initials = (u.full_name || u.email || '?')
+                  .split(' ')
+                  .map((w) => w[0])
+                  .join('')
+                  .toUpperCase()
+                  .slice(0, 2);
+
+                return (
+                  <tr key={u.id} className="hover:bg-cw-bg-alt/40 transition-colors">
+                    {/* User column */}
+                    <td className="px-4 py-3.5 sm:px-6">
+                      <div className="flex items-center gap-3">
+                        <div className="relative">
+                          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-cw-accent to-cw-accent-light text-white font-semibold text-xs flex items-center justify-center flex-shrink-0">
+                            {u.avatar_url ? (
+                              <img
+                                src={u.avatar_url}
+                                alt=""
+                                className="w-full h-full rounded-full object-cover"
+                              />
+                            ) : (
+                              initials
+                            )}
+                          </div>
+                          {u.is_online_now && !u.is_blocked && (
+                            <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full bg-emerald-500 border-2 border-cw-surface" />
+                          )}
+                        </div>
+                        <div className="min-w-0">
+                          <div className="font-semibold text-cw-text-1 truncate max-w-[180px]">
+                            {u.full_name || 'Anonymous Student'}
+                          </div>
+                          <div className="text-xs text-cw-text-3 truncate max-w-[180px]">
+                            {u.email}
+                          </div>
+                        </div>
+                      </div>
+                    </td>
+
+                    {/* Roll No */}
+                    <td className="px-4 py-3.5 font-mono text-xs">
+                      {u.roll_number ? (
+                        <span className="px-2 py-0.5 rounded bg-cw-bg-alt border border-cw-border text-cw-text-2">
+                          {u.roll_number}
+                        </span>
+                      ) : (
+                        <span className="text-cw-text-3">-</span>
+                      )}
+                    </td>
+
+                    {/* Status Badge */}
+                    <td className="px-4 py-3.5">
+                      {u.is_blocked ? (
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-red-500/10 text-red-500 border border-red-500/20">
+                          <span className="w-1.5 h-1.5 rounded-full bg-red-500" />
+                          Blocked
+                        </span>
+                      ) : u.is_online_now ? (
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30">
+                          <span className="relative flex h-2 w-2">
+                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                            <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                          </span>
+                          Online Now
+                        </span>
+                      ) : u.is_seen_today ? (
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
+                          <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+                          Seen Today
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-cw-bg-alt text-cw-text-3 border border-cw-border">
+                          <span className="w-1.5 h-1.5 rounded-full bg-slate-400" />
+                          Offline
+                        </span>
+                      )}
+                    </td>
+
+                    {/* Last Seen */}
+                    <td className="px-4 py-3.5">
+                      <div className="flex flex-col" title={`Exact full timestamp: ${seenInfo.full}`}>
+                        <span
+                          className={`text-xs flex items-center gap-1 ${
+                            seenInfo.isOnline
+                              ? 'text-emerald-600 dark:text-emerald-400 font-semibold'
+                              : seenInfo.isToday
+                              ? 'text-cw-text-1 font-medium'
+                              : 'text-cw-text-3 font-normal'
+                          }`}
+                        >
+                          {seenInfo.isOnline && (
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                          )}
+                          {seenInfo.status}
+                        </span>
+                        <span className="text-[11px] text-cw-text-3 font-normal truncate max-w-[140px]">
+                          {seenInfo.full}
+                        </span>
+                      </div>
+                    </td>
+
+                    {/* Joined Date */}
+                    <td className="px-4 py-3.5 text-xs text-cw-text-3 whitespace-nowrap">
+                      {u.created_at
+                        ? new Date(u.created_at).toLocaleDateString('en-US', {
+                            month: 'short',
+                            day: 'numeric',
+                            year: 'numeric',
+                          })
+                        : '-'}
+                    </td>
+
+                    {/* Trust Score */}
+                    <td className="px-4 py-3.5 whitespace-nowrap">
+                      <span className="font-semibold text-cw-text-1">
+                        {u.rating_average ? Number(u.rating_average).toFixed(1) : '-'}
+                      </span>{' '}
+                      <span className="text-xs text-cw-text-3">({u.rating_count || 0})</span>
+                    </td>
+
+                    {/* Warnings */}
+                    <td className="px-4 py-3.5">
+                      <span
+                        className={`px-2 py-0.5 rounded-full text-xs font-semibold ${
+                          u.warnings_count > 0
+                            ? 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300'
+                            : 'bg-cw-bg-alt text-cw-text-3'
+                        }`}
+                      >
+                        {u.warnings_count || 0}
+                      </span>
+                    </td>
+
+                    {/* Actions */}
+                    <td className="px-4 py-3.5 sm:px-6 text-right space-x-2 whitespace-nowrap">
+                      {!u.is_blocked ? (
+                        <>
+                          <button
+                            onClick={() => openActionModal(u, 'warn')}
+                            className="px-2.5 py-1 text-xs font-semibold rounded-lg bg-amber-500/10 text-amber-500 hover:bg-amber-500/20 transition-colors"
+                          >
+                            Warn
+                          </button>
+                          <button
+                            onClick={() => openActionModal(u, 'block')}
+                            className="px-2.5 py-1 text-xs font-semibold rounded-lg bg-red-500/10 text-red-500 hover:bg-red-500/20 transition-colors"
+                          >
+                            Block
+                          </button>
+                        </>
+                      ) : (
+                        <button
+                          onClick={() => openActionModal(u, 'unblock')}
+                          className="px-2.5 py-1 text-xs font-semibold rounded-lg bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500/20 transition-colors"
+                        >
+                          Unblock
+                        </button>
+                      )}
+                    </td>
+                  </tr>
+                );
+              })}
+
+              {sortedUsers.length === 0 && (
+                <tr>
+                  <td colSpan="8" className="px-6 py-12 text-center text-cw-text-3">
+                    <p className="font-semibold text-cw-text-2">No students found.</p>
+                    <p className="text-xs mt-1">Try adjusting your search query or filter criteria.</p>
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
     </div>
   );
 
-  const renderBlockedTab = () => (
-    <div className="space-y-4">
-      <div className="flex justify-between items-center">
-        <input
-          type="search"
-          placeholder="Search blocked users..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="field max-w-sm"
-        />
-      </div>
-      {renderUserTable(blockedUsers, true)}
-    </div>
-  );
+  const renderBlockedTab = () => {
+    return renderUsersTab();
+  };
 
   const renderReportsTab = () => (
     <div className="space-y-4">
@@ -793,27 +1273,60 @@ export default function AdminPanel() {
       <div className="border-b border-cw-border">
         <nav className="-mb-px flex flex-wrap gap-4 sm:gap-8 px-2 sm:px-0">
           <button
-            onClick={() => { setActiveTab('users'); setSearchQuery(''); }}
-            className={`whitespace-nowrap pb-4 px-1 border-b-2 font-medium text-sm transition-colors ${activeTab === 'users'
-                ? 'border-cw-accent text-cw-accent'
+            onClick={() => { setActiveTab('users'); setUserFilter('all'); setSearchQuery(''); }}
+            className={`whitespace-nowrap pb-4 px-1 border-b-2 font-medium text-sm transition-colors ${activeTab === 'users' && userFilter === 'all'
+                ? 'border-cw-accent text-cw-accent font-semibold'
                 : 'border-transparent text-cw-text-2 hover:text-cw-text-1 hover:border-cw-border'
               }`}
           >
-            Active Users ({activeUsers.length})
+            All Students ({totalUsersCount})
           </button>
           <button
-            onClick={() => { setActiveTab('blocked'); setSearchQuery(''); }}
-            className={`whitespace-nowrap pb-4 px-1 border-b-2 font-medium text-sm transition-colors ${activeTab === 'blocked'
-                ? 'border-red-500 text-red-500'
+            onClick={() => { setActiveTab('users'); setUserFilter('online'); setSearchQuery(''); }}
+            className={`whitespace-nowrap pb-4 px-1 border-b-2 font-medium text-sm transition-colors flex items-center gap-1.5 ${activeTab === 'users' && userFilter === 'online'
+                ? 'border-emerald-500 text-emerald-600 dark:text-emerald-400 font-semibold'
                 : 'border-transparent text-cw-text-2 hover:text-cw-text-1 hover:border-cw-border'
               }`}
           >
-            Blocked Users ({blockedUsers.length})
+            <span className="relative flex h-2 w-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+            </span>
+            Online Now ({totalOnlineCount})
+          </button>
+          <button
+            onClick={() => { setActiveTab('users'); setUserFilter('today'); setSearchQuery(''); }}
+            className={`whitespace-nowrap pb-4 px-1 border-b-2 font-medium text-sm transition-colors flex items-center gap-1.5 ${activeTab === 'users' && userFilter === 'today'
+                ? 'border-sky-500 text-sky-600 dark:text-sky-400 font-semibold'
+                : 'border-transparent text-cw-text-2 hover:text-cw-text-1 hover:border-cw-border'
+              }`}
+          >
+            <span className="w-2 h-2 rounded-full bg-sky-500" />
+            Active Today ({totalSeenTodayCount})
+          </button>
+          <button
+            onClick={() => { setActiveTab('users'); setUserFilter('offline'); setSearchQuery(''); }}
+            className={`whitespace-nowrap pb-4 px-1 border-b-2 font-medium text-sm transition-colors flex items-center gap-1.5 ${activeTab === 'users' && userFilter === 'offline'
+                ? 'border-slate-500 text-slate-600 dark:text-slate-400 font-semibold'
+                : 'border-transparent text-cw-text-2 hover:text-cw-text-1 hover:border-cw-border'
+              }`}
+          >
+            <span className="w-2 h-2 rounded-full bg-slate-400" />
+            Offline ({totalOfflineCount})
+          </button>
+          <button
+            onClick={() => { setActiveTab('users'); setUserFilter('blocked'); setSearchQuery(''); }}
+            className={`whitespace-nowrap pb-4 px-1 border-b-2 font-medium text-sm transition-colors flex items-center gap-1.5 ${activeTab === 'users' && userFilter === 'blocked'
+                ? 'border-red-500 text-red-500 font-semibold'
+                : 'border-transparent text-cw-text-2 hover:text-cw-text-1 hover:border-cw-border'
+              }`}
+          >
+            Blocked ({totalBlockedCount})
           </button>
           <button
             onClick={() => { setActiveTab('reports'); setSearchQuery(''); }}
             className={`whitespace-nowrap pb-4 px-1 border-b-2 font-medium text-sm transition-colors ${activeTab === 'reports'
-                ? 'border-cw-accent text-cw-accent'
+                ? 'border-cw-accent text-cw-accent font-semibold'
                 : 'border-transparent text-cw-text-2 hover:text-cw-text-1 hover:border-cw-border'
               }`}
           >

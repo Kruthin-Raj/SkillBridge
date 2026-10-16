@@ -60,6 +60,18 @@ export default function Navbar() {
     };
   }, [user]);
 
+  // Live user presence heartbeat while tab is open
+  useEffect(() => {
+    if (!user) return;
+    const sendHeartbeat = () => {
+      if (document.visibilityState === 'visible') {
+        api.auth.me().catch(() => {});
+      }
+    };
+    const interval = setInterval(sendHeartbeat, 120000); // Every 2 minutes
+    return () => clearInterval(interval);
+  }, [user]);
+
   // Close dropdown on outside click
   useEffect(() => {
     const handler = (e) => {
