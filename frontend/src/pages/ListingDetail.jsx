@@ -354,8 +354,21 @@ export default function ListingDetail() {
           )
         )}
 
+        {/* Completed status banner for non-participants viewing a finished post */}
+        {listing.status === 'completed' && !isOwner && !isParticipant && (
+          <div className="card text-center py-6 border border-emerald-500/20 bg-emerald-500/5">
+            <div className="inline-flex items-center justify-center w-10 h-10 rounded-full bg-emerald-100 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 mb-2 font-bold text-lg">
+              ✓
+            </div>
+            <h3 className="font-semibold text-cw-text-1">Task Completed</h3>
+            <p className="text-xs text-cw-text-3 mt-1">
+              This task has been completed and closed. Proposals and internal details are private.
+            </p>
+          </div>
+        )}
+
         {/* Freelance mode: place a bid, or (as owner) accept one. */}
-        {user && isFreelance && (
+        {user && isFreelance && (listing.status === 'open' || isOwner || isParticipant) && (
           <div className="card">
             <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
               <div className="flex items-center gap-2">

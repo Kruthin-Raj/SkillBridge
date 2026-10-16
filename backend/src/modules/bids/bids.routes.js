@@ -52,9 +52,14 @@ router.get(
 
     const bids = await db.findMany(TABLES.bids, { listing_id: listingId }, { limit: 100 });
     
+    // Privacy protection: on completed or cancelled tasks, non-owners can only see their own bid
+    const visibleBids = (listing && (listing.status === 'completed' || listing.status === 'cancelled') && !isOwner)
+      ? bids.filter((b) => b.bidder_id === req.user.id)
+      : bids;
+    
     // Attach user details for each bid
-    for (let i = 0; i < bids.length; i++) {
-      const bid = bids[i];
+    for (let i = 0; i < visibleBids.length; i++) {
+      const bid = visibleBids[i];
       const isAnon = resolveBidAnon(bid);
       bid.is_anonymous = isAnon;
       bid.message = cleanBidMessage(bid.message);
@@ -71,7 +76,7 @@ router.get(
             avatar_url: user.avatar_url,
             rating_average: user.rating_average,
             rating_count: user.rating_count,
-            upi_id: user.upi_id ?? '',
+            upi_id: (isOwner || isMyBid) ? (user.upi_id ?? '') : '',
             is_anonymous: isAnon,
           };
         } else {
@@ -88,7 +93,7 @@ router.get(
       }
     }
 
-    res.json({ bids });
+    res.json({ bids: visibleBids });
   })
 );
 
