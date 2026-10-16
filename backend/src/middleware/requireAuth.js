@@ -2,6 +2,7 @@ import jwt from 'jsonwebtoken';
 import { env } from '../config/env.js';
 import { db, TABLES } from '../db/index.js';
 import { ApiError } from '../utils/ApiError.js';
+import { recordUserActivity } from '../services/loginTracker.js';
 
 /**
  * Express middleware for requireAuth.
@@ -40,6 +41,8 @@ export async function requireAuth(req, _res, next) {
     }
 
     req.user = { id: userId, email: payload.email, college_id: userRecord?.college_id || null };
+    // Real-time last seen tracking
+    recordUserActivity(userId).catch(() => {});
     return next();
   } catch (err) {
     if (err instanceof ApiError) return next(err);

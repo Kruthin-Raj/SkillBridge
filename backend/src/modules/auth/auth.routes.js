@@ -10,6 +10,7 @@ import {
   resetPassword,
   setPassword,
 } from './auth.service.js';
+import { recordUserActivity } from '../../services/loginTracker.js';
 
 /**
  * Express API routes for auth module.
@@ -106,6 +107,8 @@ router.get(
   '/me',
   requireAuth,
   asyncHandler(async (req, res) => {
+    // Record throttled user activity
+    recordUserActivity(req.user.id).catch(() => {});
     const user = await getUserById(req.user.id);
     res.json({ user, hasPassword: Boolean(user.password_hash) });
   })

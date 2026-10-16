@@ -42,6 +42,7 @@ create table if not exists public.users (
   upi_qr_url     text        default '',
   college_id     uuid        references public.colleges(id) on delete set null,
   last_read_at   timestamptz not null default now(),
+  last_login_at  timestamptz default now(),
   created_at     timestamptz not null default now(),
   updated_at     timestamptz not null default now()
 );

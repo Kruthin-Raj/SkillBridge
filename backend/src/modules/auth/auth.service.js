@@ -4,6 +4,7 @@ import { db, TABLES } from '../../db/index.js';
 import { ApiError } from '../../utils/ApiError.js';
 import { signToken } from '../../middleware/requireAuth.js';
 import { issueOtp, verifyOtp } from '../../services/otpService.js';
+import { recordUserActivity } from '../../services/loginTracker.js';
 
 /**
  * Business logic service for auth module.
@@ -69,6 +70,9 @@ export async function loginWithPassword(rawEmail, password) {
     throw ApiError.unauthorized('Incorrect password.');
   }
 
+  // Record user last login timestamp
+  await recordUserActivity(user.id);
+
   return { token: signToken(user), user };
 }
 
@@ -97,6 +101,9 @@ export async function registerWithOtp(rawEmail, password, code, rollNumber) {
     rating_count: 0,
     college_id: college ? college.id : null,
   });
+
+  // Record initial activity
+  await recordUserActivity(user.id);
 
   return { token: signToken(user), user };
 }
