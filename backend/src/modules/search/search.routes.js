@@ -93,12 +93,12 @@ router.get(
         }
       }
 
-      // 2. Search Listings/Posts if requested
+      // 2. Search Listings/Posts if requested (Only active, open tasks; completed tasks are visible via user profile only)
       if (type === 'all' || type === 'posts') {
         let listingQuery = supabase
           .from(TABLES.listings)
           .select('*')
-          .neq('status', 'cancelled');
+          .eq('status', 'open');
 
         if (userCollegeId) {
           listingQuery = listingQuery.eq('college_id', userCollegeId);
@@ -108,8 +108,17 @@ router.get(
         if (listingErr) {
           console.error('[Search Listings Supabase Error]', listingErr);
         } else if (rawListings) {
+          // Filter out expired freelance listings so public search only displays live opportunities
+          const now = new Date();
+          const activeListings = rawListings.filter((l) => {
+            if (l.mode === 'freelance' && l.deadline && new Date(l.deadline) <= now) {
+              return false;
+            }
+            return true;
+          });
+
           // Fetch owner details for display
-          const ownerIds = [...new Set(rawListings.map(l => l.owner_id).filter(Boolean))];
+          const ownerIds = [...new Set(activeListings.map(l => l.owner_id).filter(Boolean))];
           let ownerMap = new Map();
           if (ownerIds.length > 0) {
             const { data: owners } = await supabase
@@ -124,7 +133,7 @@ router.get(
           }
 
           // Attach owner info
-          const listingsWithOwner = rawListings.map(l => ({
+          const listingsWithOwner = activeListings.map(l => ({
             ...l,
             owner: ownerMap.get(l.owner_id) || null,
           }));
