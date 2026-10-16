@@ -1,5 +1,6 @@
 import { Route, Routes, Link } from 'react-router-dom';
 import Navbar from './components/Navbar';
+import MobileBottomNav from './components/MobileBottomNav';
 import Logo from './components/Logo';
 import ProtectedRoute from './components/ProtectedRoute';
 import Home from './pages/Home';
@@ -32,7 +33,7 @@ export default function App() {
   return (
     <div className="min-h-screen">
       <Navbar />
-      <main className="mx-auto max-w-5xl px-4 py-8">
+      <main className="mx-auto max-w-5xl px-4 py-8 pb-24 md:pb-8">
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/browse" element={<Browse />} />
@@ -107,7 +108,7 @@ export default function App() {
         </Routes>
       </main>
 
-      <footer className="mt-auto border-t border-cw-accent/10 bg-cw-surface/50 py-6">
+      <footer className="mt-auto border-t border-cw-accent/10 bg-cw-surface/50 py-6 mb-16 md:mb-0">
         <div className="mx-auto max-w-5xl px-4 flex flex-wrap items-center justify-between gap-4 text-sm text-cw-text-3">
           <div className="flex items-center gap-2">
             <Logo size="xs" />
@@ -121,6 +122,9 @@ export default function App() {
           </div>
         </div>
       </footer>
+
+      {/* Mobile Horizontal Navigation Dock / Tab Bar */}
+      <MobileBottomNav />
     </div>
   );
 }
