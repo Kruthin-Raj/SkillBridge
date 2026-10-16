@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { api } from '../lib/api';
+import { triggerAppRefresh } from '../hooks/useLiveRefresh';
 
 /**
  * React component for TaskProgress.
@@ -24,6 +25,7 @@ export default function TaskProgress({ listingId, currentStatus, onUpdate }) {
     try {
       const { listing } = await api.listings.setWorkerStatus(listingId, status);
       if (onUpdate) onUpdate(listing);
+      triggerAppRefresh();
     } catch (err) {
       setError(err.message);
     } finally {

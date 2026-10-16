@@ -1,10 +1,11 @@
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import ListingCard from '../components/ListingCard';
 import ModeToggle from '../components/ModeToggle';
 import { api } from '../lib/api';
 import { useAuth } from '../context/AuthContext';
 import { scoreFuzzyMatch } from '../utils/fuzzySearch';
+import { useLiveRefresh } from '../hooks/useLiveRefresh';
 
 /**
  * React page component for Browse view.
@@ -20,27 +21,28 @@ export default function Browse() {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
 
-  useEffect(() => {
-    let cancelled = false;
-    setLoading(true);
-    setError('');
-
+  const loadListings = useCallback(() => {
     api.listings
       .list(mode)
       .then((data) => {
-        if (!cancelled) setListings(data.listings);
+        setListings(data.listings);
+        setError('');
       })
       .catch((err) => {
-        if (!cancelled) setError(err.message);
+        setError(err.message);
       })
       .finally(() => {
-        if (!cancelled) setLoading(false);
+        setLoading(false);
       });
-
-    return () => {
-      cancelled = true;
-    };
   }, [mode]);
+
+  useEffect(() => {
+    setLoading(true);
+    loadListings();
+  }, [loadListings]);
+
+  // Refreshes when window regains focus or after storage updates
+  useLiveRefresh(loadListings, { intervalMs: 12000 });
 
   const filteredListings = useMemo(() => {
     if (!searchQuery.trim()) return listings;
