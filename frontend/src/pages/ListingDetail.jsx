@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { api } from '../lib/api';
 import { useAuth } from '../context/AuthContext';
+import { useLiveRefresh, triggerAppRefresh } from '../hooks/useLiveRefresh';
 import TaskProgress from '../components/TaskProgress';
 import WorkspaceChat from '../components/WorkspaceChat';
 import ParticipantCard from '../components/ParticipantCard';
@@ -67,11 +68,15 @@ export default function ListingDetail() {
     load();
   }, [load]);
 
+  // Automatically refresh when window regains focus, tab becomes visible, or after payment/sync
+  useLiveRefresh(load, { intervalMs: 8000, enabled: Boolean(id) });
+
   const handleAction = async (action) => {
     setError('');
     try {
       await action();
       await load();
+      triggerAppRefresh();
     } catch (err) {
       setError(err.message);
     }
