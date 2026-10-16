@@ -143,6 +143,7 @@ router.get(
               id: user.id,
               full_name: user.full_name,
               avatar_url: user.avatar_url,
+              upi_id: user.upi_id ?? '',
               role: 'freelancer'
             });
           }

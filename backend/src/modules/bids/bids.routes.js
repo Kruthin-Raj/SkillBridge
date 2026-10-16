@@ -71,6 +71,7 @@ router.get(
             avatar_url: user.avatar_url,
             rating_average: user.rating_average,
             rating_count: user.rating_count,
+            upi_id: user.upi_id ?? '',
             is_anonymous: isAnon,
           };
         } else {
