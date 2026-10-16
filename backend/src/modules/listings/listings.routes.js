@@ -348,4 +348,93 @@ router.delete(
   })
 );
 
+const settlementsStore = new Map();
+
+/** GET /api/listings/:id/settlement - real-time campus settlement state */
+router.get(
+  '/:id/settlement',
+  asyncHandler(async (req, res) => {
+    const listingId = req.params.id;
+    const listing = await db.findOne(TABLES.listings, { id: listingId });
+    if (!listing) throw ApiError.notFound('Listing not found');
+
+    if (settlementsStore.has(listingId)) {
+      return res.json({ settlement: settlementsStore.get(listingId) });
+    }
+
+    // Fallback: if task completed, it is confirmed
+    if (listing.status === 'completed') {
+      const confirmedState = {
+        status: 'confirmed',
+        method: 'upi',
+        upi_id: '',
+        updated_at: listing.updated_at || new Date().toISOString(),
+      };
+      settlementsStore.set(listingId, confirmedState);
+      return res.json({ settlement: confirmedState });
+    }
+
+    // Inspect messages for previous notices if store was restarted
+    try {
+      const messages = await db.findMany(
+        TABLES.messages,
+        { listing_id: listingId },
+        { orderBy: 'created_at', ascending: false, limit: 30 }
+      );
+      for (const m of messages) {
+        const text = m.content || '';
+        if (text.includes('Payment Confirmed')) {
+          const state = { status: 'confirmed', method: 'upi', upi_id: '', updated_at: m.created_at };
+          settlementsStore.set(listingId, state);
+          return res.json({ settlement: state });
+        }
+        if (text.includes('paid in Cash') || text.includes('💵 Cash')) {
+          const state = { status: 'sent', method: 'cash', upi_id: '', updated_at: m.created_at };
+          settlementsStore.set(listingId, state);
+          return res.json({ settlement: state });
+        }
+        if (text.includes('sent via UPI') || text.includes('💳 UPI')) {
+          const state = { status: 'sent', method: 'upi', upi_id: '', updated_at: m.created_at };
+          settlementsStore.set(listingId, state);
+          return res.json({ settlement: state });
+        }
+      }
+    } catch (_) {}
+
+    const defaultState = { status: 'pending', method: 'upi', upi_id: '', updated_at: null };
+    res.json({ settlement: defaultState });
+  })
+);
+
+const settlementPatchSchema = z.object({
+  status: z.enum(['pending', 'sent', 'confirmed']),
+  method: z.enum(['upi', 'cash']).optional(),
+  upi_id: z.string().max(100).optional(),
+});
+
+/** PATCH /api/listings/:id/settlement - update real-time settlement state */
+router.patch(
+  '/:id/settlement',
+  requireAuth,
+  asyncHandler(async (req, res) => {
+    const listingId = req.params.id;
+    const patch = settlementPatchSchema.parse(req.body);
+
+    const prev = settlementsStore.get(listingId) || {
+      status: 'pending',
+      method: 'upi',
+      upi_id: '',
+    };
+
+    const updated = {
+      ...prev,
+      ...patch,
+      updated_at: new Date().toISOString(),
+    };
+
+    settlementsStore.set(listingId, updated);
+    res.json({ settlement: updated });
+  })
+);
+
 export default router;
