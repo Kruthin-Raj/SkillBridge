@@ -20,6 +20,13 @@ export default function AdminPanel() {
   const [users, setUsers] = useState([]);
   const [reports, setReports] = useState([]);
   const [colleges, setColleges] = useState([]);
+  const [collegeRequests, setCollegeRequests] = useState([]);
+  const [collegeSubTab, setCollegeSubTab] = useState('requests'); // 'requests' | 'colleges'
+  const [requestsFilter, setRequestsFilter] = useState('all'); // 'all' | 'pending' | 'approved' | 'rejected'
+  const [actionBusyId, setActionBusyId] = useState(null);
+  const [rejectModalOpen, setRejectModalOpen] = useState(false);
+  const [requestToReject, setRequestToReject] = useState(null);
+  const [rejectionReason, setRejectionReason] = useState('');
   const [supportTickets, setSupportTickets] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -45,16 +52,18 @@ export default function AdminPanel() {
     setLoading(true);
     setError('');
     try {
-      const [usersData, reportsData, collegesData, supportData] = await Promise.all([
+      const [usersData, reportsData, collegesData, supportData, requestsData] = await Promise.all([
         api.admin.getUsers(),
         api.admin.getReports(),
         api.admin.getColleges(),
         api.support.getAllTickets().catch(() => ({ tickets: [] })),
+        api.admin.getCollegeRequests().catch(() => ({ requests: [] })),
       ]);
       setUsers(usersData.users);
       setReports(reportsData.reports);
       setColleges(collegesData.colleges);
       setSupportTickets(supportData.tickets || []);
+      setCollegeRequests(requestsData.requests || []);
     } catch (err) {
       if (err.status === 403) {
         navigate('/');
@@ -232,6 +241,56 @@ export default function AdminPanel() {
       loadData();
     } catch (err) {
       alert(err.message);
+    }
+  };
+
+  const handleApproveCollegeRequest = async (req) => {
+    if (!window.confirm(`Approve ${req.college_name} (@${req.college_domain})?\n\nThis will add @${req.college_domain} to the active colleges directory and send an automated notification email to ${req.example_email}.`)) {
+      return;
+    }
+    setActionBusyId(req.id);
+    try {
+      const res = await api.admin.approveCollegeRequest(req.id);
+      alert(res.message || 'College approved! Notification email sent to student.');
+      await loadData();
+    } catch (err) {
+      alert(err.message || 'Failed to approve college request');
+    } finally {
+      setActionBusyId(null);
+    }
+  };
+
+  const handleOpenRejectModal = (req) => {
+    setRequestToReject(req);
+    setRejectionReason('Thank you for your interest in SkillBridge. At this time, we are unable to verify or support this domain. We will keep your request on file as we expand.');
+    setRejectModalOpen(true);
+  };
+
+  const handleConfirmReject = async (e) => {
+    e.preventDefault();
+    if (!requestToReject) return;
+    setActionBusyId(requestToReject.id);
+    try {
+      const res = await api.admin.rejectCollegeRequest(requestToReject.id, rejectionReason.trim());
+      alert(res.message || 'Request rejected and notification email dispatched.');
+      setRejectModalOpen(false);
+      setRequestToReject(null);
+      setRejectionReason('');
+      await loadData();
+    } catch (err) {
+      alert(err.message || 'Failed to reject college request');
+    } finally {
+      setActionBusyId(null);
+    }
+  };
+
+  const handleDeleteCollegeRequest = async (id) => {
+    if (!window.confirm('Are you sure you want to delete this college request record?')) return;
+    try {
+      await api.admin.deleteCollegeRequest(id);
+      setCollegeRequests((prev) => prev.filter((r) => r.id !== id));
+    } catch (err) {
+      alert(err.message || 'Failed to delete request');
     }
   };
 
@@ -886,73 +945,361 @@ export default function AdminPanel() {
     </div>
   );
 
-  const renderCollegesTab = () => (
-    <div className="space-y-6">
-      <div className="bg-cw-surface p-6 rounded-xl border border-cw-border">
-        <h3 className="text-lg font-semibold text-cw-text-1 mb-4">Add a New College</h3>
-        <form onSubmit={handleAddCollege} className="flex flex-col sm:flex-row gap-4">
-          <div className="flex-1">
-            <label className="block text-xs font-medium text-cw-text-2 mb-1">College Domain (e.g., stanford.edu)</label>
-            <input
-              type="text"
-              required
-              className="field w-full"
-              value={newCollege.domain}
-              onChange={e => setNewCollege({ ...newCollege, domain: e.target.value.toLowerCase() })}
-              placeholder="harvard.edu"
-            />
-          </div>
-          <div className="flex-1">
-            <label className="block text-xs font-medium text-cw-text-2 mb-1">College Name</label>
-            <input
-              type="text"
-              required
-              className="field w-full"
-              value={newCollege.name}
-              onChange={e => setNewCollege({ ...newCollege, name: e.target.value })}
-              placeholder="Harvard University"
-            />
-          </div>
-          <div className="flex items-end">
-            <button type="submit" className="btn-primary py-2 px-6">Add</button>
-          </div>
-        </form>
-      </div>
+  const renderCollegesTab = () => {
+    const pendingRequests = collegeRequests.filter((r) => r.status === 'pending');
+    const approvedRequests = collegeRequests.filter((r) => r.status === 'approved');
+    const rejectedRequests = collegeRequests.filter((r) => r.status === 'rejected');
 
-      <div className="overflow-x-auto bg-cw-surface rounded-xl border border-cw-border">
-        <table className="w-full text-left text-sm text-cw-text-2">
-          <thead className="bg-cw-bg-alt text-xs uppercase text-cw-text-3">
-            <tr>
-              <th className="px-6 py-4 font-semibold">Domain</th>
-              <th className="px-6 py-4 font-semibold">Name</th>
-              <th className="px-6 py-4 font-semibold text-right">Actions</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-cw-border">
-            {colleges.map(c => (
-              <tr key={c.id} className="hover:bg-cw-bg-alt/50 transition-colors">
-                <td className="px-6 py-4 font-medium text-cw-text-1 whitespace-nowrap">@{c.domain}</td>
-                <td className="px-6 py-4 whitespace-nowrap">{c.name}</td>
-                <td className="px-6 py-4 text-right whitespace-nowrap">
-                  <button
-                    onClick={() => handleDeleteCollege(c.domain)}
-                    className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-red-500/10 text-red-500 hover:bg-red-500/20 transition-colors"
-                  >
-                    Delete
+    const filteredRequests = collegeRequests.filter((r) => {
+      const q = searchQuery.toLowerCase();
+      const matchesQuery =
+        (r.college_name || '').toLowerCase().includes(q) ||
+        (r.college_domain || '').toLowerCase().includes(q) ||
+        (r.example_email || '').toLowerCase().includes(q) ||
+        (r.notes || '').toLowerCase().includes(q);
+
+      if (!matchesQuery) return false;
+      if (requestsFilter === 'all') return true;
+      return r.status === requestsFilter;
+    });
+
+    const filteredColleges = colleges.filter((c) => {
+      const q = searchQuery.toLowerCase();
+      return (
+        (c.name || '').toLowerCase().includes(q) ||
+        (c.domain || '').toLowerCase().includes(q)
+      );
+    });
+
+    return (
+      <div className="space-y-6">
+        {/* Sub Navigation */}
+        <div className="flex items-center justify-between border-b border-cw-border pb-3">
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setCollegeSubTab('requests')}
+              className={`px-4 py-2 rounded-xl text-xs font-semibold transition-all flex items-center gap-2 ${
+                collegeSubTab === 'requests'
+                  ? 'bg-cw-accent text-white shadow-sm'
+                  : 'bg-cw-surface border border-cw-border text-cw-text-2 hover:text-cw-text-1 hover:bg-cw-bg-alt'
+              }`}
+            >
+              <span>🎓 Student Access Requests</span>
+              <span
+                className={`px-1.5 py-0.5 rounded-full text-[10px] font-bold ${
+                  collegeSubTab === 'requests'
+                    ? 'bg-white/25 text-white'
+                    : pendingRequests.length > 0
+                    ? 'bg-amber-500 text-white animate-pulse'
+                    : 'bg-cw-bg-alt text-cw-text-3'
+                }`}
+              >
+                {pendingRequests.length > 0 ? `${pendingRequests.length} pending` : collegeRequests.length}
+              </span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setCollegeSubTab('colleges')}
+              className={`px-4 py-2 rounded-xl text-xs font-semibold transition-all flex items-center gap-2 ${
+                collegeSubTab === 'colleges'
+                  ? 'bg-cw-accent text-white shadow-sm'
+                  : 'bg-cw-surface border border-cw-border text-cw-text-2 hover:text-cw-text-1 hover:bg-cw-bg-alt'
+              }`}
+            >
+              <span>🏛️ Approved Colleges</span>
+              <span
+                className={`px-1.5 py-0.5 rounded-full text-[10px] font-bold ${
+                  collegeSubTab === 'colleges' ? 'bg-white/25 text-white' : 'bg-cw-bg-alt text-cw-text-3'
+                }`}
+              >
+                {colleges.length}
+              </span>
+            </button>
+          </div>
+
+          <div className="text-xs text-cw-text-3 hidden sm:block">
+            {collegeSubTab === 'requests'
+              ? `${collegeRequests.length} total request(s) received`
+              : `${colleges.length} approved university domain(s)`}
+          </div>
+        </div>
+
+        {/* SUBTAB 1: REQUESTS */}
+        {collegeSubTab === 'requests' && (
+          <div className="space-y-4">
+            {/* Context Explanation Callout */}
+            <div className="p-4 rounded-xl bg-gradient-to-r from-cw-accent/10 via-purple-500/10 to-transparent border border-cw-accent/20 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+              <div>
+                <h4 className="text-sm font-bold text-cw-text-1 flex items-center gap-2">
+                  <span>📬</span> Prospective Campus Applications
+                </h4>
+                <p className="text-xs text-cw-text-2 mt-0.5">
+                  When you approve a request, the university domain is immediately added to the system and an automated confirmation email is sent to the student so they can register.
+                </p>
+              </div>
+            </div>
+
+            {/* Filter Pills */}
+            <div className="flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setRequestsFilter('all')}
+                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                  requestsFilter === 'all'
+                    ? 'bg-cw-text-1 text-cw-bg font-semibold'
+                    : 'bg-cw-surface border border-cw-border text-cw-text-2 hover:bg-cw-bg-alt'
+                }`}
+              >
+                All ({collegeRequests.length})
+              </button>
+              <button
+                type="button"
+                onClick={() => setRequestsFilter('pending')}
+                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors flex items-center gap-1.5 ${
+                  requestsFilter === 'pending'
+                    ? 'bg-amber-500 text-white font-semibold'
+                    : 'bg-cw-surface border border-cw-border text-amber-600 dark:text-amber-400 hover:bg-cw-bg-alt'
+                }`}
+              >
+                <span>⏳ Pending Review</span>
+                <span className="font-bold">({pendingRequests.length})</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setRequestsFilter('approved')}
+                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors flex items-center gap-1.5 ${
+                  requestsFilter === 'approved'
+                    ? 'bg-emerald-600 text-white font-semibold'
+                    : 'bg-cw-surface border border-cw-border text-emerald-600 dark:text-emerald-400 hover:bg-cw-bg-alt'
+                }`}
+              >
+                <span>✓ Approved</span>
+                <span className="font-bold">({approvedRequests.length})</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setRequestsFilter('rejected')}
+                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors flex items-center gap-1.5 ${
+                  requestsFilter === 'rejected'
+                    ? 'bg-red-600 text-white font-semibold'
+                    : 'bg-cw-surface border border-cw-border text-red-600 dark:text-red-400 hover:bg-cw-bg-alt'
+                }`}
+              >
+                <span>✕ Rejected</span>
+                <span className="font-bold">({rejectedRequests.length})</span>
+              </button>
+            </div>
+
+            {/* Requests Table */}
+            <div className="overflow-x-auto bg-cw-surface rounded-xl border border-cw-border shadow-sm">
+              <table className="w-full text-left text-sm text-cw-text-2">
+                <thead className="bg-cw-bg-alt text-xs uppercase text-cw-text-3 font-semibold border-b border-cw-border">
+                  <tr>
+                    <th className="px-6 py-3.5">College &amp; Domain</th>
+                    <th className="px-6 py-3.5">Requester Contact</th>
+                    <th className="px-6 py-3.5">Status</th>
+                    <th className="px-6 py-3.5">Details / Notes</th>
+                    <th className="px-6 py-3.5">Date</th>
+                    <th className="px-6 py-3.5 text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-cw-border">
+                  {filteredRequests.map((r) => {
+                    const isBusy = actionBusyId === r.id;
+                    return (
+                      <tr key={r.id} className="hover:bg-cw-bg-alt/40 transition-colors">
+                        <td className="px-6 py-4">
+                          <div className="font-semibold text-cw-text-1">{r.college_name}</div>
+                          <div className="font-mono text-xs text-cw-accent mt-0.5 font-medium">
+                            @{r.college_domain}
+                          </div>
+                        </td>
+                        <td className="px-6 py-4">
+                          <a
+                            href={`mailto:${r.example_email}`}
+                            className="font-medium text-cw-text-1 hover:underline flex items-center gap-1 text-xs"
+                          >
+                            ✉️ {r.example_email}
+                          </a>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          {r.status === 'pending' && (
+                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
+                              <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
+                              Pending
+                            </span>
+                          )}
+                          {r.status === 'approved' && (
+                            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+                              ✓ Approved
+                            </span>
+                          )}
+                          {r.status === 'rejected' && (
+                            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-red-500/10 text-red-600 dark:text-red-400 border border-red-500/20">
+                              ✕ Rejected
+                            </span>
+                          )}
+                        </td>
+                        <td className="px-6 py-4 max-w-xs text-xs">
+                          {r.notes ? (
+                            <div className="text-cw-text-2 italic">&ldquo;{r.notes}&rdquo;</div>
+                          ) : (
+                            <span className="text-cw-text-3">—</span>
+                          )}
+                          {r.admin_reply && (
+                            <div className="mt-1 text-[11px] text-red-600 dark:text-red-400">
+                              <strong>Decision note:</strong> {r.admin_reply}
+                            </div>
+                          )}
+                        </td>
+                        <td className="px-6 py-4 text-xs text-cw-text-3 whitespace-nowrap">
+                          {r.created_at ? new Date(r.created_at).toLocaleDateString() : '—'}
+                        </td>
+                        <td className="px-6 py-4 text-right whitespace-nowrap">
+                          <div className="flex items-center justify-end gap-2">
+                            {r.status === 'pending' ? (
+                              <>
+                                <button
+                                  type="button"
+                                  disabled={isBusy}
+                                  onClick={() => handleApproveCollegeRequest(r)}
+                                  className="px-3 py-1.5 text-xs font-bold rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white transition-all shadow-sm flex items-center gap-1 disabled:opacity-50"
+                                >
+                                  {isBusy ? 'Processing…' : '✓ Approve & Email'}
+                                </button>
+                                <button
+                                  type="button"
+                                  disabled={isBusy}
+                                  onClick={() => handleOpenRejectModal(r)}
+                                  className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-red-500/10 text-red-600 hover:bg-red-500/20 transition-colors disabled:opacity-50"
+                                >
+                                  ✕ Reject
+                                </button>
+                              </>
+                            ) : null}
+
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteCollegeRequest(r.id)}
+                              title="Delete request record"
+                              className="p-1.5 rounded-lg text-cw-text-3 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors"
+                            >
+                              🗑️
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                  {filteredRequests.length === 0 && (
+                    <tr>
+                      <td colSpan="6" className="px-6 py-12 text-center text-cw-text-3">
+                        <div className="text-3xl mb-2">🎓</div>
+                        <p className="font-medium text-cw-text-2">No college requests found.</p>
+                        <p className="text-xs text-cw-text-3 mt-1">
+                          {requestsFilter !== 'all'
+                            ? `There are no ${requestsFilter} requests right now.`
+                            : 'When students request access for unlisted universities, they will appear here.'}
+                        </p>
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
+        {/* SUBTAB 2: APPROVED COLLEGES DIRECTORY */}
+        {collegeSubTab === 'colleges' && (
+          <div className="space-y-6">
+            <div className="bg-cw-surface p-6 rounded-xl border border-cw-border shadow-sm">
+              <h3 className="text-lg font-semibold text-cw-text-1 mb-1">Add a New College Manually</h3>
+              <p className="text-xs text-cw-text-3 mb-4">
+                Manually whitelist a university domain to allow students with that email domain to register immediately.
+              </p>
+              <form onSubmit={handleAddCollege} className="flex flex-col sm:flex-row gap-4">
+                <div className="flex-1">
+                  <label className="block text-xs font-semibold text-cw-text-2 mb-1">
+                    College Domain (e.g. stanford.edu)
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    className="field w-full"
+                    value={newCollege.domain}
+                    onChange={(e) =>
+                      setNewCollege({
+                        ...newCollege,
+                        domain: e.target.value.toLowerCase().replace(/^@+/, ''),
+                      })
+                    }
+                    placeholder="mit.edu or vit.ac.in"
+                  />
+                </div>
+                <div className="flex-1">
+                  <label className="block text-xs font-semibold text-cw-text-2 mb-1">College Full Name</label>
+                  <input
+                    type="text"
+                    required
+                    className="field w-full"
+                    value={newCollege.name}
+                    onChange={(e) => setNewCollege({ ...newCollege, name: e.target.value })}
+                    placeholder="Massachusetts Institute of Technology"
+                  />
+                </div>
+                <div className="flex items-end">
+                  <button type="submit" className="btn-primary py-2 px-6">
+                    + Add College
                   </button>
-                </td>
-              </tr>
-            ))}
-            {colleges.length === 0 && (
-              <tr>
-                <td colSpan="3" className="px-6 py-8 text-center text-cw-text-3">No colleges found.</td>
-              </tr>
-            )}
-          </tbody>
-        </table>
+                </div>
+              </form>
+            </div>
+
+            <div className="overflow-x-auto bg-cw-surface rounded-xl border border-cw-border shadow-sm">
+              <table className="w-full text-left text-sm text-cw-text-2">
+                <thead className="bg-cw-bg-alt text-xs uppercase text-cw-text-3 font-semibold border-b border-cw-border">
+                  <tr>
+                    <th className="px-6 py-4">Domain</th>
+                    <th className="px-6 py-4">College Name</th>
+                    <th className="px-6 py-4 text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-cw-border">
+                  {filteredColleges.map((c) => (
+                    <tr key={c.id || c.domain} className="hover:bg-cw-bg-alt/50 transition-colors">
+                      <td className="px-6 py-4 font-mono font-semibold text-cw-accent whitespace-nowrap">
+                        @{c.domain}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap font-medium text-cw-text-1">{c.name}</td>
+                      <td className="px-6 py-4 text-right whitespace-nowrap">
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteCollege(c.domain)}
+                          className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-red-500/10 text-red-500 hover:bg-red-500/20 transition-colors"
+                        >
+                          Delete
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                  {filteredColleges.length === 0 && (
+                    <tr>
+                      <td colSpan="3" className="px-6 py-8 text-center text-cw-text-3">
+                        No approved colleges found.
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
       </div>
-    </div>
-  );
+    );
+  };
 
   const openTicketsCount = supportTickets.filter(
     (t) => t.status === 'open' || t.status === 'in_progress'
@@ -1346,12 +1693,17 @@ export default function AdminPanel() {
           </button>
           <button
             onClick={() => { setActiveTab('colleges'); setSearchQuery(''); }}
-            className={`whitespace-nowrap pb-4 px-1 border-b-2 font-medium text-sm transition-colors ${activeTab === 'colleges'
-                ? 'border-cw-accent text-cw-accent'
+            className={`whitespace-nowrap pb-4 px-1 border-b-2 font-medium text-sm transition-colors flex items-center gap-1.5 ${activeTab === 'colleges'
+                ? 'border-cw-accent text-cw-accent font-semibold'
                 : 'border-transparent text-cw-text-2 hover:text-cw-text-1 hover:border-cw-border'
               }`}
           >
-            Assigned Colleges ({colleges.length})
+            <span>Colleges &amp; Requests ({colleges.length})</span>
+            {collegeRequests.filter(r => r.status === 'pending').length > 0 && (
+              <span className="px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-500 text-white animate-pulse">
+                {collegeRequests.filter(r => r.status === 'pending').length} new
+              </span>
+            )}
           </button>
         </nav>
       </div>
@@ -1379,6 +1731,75 @@ export default function AdminPanel() {
 
       {fullscreenImage && (
         <ImageModal src={fullscreenImage} onClose={() => setFullscreenImage(null)} />
+      )}
+
+      {/* REJECTION EMAIL MODAL */}
+      {rejectModalOpen && requestToReject && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
+          <div className="relative w-full max-w-lg bg-cw-surface rounded-2xl border border-cw-border shadow-2xl p-6 space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="text-lg font-bold text-cw-text-1 flex items-center gap-2">
+                <span className="text-red-500">✕</span> Reject College Request
+              </h3>
+              <button
+                type="button"
+                onClick={() => { setRejectModalOpen(false); setRequestToReject(null); }}
+                className="text-cw-text-3 hover:text-cw-text-1 p-1 rounded-lg"
+              >
+                ✕
+              </button>
+            </div>
+
+            <p className="text-xs text-cw-text-2">
+              An automated notification email will be dispatched to{' '}
+              <strong className="text-cw-text-1 font-semibold">{requestToReject.example_email}</strong> detailing the decision.
+            </p>
+
+            <div className="p-3 bg-cw-bg-alt rounded-xl text-xs space-y-1.5 border border-cw-border">
+              <div className="flex justify-between">
+                <span className="text-cw-text-3">University:</span>
+                <span className="font-semibold text-cw-text-1">{requestToReject.college_name}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-cw-text-3">Domain:</span>
+                <span className="font-mono font-semibold text-cw-accent">@{requestToReject.college_domain}</span>
+              </div>
+            </div>
+
+            <form onSubmit={handleConfirmReject} className="space-y-4">
+              <div>
+                <label className="block text-xs font-semibold text-cw-text-2 mb-1">
+                  Reason for rejection (will be included in automated email)
+                </label>
+                <textarea
+                  rows={4}
+                  required
+                  value={rejectionReason}
+                  onChange={(e) => setRejectionReason(e.target.value)}
+                  className="field text-sm w-full"
+                  placeholder="Explain why this college request cannot be approved at this time..."
+                />
+              </div>
+
+              <div className="flex items-center justify-end gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => { setRejectModalOpen(false); setRequestToReject(null); }}
+                  className="btn-ghost text-xs py-2 px-4 text-cw-text-2"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={actionBusyId === requestToReject.id}
+                  className="px-4 py-2 text-xs font-bold rounded-xl bg-red-600 hover:bg-red-700 text-white transition-colors shadow-sm disabled:opacity-50"
+                >
+                  {actionBusyId === requestToReject.id ? 'Sending notification email…' : 'Send Rejection Email'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
       )}
     </div>
   );

@@ -4,6 +4,7 @@ import { useAuth, isProfileIncomplete } from '../context/AuthContext';
 import PasswordInput from '../components/PasswordInput';
 import ImageModal from '../components/ImageModal';
 import Logo from '../components/Logo';
+import RequestCollegeModal from '../components/RequestCollegeModal';
 import { cleanErrorMessage } from '../lib/api';
 
 /**
@@ -23,6 +24,7 @@ export default function Login() {
   const [errorObj, setErrorObj] = useState(null);
   const [busy, setBusy] = useState(false);
   const [fullscreenImage, setFullscreenImage] = useState(null);
+  const [isRequestModalOpen, setIsRequestModalOpen] = useState(false);
 
   const handleSubmit = async (event) => {
     event.preventDefault();
@@ -84,8 +86,17 @@ export default function Login() {
         </div>
 
         {errorObj && (
-          <div role="alert" className="rounded-lg bg-red-50 p-4 border border-red-200">
-            <p className="text-sm font-medium text-red-700">{cleanErrorMessage(errorObj.message)}</p>
+          <div role="alert" className="rounded-xl bg-red-50 dark:bg-red-950/40 p-4 border border-red-200 dark:border-red-900/50 space-y-2">
+            <p className="text-sm font-medium text-red-700 dark:text-red-300">{cleanErrorMessage(errorObj.message)}</p>
+            {(errorObj.message?.includes('not yet supported') || errorObj.message?.includes('college domain')) && (
+              <button
+                type="button"
+                onClick={() => setIsRequestModalOpen(true)}
+                className="inline-flex items-center gap-1.5 text-xs font-semibold text-cw-accent hover:underline bg-cw-accent/10 px-2.5 py-1.5 rounded-lg transition-colors"
+              >
+                🎓 Request access for your college →
+              </button>
+            )}
             {errorObj.details?.image_url && (
               <div className="mt-3">
                 <p className="text-xs text-red-600 mb-1 font-semibold uppercase tracking-wider">Proof / Attachment</p>
@@ -104,6 +115,17 @@ export default function Login() {
           {busy ? 'Signing in…' : 'Sign in'}
         </button>
 
+        <div className="pt-2 text-center border-t border-cw-border">
+          <button
+            type="button"
+            onClick={() => setIsRequestModalOpen(true)}
+            className="text-xs font-medium text-cw-accent hover:underline inline-flex items-center gap-1.5 py-1 px-2 rounded hover:bg-cw-accent/5 transition-colors"
+          >
+            <span className="text-cw-text-3">Student from another university?</span>
+            <span className="font-semibold text-cw-accent">Request College Access →</span>
+          </button>
+        </div>
+
         <div className="flex items-center justify-between text-sm">
           <Link to="/forgot-password" className="font-medium text-freelance hover:underline">
             Forgot password?
@@ -117,6 +139,12 @@ export default function Login() {
       {fullscreenImage && (
         <ImageModal src={fullscreenImage} onClose={() => setFullscreenImage(null)} />
       )}
+
+      <RequestCollegeModal
+        isOpen={isRequestModalOpen}
+        onClose={() => setIsRequestModalOpen(false)}
+        initialEmail={email}
+      />
     </div>
   );
 }

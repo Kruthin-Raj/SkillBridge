@@ -4,6 +4,12 @@ import { ApiError } from '../../utils/ApiError.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
 import { requireAuth } from '../../middleware/requireAuth.js';
 import { getUserLastLogin } from '../../services/loginTracker.js';
+import {
+  getAllCollegeRequests,
+  approveCollegeRequest,
+  rejectCollegeRequest,
+  deleteCollegeRequest,
+} from '../../services/collegeRequestsService.js';
 
 /**
  * Express API routes for admin module.
@@ -269,6 +275,51 @@ router.delete(
 
     // Now delete the college itself
     await db.remove(TABLES.colleges, { domain });
+    res.json({ success: true });
+  })
+);
+
+/** GET /api/admin/college-requests - Get all student college access requests */
+router.get(
+  '/college-requests',
+  requireAuth,
+  requireAdmin,
+  asyncHandler(async (req, res) => {
+    const requests = await getAllCollegeRequests();
+    res.json({ requests });
+  })
+);
+
+/** POST /api/admin/college-requests/:id/approve - Approve college request & send email notification */
+router.post(
+  '/college-requests/:id/approve',
+  requireAuth,
+  requireAdmin,
+  asyncHandler(async (req, res) => {
+    const result = await approveCollegeRequest(req.params.id, req.user?.email);
+    res.json(result);
+  })
+);
+
+/** POST /api/admin/college-requests/:id/reject - Reject college request & send explanation email */
+router.post(
+  '/college-requests/:id/reject',
+  requireAuth,
+  requireAdmin,
+  asyncHandler(async (req, res) => {
+    const { reason } = req.body;
+    const result = await rejectCollegeRequest(req.params.id, reason);
+    res.json(result);
+  })
+);
+
+/** DELETE /api/admin/college-requests/:id - Delete a college request */
+router.delete(
+  '/college-requests/:id',
+  requireAuth,
+  requireAdmin,
+  asyncHandler(async (req, res) => {
+    await deleteCollegeRequest(req.params.id);
     res.json({ success: true });
   })
 );
