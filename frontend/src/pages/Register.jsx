@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import PasswordInput from '../components/PasswordInput';
 import Logo from '../components/Logo';
+import RequestCollegeModal from '../components/RequestCollegeModal';
 
 /**
  * React page component for Register view.
@@ -26,6 +27,7 @@ export default function Register() {
   const [busy, setBusy] = useState(false);
   const [deliveredByEmail, setDeliveredByEmail] = useState(true);
   const [cooldown, setCooldown] = useState(0);
+  const [isRequestModalOpen, setIsRequestModalOpen] = useState(false);
 
   useEffect(() => {
     let timer;
@@ -213,14 +215,34 @@ export default function Register() {
         </div>
 
         {error && (
-          <p role="alert" className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">
-            {error}
-          </p>
+          <div role="alert" className="rounded-xl bg-red-50 dark:bg-red-950/40 p-3.5 border border-red-200 dark:border-red-900/50 space-y-2">
+            <p className="text-sm font-medium text-red-700 dark:text-red-300">{error}</p>
+            {(error.includes('not yet supported') || error.includes('college domain')) && (
+              <button
+                type="button"
+                onClick={() => setIsRequestModalOpen(true)}
+                className="inline-flex items-center gap-1.5 text-xs font-semibold text-cw-accent hover:underline bg-cw-accent/10 px-2.5 py-1.5 rounded-lg transition-colors"
+              >
+                🎓 Request access for your college →
+              </button>
+            )}
+          </div>
         )}
 
         <button type="submit" disabled={busy || cooldown > 0} className="btn-primary w-full">
           {busy ? 'Sending code…' : cooldown > 0 ? `Wait ${cooldown}s` : 'Send verification code'}
         </button>
+
+        <div className="pt-2 text-center border-t border-cw-border">
+          <button
+            type="button"
+            onClick={() => setIsRequestModalOpen(true)}
+            className="text-xs font-medium text-cw-accent hover:underline inline-flex items-center gap-1.5 py-1 px-2 rounded hover:bg-cw-accent/5 transition-colors"
+          >
+            <span className="text-cw-text-3">Can&apos;t find your college?</span>
+            <span className="font-semibold text-cw-accent">Request your campus to be added →</span>
+          </button>
+        </div>
 
         <p className="text-[11px] text-cw-text-3 text-center">
           By registering, you agree to our{' '}
@@ -241,6 +263,12 @@ export default function Register() {
           </p>
         </div>
       </form>
+
+      <RequestCollegeModal
+        isOpen={isRequestModalOpen}
+        onClose={() => setIsRequestModalOpen(false)}
+        initialEmail={email}
+      />
     </div>
   );
 }

@@ -195,8 +195,17 @@ export const api = {
     getColleges: () => request('/api/admin/colleges'),
     createCollege: (college) => request('/api/admin/colleges', { method: 'POST', body: college }),
     deleteCollege: (domain) => request(`/api/admin/colleges/${encodeURIComponent(domain)}`, { method: 'DELETE' }),
+    getCollegeRequests: () => request('/api/admin/college-requests'),
+    approveCollegeRequest: (id) => request(`/api/admin/college-requests/${id}/approve`, { method: 'POST' }),
+    rejectCollegeRequest: (id, reason) => request(`/api/admin/college-requests/${id}/reject`, { method: 'POST', body: { reason } }),
+    deleteCollegeRequest: (id) => request(`/api/admin/college-requests/${id}`, { method: 'DELETE' }),
     getSupportTickets: () => request('/api/support/admin/tickets'),
     deleteSupportTicket: (id) => request(`/api/support/admin/tickets/${id}`, { method: 'DELETE' }),
+  },
+
+  colleges: {
+    getAll: () => request('/api/colleges', { auth: false }),
+    requestAccess: (data) => request('/api/colleges/request', { method: 'POST', body: data, auth: false }),
   },
 
   support: {

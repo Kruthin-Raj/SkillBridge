@@ -9,7 +9,7 @@
     "node": ">=18.17"
   },
   "scripts": {
-    "dev": "node --watch src/server.js",
+    "dev": "node --watch --watch-path=src src/server.js",
     "start": "node src/server.js"
   },
   "dependencies": {
