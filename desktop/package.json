@@ -1,0 +1,41 @@
+{
+  "name": "skillbridge-desktop",
+  "version": "1.0.0",
+  "description": "SkillBridge - Campus Peer Freelancing & Skill Exchange Desktop Application",
+  "main": "main.js",
+  "author": "Kruthin Raj",
+  "private": true,
+  "scripts": {
+    "start": "electron .",
+    "build:quick": "powershell -Command \"& 'C:\\Windows\\Microsoft.NET\\Framework64\\v4.0.30319\\csc.exe' /target:winexe /optimize+ /win32icon:icon.ico /out:SkillBridge.exe src/Program.cs\"",
+    "pack": "electron-builder --dir",
+    "dist": "electron-builder --win nsis"
+  },
+  "dependencies": {
+    "electron-is-dev": "^3.0.1"
+  },
+  "devDependencies": {
+    "electron": "^33.2.0",
+    "electron-builder": "^25.1.8"
+  },
+  "build": {
+    "appId": "com.skillbridge.desktop",
+    "productName": "SkillBridge",
+    "directories": {
+      "output": "dist-electron"
+    },
+    "win": {
+      "target": [
+        "nsis",
+        "portable"
+      ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "SkillBridge"
+    }
+  }
+}

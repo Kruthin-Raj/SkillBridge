@@ -22,6 +22,8 @@ import About from './pages/About';
 import Support from './pages/Support';
 import AdminPanel from './pages/AdminPanel';
 import PrivacyPolicy from './pages/PrivacyPolicy';
+import Download from './pages/Download';
+import { useIsDesktop } from './lib/isDesktop';
 
 /**
  * Implementation file for App.
@@ -30,6 +32,8 @@ import PrivacyPolicy from './pages/PrivacyPolicy';
  */
 
 export default function App() {
+  const isDesktop = useIsDesktop();
+
   return (
     <div className="min-h-screen">
       <Navbar />
@@ -37,6 +41,7 @@ export default function App() {
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/browse" element={<Browse />} />
+          <Route path="/download" element={<Download />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
@@ -116,6 +121,14 @@ export default function App() {
             <span className="text-xs text-cw-text-3 hidden sm:inline">&bull; &copy; {new Date().getFullYear()} Campus Platform</span>
           </div>
           <div className="flex items-center gap-6">
+            {!isDesktop && (
+              <Link to="/download" className="hover:text-cw-text-1 text-cw-accent font-medium transition-colors flex items-center gap-1.5">
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                </svg>
+                <span>Windows App (.exe)</span>
+              </Link>
+            )}
             <Link to="/about" className="hover:text-cw-text-1 transition-colors">About</Link>
             <Link to="/privacy" className="hover:text-cw-text-1 transition-colors">Privacy Policy</Link>
             <Link to="/support" className="hover:text-cw-text-1 transition-colors">Support</Link>

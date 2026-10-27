@@ -14,6 +14,7 @@ import adminRoutes from '../modules/admin/admin.routes.js';
 import supportRoutes from '../modules/support/support.routes.js';
 import searchRoutes from '../modules/search/search.routes.js';
 import collegesRoutes from '../modules/colleges/colleges.routes.js';
+import downloadRoutes from '../modules/download/download.routes.js';
 
 /**
  * Implementation file for index.
@@ -38,5 +39,6 @@ router.use('/admin', adminRoutes);
 router.use('/support', supportRoutes);
 router.use('/search', searchRoutes);
 router.use('/colleges', collegesRoutes);
+router.use('/download', downloadRoutes);
 
 export default router;
