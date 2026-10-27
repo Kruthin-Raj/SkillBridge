@@ -20,7 +20,8 @@ function createWindow() {
     autoHideMenuBar: true,
   });
 
-  const startUrl = process.env.SKILLBRIDGE_URL || 'http://localhost:5173?app=desktop';
+  const defaultUrl = 'https://skill-bridge-khaki-kappa.vercel.app?app=desktop';
+  const startUrl = process.env.SKILLBRIDGE_URL || defaultUrl;
   mainWindow.loadURL(startUrl);
 
   // Open external links in user's default browser
