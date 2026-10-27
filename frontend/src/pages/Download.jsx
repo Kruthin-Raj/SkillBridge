@@ -24,6 +24,7 @@ export default function Download() {
   });
   const [downloading, setDownloading] = useState(false);
   const [showIosGuide, setShowIosGuide] = useState(false);
+  const [showAndroidGuide, setShowAndroidGuide] = useState(false);
 
   // Auto-detect user's operating system on load
   useEffect(() => {
@@ -57,10 +58,25 @@ export default function Download() {
     setTimeout(() => setDownloading(false), 2500);
   };
 
-  const handleDownloadAndroid = () => {
+  const handleDownloadAndroid = async () => {
     setDownloading(true);
-    window.location.href = `${BASE_URL}/api/download/android`;
-    setTimeout(() => setDownloading(false), 3000);
+    try {
+      const res = await fetch('/downloads/SkillBridge.apk', { method: 'HEAD' });
+      if (res.ok) {
+        const link = document.createElement('a');
+        link.href = '/downloads/SkillBridge.apk';
+        link.download = 'SkillBridge.apk';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      } else {
+        setShowAndroidGuide(true);
+      }
+    } catch {
+      setShowAndroidGuide(true);
+    } finally {
+      setTimeout(() => setDownloading(false), 2000);
+    }
   };
 
   return (
@@ -226,43 +242,54 @@ export default function Download() {
                 </div>
               </div>
 
-              {/* Android Action Buttons & Store Badges */}
+              {/* Android Action Buttons */}
               <div className="flex flex-col gap-3 w-full md:w-auto items-center md:items-end">
-                <button
-                  type="button"
+                <a
+                  href="/downloads/SkillBridge.apk"
+                  download="SkillBridge.apk"
                   onClick={handleDownloadAndroid}
-                  className="w-full sm:w-auto px-8 py-3.5 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm shadow-xl shadow-emerald-600/25 transition-all flex items-center justify-center gap-2.5 hover:-translate-y-0.5"
+                  className="w-full sm:w-auto px-8 py-3.5 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm shadow-xl shadow-emerald-600/25 transition-all flex items-center justify-center gap-2.5 hover:-translate-y-0.5 select-none"
                 >
                   <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
                   </svg>
                   <span>Download Android APK</span>
-                </button>
+                </a>
 
-                {/* Google Play Store Badge Button */}
-                <div className="p-3 rounded-2xl bg-black border border-cw-border text-white text-left flex items-center gap-3 w-full sm:w-56 cursor-pointer hover:border-emerald-500/50 transition-colors shadow-sm">
-                  <span className="text-2xl">▶</span>
-                  <div>
-                    <div className="text-[10px] uppercase tracking-wider text-neutral-400">Coming Soon on</div>
-                    <div className="text-sm font-bold text-white leading-tight">Google Play</div>
-                  </div>
-                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowAndroidGuide(!showAndroidGuide)}
+                  className="w-full sm:w-auto px-6 py-2.5 rounded-xl border border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-xs font-semibold hover:bg-emerald-500/20 transition-all flex items-center justify-center gap-2"
+                >
+                  <span>⚡</span>
+                  <span>{showAndroidGuide ? 'Hide Mobile Guide' : 'Instant 1-Tap Install (No APK Needed)'}</span>
+                </button>
               </div>
             </div>
 
             {/* Android Setup Guide */}
-            <div className="p-5 rounded-2xl bg-cw-bg-alt/50 border border-cw-border text-xs space-y-3">
+            <div className="p-5 rounded-2xl bg-cw-bg-alt/50 border border-cw-border text-xs space-y-4">
               <h4 className="font-bold text-cw-text-1 flex items-center gap-2">
-                <span>📱</span> Easy 2-Step Android Install
+                <span>📱</span> Two Ways to Install on Android
               </h4>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-cw-text-2">
-                <div className="space-y-1">
-                  <span className="font-semibold text-cw-text-1">1. Download &amp; Tap Install</span>
-                  <p className="text-[11px] text-cw-text-3">Download the APK file on your device and tap &ldquo;Install&rdquo;. If prompted, allow installation from this source.</p>
+                <div className="p-3.5 rounded-xl bg-cw-surface border border-cw-border space-y-1.5">
+                  <span className="font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-1.5">
+                    <span>⚡</span> Option 1: Instant Chrome App (Fastest)
+                  </span>
+                  <p className="font-semibold text-cw-text-1">No file download required</p>
+                  <p className="text-[11px] text-cw-text-3 leading-relaxed">
+                    Open SkillBridge in Chrome on your phone, tap <strong>⋮ (Menu)</strong> → <strong>&ldquo;Install app&rdquo;</strong> (or <strong>&ldquo;Add to Home screen&rdquo;</strong>). It installs immediately with the SkillBridge icon and full-screen view.
+                  </p>
                 </div>
-                <div className="space-y-1">
-                  <span className="font-semibold text-cw-text-1">2. Log In with College Email</span>
-                  <p className="text-[11px] text-cw-text-3">Log in once with your university credentials to receive real-time push notifications wherever you are.</p>
+                <div className="p-3.5 rounded-xl bg-cw-surface border border-cw-border space-y-1.5">
+                  <span className="font-bold text-cw-accent flex items-center gap-1.5">
+                    <span>📦</span> Option 2: Standalone APK
+                  </span>
+                  <p className="font-semibold text-cw-text-1">Download &amp; Sideload</p>
+                  <p className="text-[11px] text-cw-text-3 leading-relaxed">
+                    Click <strong>&ldquo;Download Android APK&rdquo;</strong> above. Once downloaded, tap the file in your notifications or Files app, and choose <strong>&ldquo;Install&rdquo;</strong>.
+                  </p>
                 </div>
               </div>
             </div>
@@ -275,24 +302,24 @@ export default function Download() {
             <div className="flex flex-col md:flex-row items-center justify-between gap-6">
               <div className="space-y-3 text-center md:text-left">
                 <div className="inline-flex items-center gap-2 text-xs font-semibold text-indigo-600 dark:text-indigo-400 uppercase tracking-wider">
-                  <span>Apple iOS 15+ (iPhone &amp; iPad)</span>
+                  <span>Apple iOS (iPhone &amp; iPad)</span>
                 </div>
                 <h2 className="text-2xl sm:text-3xl font-extrabold text-cw-text-1 font-serif">
                   SkillBridge for iPhone &amp; iPad
                 </h2>
                 <p className="text-sm text-cw-text-2 max-w-lg leading-relaxed">
-                  Smooth iOS experience crafted for Apple devices. Install as an instant home screen app in seconds with full offline support and no browser chrome.
+                  Install SkillBridge directly on your iPhone without going through the App Store. Runs in full-screen standalone mode with the native app icon and zero browser bars.
                 </p>
                 <div className="flex flex-wrap items-center justify-center md:justify-start gap-4 text-xs text-cw-text-3 pt-1">
-                  <span>✓ Instant 1-Tap Add to Home Screen</span>
+                  <span>✓ 1-Tap Home Screen Install</span>
                   <span>&bull;</span>
-                  <span>App Store Preview</span>
+                  <span>Full-Screen Standalone View</span>
                   <span>&bull;</span>
-                  <span>Full Screen PWA Mode</span>
+                  <span>Instant Updates</span>
                 </div>
               </div>
 
-              {/* iOS Action Buttons & Badges */}
+              {/* iOS Action Buttons */}
               <div className="flex flex-col gap-3 w-full md:w-auto items-center md:items-end">
                 <button
                   type="button"
@@ -302,38 +329,29 @@ export default function Download() {
                   <span>📲</span>
                   <span>{showIosGuide ? 'Hide Install Guide' : 'How to Install on iPhone'}</span>
                 </button>
-
-                {/* App Store Badge Button */}
-                <div className="p-3 rounded-2xl bg-black border border-cw-border text-white text-left flex items-center gap-3 w-full sm:w-56 cursor-pointer hover:border-indigo-500/50 transition-colors shadow-sm">
-                  <span className="text-2xl"></span>
-                  <div>
-                    <div className="text-[10px] uppercase tracking-wider text-neutral-400">Available on the</div>
-                    <div className="text-sm font-bold text-white leading-tight">App Store</div>
-                  </div>
-                </div>
               </div>
             </div>
 
             {/* iOS Instant Web App Guide */}
             <div className="p-5 rounded-2xl bg-cw-bg-alt/50 border border-cw-border text-xs space-y-4">
               <h4 className="font-bold text-cw-text-1 flex items-center gap-2">
-                <span>🍎</span> Instant iPhone / iPad Setup (Zero App Store Wait)
+                <span>🍎</span> 3-Step Instant iPhone Setup (No App Store Needed)
               </h4>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-cw-text-2">
                 <div className="p-3 rounded-xl bg-cw-surface border border-cw-border space-y-1">
                   <span className="font-bold text-cw-accent">Step 1</span>
                   <p className="font-semibold text-cw-text-1">Open in Safari</p>
-                  <p className="text-[11px] text-cw-text-3">Visit SkillBridge in Safari on your iPhone or iPad.</p>
+                  <p className="text-[11px] text-cw-text-3">Open this website in Safari on your iPhone or iPad.</p>
                 </div>
                 <div className="p-3 rounded-xl bg-cw-surface border border-cw-border space-y-1">
                   <span className="font-bold text-cw-accent">Step 2</span>
                   <p className="font-semibold text-cw-text-1">Tap the Share Icon</p>
-                  <p className="text-[11px] text-cw-text-3">Tap the Share button at the bottom of Safari (box with up arrow).</p>
+                  <p className="text-[11px] text-cw-text-3">Tap the Share button at the bottom of Safari (the square with an arrow pointing up).</p>
                 </div>
                 <div className="p-3 rounded-xl bg-cw-surface border border-cw-border space-y-1">
                   <span className="font-bold text-cw-accent">Step 3</span>
                   <p className="font-semibold text-cw-text-1">Add to Home Screen</p>
-                  <p className="text-[11px] text-cw-text-3">Choose &ldquo;Add to Home Screen&rdquo; to launch SkillBridge in native full-screen app mode.</p>
+                  <p className="text-[11px] text-cw-text-3">Scroll down and tap &ldquo;Add to Home Screen&rdquo;, then tap &ldquo;Add&rdquo;. SkillBridge will appear as an app on your home screen!</p>
                 </div>
               </div>
             </div>
