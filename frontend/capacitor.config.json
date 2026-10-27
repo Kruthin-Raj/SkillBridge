@@ -3,6 +3,7 @@
   "appName": "SkillBridge",
   "webDir": "dist",
   "server": {
+    "url": "https://skill-bridge-khaki-kappa.vercel.app",
     "androidScheme": "https",
     "cleartext": true
   }
