@@ -226,4 +226,9 @@ export const api = {
     deleteTicket: (ticketId) =>
       request(`/api/support/admin/tickets/${ticketId}`, { method: 'DELETE' }),
   },
+
+  download: {
+    getInfo: () => request('/api/download/info', { auth: false }),
+    getWindowsUrl: () => `${BASE_URL}/api/download/windows`,
+  },
 };
