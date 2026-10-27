@@ -230,5 +230,6 @@ export const api = {
   download: {
     getInfo: () => request('/api/download/info', { auth: false }),
     getWindowsUrl: () => `${BASE_URL}/api/download/windows`,
+    getAndroidUrl: () => `${BASE_URL}/api/download/android`,
   },
 };
