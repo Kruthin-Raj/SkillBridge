@@ -168,7 +168,7 @@ export async function approveCollegeRequest(requestId, adminEmail = 'kruthin123@
   persistCache();
 
   // 3. Send automated notification email to the student
-  const frontendUrl = 'http://localhost:5173';
+  const frontendUrl = process.env.FRONTEND_URL || 'https://skill-bridge-khaki-kappa.vercel.app';
   const subject = `🎉 Approved: ${name} is now on SkillBridge!`;
   const text = `Hello,\n\nGreat news! Your request to add ${name} (@${domain}) to SkillBridge has been reviewed and officially APPROVED!\n\nYou and all fellow students from ${name} can now sign up, post freelance gigs, and exchange skills using your college email addresses.\n\nSign up here: ${frontendUrl}/register\n\nWelcome to SkillBridge!\n\nBest regards,\nSkillBridge Campus Team`;
 
