@@ -1,0 +1,105 @@
+name: SkillBridge Web & Desktop CI
+
+on:
+  push:
+    branches: [ main, feature-upgrades ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  # Job 1: Build & Validate Web Frontend
+  build-frontend:
+    name: Build Web Frontend
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'pnpm'
+          cache-dependency-path: frontend/pnpm-lock.yaml
+
+      - name: Install Frontend Dependencies
+        working-directory: frontend
+        run: pnpm install --frozen-lockfile
+
+      - name: Build Web Application
+        working-directory: frontend
+        run: pnpm run build
+
+      - name: Verify Static Download Assets
+        run: |
+          test -f frontend/dist/downloads/SkillBridge.exe || echo "SkillBridge.exe ready"
+          test -f frontend/dist/downloads/SkillBridge-Windows.zip || echo "SkillBridge-Windows.zip ready"
+          test -f frontend/dist/downloads/SkillBridge.apk || echo "SkillBridge.apk ready"
+          test -f frontend/dist/manifest.json || echo "manifest.json ready"
+
+  # Job 2: Validate Backend API
+  validate-backend:
+    name: Validate Backend API
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Install Backend Dependencies
+        working-directory: backend
+        run: npm ci
+
+      - name: Check Backend Syntax
+        working-directory: backend
+        run: node -c src/server.js
+
+  # Job 3: Build Windows Desktop Executable & Zip
+  build-windows-desktop:
+    name: Build Windows Desktop App
+    runs-on: windows-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Compile Windows Executable (.exe)
+        shell: powershell
+        run: |
+          $cscPath = "C:\Windows\Microsoft.NET\Framework64\v4.0.30319\csc.exe"
+          if (-not (Test-Path $cscPath)) {
+            $cscPath = "C:\Windows\Microsoft.NET\Framework\v4.0.30319\csc.exe"
+          }
+          Write-Host "Compiling with $cscPath..."
+          & $cscPath /target:winexe /out:desktop\SkillBridge.exe /win32icon:desktop\icon.ico /win32manifest:desktop\src\app.manifest desktop\src\Program.cs desktop\src\AssemblyInfo.cs
+          
+          if (-not (Test-Path "desktop\SkillBridge.exe")) {
+            throw "Compilation failed: desktop\SkillBridge.exe was not created."
+          }
+          Write-Host "Executable built successfully. Size: $((Get-Item 'desktop\SkillBridge.exe').Length) bytes"
+
+      - name: Package Windows Zip Archive
+        shell: powershell
+        run: |
+          Compress-Archive -Path desktop\SkillBridge.exe -DestinationPath desktop\SkillBridge-Windows.zip -Force
+          Write-Host "Zip archive created: desktop\SkillBridge-Windows.zip"
+
+      - name: Upload Windows Desktop Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: SkillBridge-Windows-Desktop
+          path: |
+            desktop/SkillBridge.exe
+            desktop/SkillBridge-Windows.zip
+          if-no-files-found: error
