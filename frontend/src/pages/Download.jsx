@@ -181,7 +181,7 @@ export default function Download() {
                 <a
                   href="/downloads/SkillBridge.exe"
                   download="SkillBridge.exe"
-                  className="px-8 py-4 rounded-2xl bg-cw-accent hover:bg-cw-accent-mid text-white font-bold text-base shadow-xl shadow-cw-accent/25 transition-all flex items-center justify-center gap-3 hover:-translate-y-0.5 text-center select-none"
+                  className="px-8 py-3.5 rounded-2xl bg-cw-accent hover:bg-cw-accent-mid text-white font-bold text-sm shadow-xl shadow-cw-accent/25 transition-all flex items-center justify-center gap-2.5 hover:-translate-y-0.5 text-center select-none"
                 >
                   <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
@@ -189,17 +189,42 @@ export default function Download() {
                   <span>Download for Windows (.exe)</span>
                 </a>
 
+                <a
+                  href="/downloads/SkillBridge-Windows.zip"
+                  download="SkillBridge-Windows.zip"
+                  className="px-6 py-2.5 rounded-xl border border-cw-border text-xs font-semibold text-cw-text-2 hover:text-cw-text-1 hover:bg-cw-bg-alt transition-all flex items-center justify-center gap-2"
+                >
+                  <span>📦</span>
+                  <span>Download as .zip (Bypasses Browser Warning)</span>
+                </a>
+
                 <Link
                   to="/browse"
-                  className="px-6 py-2.5 rounded-xl text-center text-xs text-cw-text-3 hover:text-cw-text-1 font-semibold hover:bg-cw-bg-alt transition-colors"
+                  className="text-center text-xs text-cw-text-3 hover:text-cw-text-1 font-semibold hover:underline transition-colors py-1"
                 >
                   Continue in Web Browser →
                 </Link>
               </div>
             </div>
 
+            {/* SmartScreen & Security Guide Callout */}
+            <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-xs space-y-2 text-cw-text-2">
+              <div className="font-bold text-amber-600 dark:text-amber-400 flex items-center gap-2">
+                <span>🛡️</span>
+                <span>First-time Windows Download Notice</span>
+              </div>
+              <p className="text-[11px] text-cw-text-3 leading-relaxed">
+                Because SkillBridge is an independent student platform built without an expensive corporate certificate ($400/yr), Windows SmartScreen and Chrome may display a standard security notice:
+              </p>
+              <ul className="text-[11px] text-cw-text-2 space-y-1 list-disc list-inside">
+                <li><strong>Browser says &ldquo;File might be harmful&rdquo;?</strong> Click the <strong>&hellip; (options)</strong> on the download &rarr; select <strong>&ldquo;Keep&rdquo;</strong> &rarr; <strong>&ldquo;Keep anyway&rdquo;</strong> (or download the <strong>.zip</strong> version above).</li>
+                <li><strong>Windows shows &ldquo;Windows protected your PC&rdquo;?</strong> Click <strong>&ldquo;More info&rdquo;</strong> &rarr; click <strong>&ldquo;Run anyway&rdquo;</strong>.</li>
+                <li><strong>Instant alternative (Zero prompts):</strong> In Chrome or Edge, click the <strong>Install App icon (🖥️)</strong> in your URL address bar to install SkillBridge natively with 0 warnings!</li>
+              </ul>
+            </div>
+
             {/* Features Row */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-4 border-t border-cw-border">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2 border-t border-cw-border">
               <div className="p-4 rounded-xl bg-cw-bg-alt/60 border border-cw-border/60 text-xs space-y-1">
                 <span className="text-xl">⚡</span>
                 <p className="font-bold text-cw-text-1">Taskbar Instant Launch</p>
