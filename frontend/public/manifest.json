@@ -1,0 +1,17 @@
+{
+  "name": "SkillBridge",
+  "short_name": "SkillBridge",
+  "description": "Campus Peer Freelancing & Skill Exchange Platform",
+  "start_url": "/?app=desktop",
+  "display": "standalone",
+  "background_color": "#0a0a0f",
+  "theme_color": "#0f766e",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
