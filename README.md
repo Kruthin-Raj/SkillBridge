@@ -20,6 +20,13 @@ All modes share **one listings table, one public student profile, and one unifie
 
 ## Key Features
 
+- **Multi-Platform Support & Native Apps**:
+  - **Windows Desktop App**: Standalone 1-click portable desktop executable (`SkillBridge.exe`) and `.zip` distribution with embedded brand icon, manifest, and persistent isolated session (`%LOCALAPPDATA%\SkillBridge`).
+  - **Native Android APK**: Mobile Android application compiled via Capacitor 8, Android SDK 36, and Java 21, generating `SkillBridge.apk` for direct sideloading and package installer execution.
+  - **iOS & Desktop PWA**: Progressive Web App manifest (`manifest.json`) supporting 1-tap browser address bar installation on Chrome/Edge and Safari "Add to Home Screen" on iPhone/iPad with standalone full-screen view.
+  - **Dedicated Download Hub (`/download`)**: Central platform page to download Windows `.exe`/`.zip`, Android `.apk`, or view step-by-step setup guides with SmartScreen bypass instructions.
+  - **Mobile-Responsive Dock Navigation**: Native bottom navigation bar (`MobileBottomNav`) for seamless phone and tablet browsing.
+
 - **Typo-Tolerant Smart Search**:
   - Global fuzzy search powered by Damerau-Levenshtein distance and sliding-window token scoring.
   - Automatically matches students, skills, and posts even with typos (e.g., `pyhton` ➔ `Python`, `desgn` ➔ `Design`, `pster` ➔ `Poster`).
@@ -27,28 +34,42 @@ All modes share **one listings table, one public student profile, and one unifie
   - Search results hub (`/search`) with categorized tabs: **All**, **Students**, and **Posts & Tasks**.
   - In-page live fuzzy filtering on the `/browse` page.
 
-- **Campus Authentication & Security**:
+- **Campus Authentication & College Onboarding**:
   - Email OTP verification restricted to verified college email domains (e.g., `@apollouniversity.edu.in`).
-  - Custom JWTs with college scoping and roll number verification.
+  - Roll number verification and custom JWTs with college scoping.
+  - **College Access Request System**: Students from unlisted campuses can submit a request with their domain and contact email (`/api/colleges/request`); administrators can review, approve, or reject with automated email notifications.
   - Pluggable mail driver (console logger for local dev, SMTP for production).
 
-- **In-App Messaging & Collaboration**:
-  - Project/listing chat between posters and accepted workers.
+- **Freelance Bidding & Anonymous Identity Protection**:
+  - Students place competitive bids on paid freelance tasks.
+  - **Anonymous Bidding**: Option to submit bids anonymously (`is_anonymous`), masking the student's name, avatar, and profile from competitors while remaining visible to the task owner.
+  - **Bid Lifecycle Management**: Edit bid amounts/messages, withdraw pending bids, and automatic rejection of all competing pending bids once a winner is accepted.
+  - **Direct Campus UPI Settlement**: In-app payment coordination card displaying UPI IDs and QR links for direct peer-to-peer settlement without middleman fees.
+
+- **In-App Messaging & Workspace Collaboration**:
+  - Project workspace chat (`/listings/:id`) between listing owners and accepted workers, exchange partners, or team members.
+  - Attachment and image proof sharing within workspace chat.
+  - **Task Progress Tracker**: Interactive task lifecycle tracker (`todo` ➔ `in_progress` ➔ `review` ➔ `completed`).
   - Team application and member management for hackathons and projects.
 
 - **Support & Ticketing System**:
-  - Students can raise support tickets with proof/screenshot attachments.
+  - Students can raise support tickets (`/support`) with category tags, priority levels, and image proof attachments.
   - Two-way live chat between students and campus admins on support tickets.
 
 - **Real-Time Notifications**:
-  - Server-Sent Events (SSE) stream live unread notification counts and alerts directly to the navbar.
+  - Server-Sent Events (SSE) stream live unread notification counts, bid alerts, and task updates directly to the navbar.
 
 - **Trust & Reviews**:
-  - Star ratings, text reviews, and image proof attachments after gig completion.
+  - 5-star ratings, written reviews, and image proof attachments after gig completion.
+  - Public trust scores displayed on verified student profiles.
   - Campus reporting system with administrative review, warning, and blocking tools.
 
-- **Admin Management Panel**:
-  - College domain management, active student directory, listing moderation, report handling, and live support chat desk.
+- **Admin Management Panel (`/admin-kkr`)**:
+  - College domain management, active student directory with real-time online/last-seen status, listing moderation, report handling, college request approvals, and live support chat desk.
+
+- **Automated Dual CI/CD Pipelines**:
+  - **Web & Desktop CI**: Automated GitHub Actions workflow compiling frontend assets via `pnpm`, verifying static download binaries, checking backend syntax, compiling Windows `SkillBridge.exe` via .NET `csc.exe`, and publishing desktop artifacts.
+  - **Android CI**: Dedicated GitHub Actions pipeline configuring Java 21, Android SDK 36, syncing Capacitor, compiling native debug APKs (`./gradlew assembleDebug`), and publishing downloadable `SkillBridge-Android-APK` artifacts.
 
 ---
 
@@ -56,12 +77,15 @@ All modes share **one listings table, one public student profile, and one unifie
 
 | Layer | Technology |
 | --- | --- |
-| **Frontend** | React 18 (Vite), Tailwind CSS, React Router, Server-Sent Events |
-| **Backend** | Node.js, Express, Zod validation, JSON Web Tokens (JWT) |
+| **Frontend** | React 18 (Vite), Tailwind CSS, React Router 6, Server-Sent Events, pnpm |
+| **Desktop Client** | C# .NET Windows executable launcher + Edge WebView standalone / Electron wrapper |
+| **Mobile Client** | Capacitor 8 (Android SDK 36, Java 21) + Progressive Web App (PWA) |
+| **Backend** | Node.js (>=18.17 / 22), Express, Zod validation, JSON Web Tokens (JWT) |
 | **Database** | Supabase (PostgreSQL with Row Level Security & connection pooling) |
 | **Search Engine** | Custom typo-tolerant Damerau-Levenshtein fuzzy matching engine |
 | **Mailing** | Nodemailer (Console driver for dev, SMTP for production) |
-| **Deployment** | Vercel / Netlify (Frontend) + Render / Cloud Run (Backend) |
+| **CI / CD Pipelines** | GitHub Actions (Dual pipelines: Web & Desktop CI + Android Gradle CI) |
+| **Deployment** | Vercel (Frontend & Static Downloads CDN) + Render / Cloud Run (Backend) |
 
 ---
 
@@ -69,9 +93,22 @@ All modes share **one listings table, one public student profile, and one unifie
 
 ```
 SkillBridge/
+├── .github/
+│   └── workflows/
+│       ├── web-desktop.yml         # Web build, backend check, Windows .exe compilation & packaging
+│       └── android.yml             # Android SDK 36, Java 21, Capacitor sync, Gradle APK build
+├── desktop/
+│   ├── SkillBridge.exe             # Portable Windows desktop launcher
+│   ├── icon.ico                    # Embedded application brand icon
+│   ├── main.js                     # Electron runtime wrapper
+│   ├── package.json                # Desktop packaging configuration
+│   └── src/
+│       ├── Program.cs              # C# native WebView launcher with session isolation
+│       ├── AssemblyInfo.cs         # Application assembly metadata
+│       └── app.manifest            # DPI awareness and execution level manifest
 ├── backend/
 │   ├── db/
-│   │   ├── schema.sql              # Supabase PostgreSQL schema
+│   │   ├── schema.sql              # Supabase PostgreSQL schema & tables
 │   │   ├── index.js                # Database client router
 │   │   └── supabase.js             # Supabase client & connection handler
 │   ├── .env.example
@@ -80,42 +117,50 @@ SkillBridge/
 │       ├── app.js                  # Express setup, middleware, error handler
 │       ├── config/env.js           # Centralized environment config
 │       ├── middleware/             # requireAuth, errorHandler
-│       ├── services/               # mailer.js, otpService.js
+│       ├── services/               # mailer.js, otpService.js, collegeRequestsService.js, loginTracker.js
 │       ├── utils/                  # ApiError, asyncHandler, fuzzySearch.js
 │       ├── routes/index.js         # Top-level API router
 │       └── modules/
-│           ├── admin/              # User management, reports, colleges
+│           ├── admin/              # User management, reports, colleges, request approvals
 │           ├── auth/               # OTP request, verify, login, register, password reset
-│           ├── bids/               # Freelance bids and bid acceptance
+│           ├── bids/               # Freelance bids, anonymous bidding, acceptance & rejection
+│           ├── colleges/           # Public college directory & student domain access requests
 │           ├── dashboard/          # User analytics, active gigs, earnings
+│           ├── download/           # Multi-platform download metadata and binary streaming
 │           ├── exchanges/          # Skill swap proposals and matches
-│           ├── listings/           # Freelance, exchange, and team listings
-│           ├── messages/           # In-app listing direct messaging
+│           ├── listings/           # Freelance, exchange, and team listings with attachments
+│           ├── messages/           # In-app listing direct messaging & workspace chat
 │           ├── notifications/      # SSE notification streaming and read status
 │           ├── reports/            # Community reports and flagging
 │           ├── reviews/            # Gig ratings, reviews, and proof images
 │           ├── search/             # Typo-tolerant unified search
 │           ├── support/            # Support tickets and admin live chat
 │           ├── teams/              # Team finder applications and approvals
-│           └── users/              # Student profiles, avatars, skill tags
+│           └── users/              # Student profiles, avatars, skill tags, UPI settlement
 └── frontend/
     ├── .env.example
+    ├── capacitor.config.json       # Capacitor Android configuration
+    ├── android/                    # Native Android project (Gradle wrapper, manifest, Java)
+    ├── public/
+    │   ├── manifest.json           # Web App Manifest for PWA installation
+    │   └── downloads/              # Static CDN binary downloads (SkillBridge.exe, .zip, .apk)
     └── src/
         ├── App.jsx                 # Routes and application shell
         ├── lib/api.js              # Centralized API client
         ├── context/AuthContext.jsx # Authentication state provider
         ├── utils/fuzzySearch.js    # Client-side typo-tolerant fuzzy matching
-        ├── components/             # Navbar, ModeToggle, ListingCard, ProtectedRoute, ImageModal
-        └── pages/                  # Home, Browse, CreateListing, Dashboard, Exchanges,
-                                    # SearchUsers, ListingDetail, Profile, PublicProfile,
-                                    # Support, About, AdminPanel, Login, Register, NotFound
+        ├── components/             # Navbar, MobileBottomNav, ModeToggle, ListingCard, WorkspaceChat,
+        │                           # TaskProgress, CampusSettlementCard, RequestCollegeModal, ImageModal
+        └── pages/                  # Home, Browse, CreateListing, Dashboard, Exchanges, ListingDetail,
+                                    # Profile, PublicProfile, SearchUsers, Support, Download, About,
+                                    # PrivacyPolicy, AdminPanel, Login, Register, ForgotPassword, NotFound
 ```
 
 ---
 
 ## Running Locally
 
-Requires **Node.js 18.17 or newer**.
+Requires **Node.js 18.17 or newer** (Node 22 LTS recommended for Capacitor 8).
 
 ### 1. Backend Setup
 
@@ -140,14 +185,37 @@ In a second terminal:
 
 ```bash
 cd frontend
-npm install
+pnpm install              # or: npm install
 cp .env.example .env      # Windows PowerShell: Copy-Item .env.example .env
-npm run dev
+pnpm run dev              # or: npm run dev
 ```
 
 The frontend runs at <http://localhost:5173>.
 
-### 3. Sign In & Terminal OTP
+### 3. Windows Desktop Application Setup
+
+You can launch or build the Windows desktop client:
+- **Instant Launch**: Run `desktop/SkillBridge.exe` directly for a standalone distraction-free window.
+- **Recompile Executable**:
+  ```powershell
+  C:\Windows\Microsoft.NET\Framework64\v4.0.30319\csc.exe /target:winexe /out:desktop\SkillBridge.exe /win32icon:desktop\icon.ico /win32manifest:desktop\src\app.manifest desktop\src\Program.cs desktop\src\AssemblyInfo.cs
+  ```
+
+### 4. Android Mobile Application Setup
+
+To build and run the native Android package:
+
+```bash
+cd frontend
+pnpm run build
+pnpm exec cap sync android
+cd android
+./gradlew assembleDebug   # Windows: .\gradlew.bat assembleDebug
+```
+
+The generated APK will be available at `frontend/android/app/build/outputs/apk/debug/app-debug.apk`.
+
+### 5. Sign In & Terminal OTP
 
 With `MAIL_DRIVER=console` (the default in development), verification codes are printed directly to the **backend terminal**:
 
@@ -207,12 +275,27 @@ All endpoints are prefixed with `/api`. Protected routes require `Authorization:
 | --- | --- | --- | --- |
 | `POST` | `/api/auth/request-otp` | — | Request a one-time verification code |
 | `POST` | `/api/auth/login` | — | Sign in with email and password |
-| `POST` | `/api/auth/register` | — | Complete new student registration |
+| `POST` | `/api/auth/register` | — | Complete new student registration with roll number |
+| `POST` | `/api/auth/reset-password` | — | Verify OTP and set a new password |
+| `POST` | `/api/auth/set-password` | ✓ | Change password while authenticated |
 | `GET` | `/api/auth/me` | ✓ | Fetch current authenticated student profile |
 | `GET` | `/api/users/search?q=` | — | Typo-tolerant user and skill search |
 | `GET` | `/api/users/:id` | — | Public student profile, trust score, and reviews |
-| `PATCH` | `/api/users/me` | ✓ | Update bio, skills offered, and skills wanted |
+| `PATCH` | `/api/users/me` | ✓ | Update bio, skills offered, skills wanted, and UPI ID |
 | `PATCH` | `/api/users/me/avatar` | ✓ | Upload/update profile avatar |
+
+### Campus Onboarding & Colleges
+| Method | Route | Auth | Description |
+| --- | --- | --- | --- |
+| `GET` | `/api/colleges` | — | Public list of approved campus institutions and domains |
+| `POST` | `/api/colleges/request` | — | Submit student request for new college domain onboarding |
+
+### Multi-Platform Downloads
+| Method | Route | Auth | Description |
+| --- | --- | --- | --- |
+| `GET` | `/api/download/info` | — | Retrieve platform version, availability, and bundle sizes |
+| `GET` | `/api/download/windows` | — | Stream standalone Windows `SkillBridge.exe` executable |
+| `GET` | `/api/download/android` | — | Stream native Android `SkillBridge.apk` binary package |
 
 ### Unified Search
 | Method | Route | Auth | Description |
@@ -223,18 +306,20 @@ All endpoints are prefixed with `/api`. Protected routes require `Authorization:
 | Method | Route | Auth | Description |
 | --- | --- | --- | --- |
 | `GET` | `/api/listings` | — / ✓ | Browse listings filtered by mode (`freelance`, `exchange`, `team`) |
-| `GET` | `/api/listings/:id` | — / ✓ | Detailed view of a single listing |
+| `GET` | `/api/listings/:id` | — / ✓ | Detailed view of a single listing with attachments |
 | `POST` | `/api/listings` | ✓ | Create a freelance task, skill swap, or team posting |
-| `PATCH` | `/api/listings/:id` | ✓ | Update listing details |
-| `PATCH` | `/api/listings/:id/status` | ✓ | Update status (`open`, `in_progress`, `completed`, `cancelled`) |
+| `PATCH` | `/api/listings/:id` | ✓ | Update listing details and attachments |
+| `PATCH` | `/api/listings/:id/status` | ✓ | Update status (`open`, `in_progress`, `completed`, `cancelled`, `closed`) |
 | `DELETE` | `/api/listings/:id` | ✓ | Delete a listing (owner only) |
 
 ### Bids, Exchanges & Teams
 | Method | Route | Auth | Description |
 | --- | --- | --- | --- |
-| `GET` | `/api/bids?listing_id=` | ✓ | Retrieve bids on a freelance task |
-| `POST` | `/api/bids` | ✓ | Place a bid on a freelance task |
-| `POST` | `/api/bids/:id/accept` | ✓ | Accept a bid (listing owner) |
+| `GET` | `/api/bids?listing_id=` | ✓ | Retrieve bids on a freelance task with anonymous identity masking |
+| `POST` | `/api/bids` | ✓ | Place a bid on a freelance task (optional `is_anonymous` mode) |
+| `PATCH` | `/api/bids/:id` | ✓ | Edit bid amount, message, or anonymous toggle |
+| `DELETE` | `/api/bids/:id` | ✓ | Withdraw and delete a pending bid |
+| `POST` | `/api/bids/:id/accept` | ✓ | Accept a bid; automatically rejects all other competing pending bids |
 | `GET` | `/api/exchanges/matches` | ✓ | Get matching students for skill swaps |
 | `GET` | `/api/exchanges` | ✓ | Get user's skill swap proposals |
 | `POST` | `/api/exchanges` | ✓ | Propose a skill exchange |
@@ -247,13 +332,15 @@ All endpoints are prefixed with `/api`. Protected routes require `Authorization:
 ### Messages & Support
 | Method | Route | Auth | Description |
 | --- | --- | --- | --- |
-| `GET` | `/api/messages/:listing_id` | ✓ | Fetch project messages for a listing |
-| `POST` | `/api/messages/:listing_id` | ✓ | Send a message within a listing |
-| `POST` | `/api/support/tickets` | ✓ | Submit a new support ticket with optional attachment |
-| `GET` | `/api/support/tickets/mine` | ✓ | Retrieve current student's support tickets |
+| `GET` | `/api/messages/:listing_id` | ✓ | Fetch project workspace messages for a listing |
+| `POST` | `/api/messages/:listing_id` | ✓ | Send a workspace message with screenshot attachment |
+| `POST` | `/api/support/tickets` | ✓ | Submit a support ticket with category, priority, and proof image |
+| `GET` | `/api/support/tickets/mine` | ✓ | Retrieve current student's support tickets with unread status |
 | `GET` | `/api/support/tickets/:id/messages` | ✓ | Get live conversation for a support ticket |
 | `POST` | `/api/support/tickets/:id/messages` | ✓ | Send a message on a support ticket |
-| `PATCH` | `/api/support/tickets/:id/status` | ✓ | Update ticket status (Admin or owner) |
+| `PATCH` | `/api/support/tickets/:id/status` | ✓ | Update ticket status (`open`, `in_progress`, `resolved`, `closed`) |
+| `GET` | `/api/support/admin/tickets` | ✓ (Admin) | Retrieve all platform support tickets across campus |
+| `DELETE` | `/api/support/admin/tickets/:id` | ✓ (Admin) | Delete a support ticket |
 
 ### Notifications, Reviews & Reports
 | Method | Route | Auth | Description |
@@ -264,6 +351,24 @@ All endpoints are prefixed with `/api`. Protected routes require `Authorization:
 | `GET` | `/api/reviews?user_id=` | — | Get verified reviews for a student |
 | `POST` | `/api/reviews` | ✓ | Submit a review and rating after gig completion |
 | `POST` | `/api/reports` | ✓ | Report a student profile or listing |
+
+### Admin Operations
+| Method | Route | Auth | Description |
+| --- | --- | --- | --- |
+| `GET` | `/api/admin/users` | ✓ (Admin) | Student directory with real-time online/seen status |
+| `POST` | `/api/admin/users/:id/warn` | ✓ (Admin) | Issue warning with audit message |
+| `POST` | `/api/admin/users/:id/block` | ✓ (Admin) | Block student account |
+| `POST` | `/api/admin/users/:id/unblock` | ✓ (Admin) | Restore blocked student account |
+| `GET` | `/api/admin/reports` | ✓ (Admin) | Review campus incident reports |
+| `DELETE` | `/api/admin/reports/:id` | ✓ (Admin) | Dismiss/delete an incident report |
+| `DELETE` | `/api/admin/listings/:id` | ✓ (Admin) | Moderation removal of a listing |
+| `GET` | `/api/admin/colleges` | ✓ (Admin) | Manage active college institutions |
+| `POST` | `/api/admin/colleges` | ✓ (Admin) | Add new college domain to whitelist |
+| `DELETE` | `/api/admin/colleges/:domain` | ✓ (Admin) | Remove college domain |
+| `GET` | `/api/admin/college-requests` | ✓ (Admin) | View pending student college requests |
+| `POST` | `/api/admin/college-requests/:id/approve` | ✓ (Admin) | Approve request and send onboarding email |
+| `POST` | `/api/admin/college-requests/:id/reject` | ✓ (Admin) | Reject request with explanation email |
+| `DELETE` | `/api/admin/college-requests/:id` | ✓ (Admin) | Delete college request |
 
 ---
 
